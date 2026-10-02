@@ -21,11 +21,11 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 - status: running
 - last completed artifact: A-003 (AGENTS.md)
-- current artifact: none
+- current artifact: PLAN.md agent-definition amendment (PR #5), awaiting coordinator review
 - next ready artifact: A-004 docs/spec.md
-- branch: develop
-- PR: #4 merged into develop (merge commit 59eeb8f)
-- notes: A-003 complete. Status vocabulary reconciled in PLAN.md 1.2 (blocked now defined). A-004 is marked blocked in the sequence table although its only dependency A-001 is done; being reconciled in the follow-up PLAN.md amendment. Out-of-order work still exists: feature/planner-spec carries a drafted docs/spec.md (A-004) and a modified PLAN.md. Reconcile that branch before starting A-004.
+- branch: feature/coordinator-plan
+- PR: #5 (feature/coordinator-plan -> develop)
+- notes: A-004 and A-018 are the only ready artifacts. A-004 was corrected blocked -> ready in the sequence table because its only dependency A-001 is done. Agent definitions in PLAN.md 9.2 now name owned artifacts, upstream documents, and downstream consumers; programmer owns no document artifact. Out-of-order work still exists: feature/planner-spec carries a drafted docs/spec.md (A-004) and a modified PLAN.md; reconcile or discard before starting A-004.
 
 ## Log
 
@@ -38,3 +38,6 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-02: A-003 AGENTS.md drafted (7075155): roles, branch naming, git-flow rules, commit prefixes, PR workflow, status vocabulary, PROGRESS protocol, runtime pointer, hard rules. PLAN.md updated: A-003 done, next_artifact A-004, docs(agents) prefix, blocked status defined in 1.2.
 - 2026-10-02: A-003 PR #4 opened against develop, awaiting coordinator review. Not merged. status running.
 - 2026-10-02: A-003 PR #4 approved by coordinator (recorded as comment; GitHub blocks approving own PR) and merged into develop at 59eeb8f. feature/coordinator-agents deleted. A-003 done; next ready A-004.
+- 2026-10-02: PLAN.md amendment started. Branch feature/coordinator-plan created from develop at 322289d.
+- 2026-10-02: PLAN.md 9.2 agent definitions made explicit (5c0f32f): owned artifacts, upstream documents, downstream consumers for all nine agents; consistency rule in 1.6 and 9.2 preamble; programmer owns no document; AGENTS.md aligned; A-004 corrected blocked -> ready. JSON block re-validated.
+- 2026-10-02: Amendment PR #5 opened against develop, awaiting coordinator review. Not merged. status running.
