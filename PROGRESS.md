@@ -2,8 +2,8 @@
 project: Event Horizon
 updated: 2026-10-02
 status: running
-last_artifact: A-003
-next_artifact: A-004
+last_artifact: A-004
+next_artifact: A-005
 ---
 
 # Progress Control File
@@ -20,12 +20,12 @@ This file is the run-state control file for the coordinator. It is not a design 
 ## Current state
 
 - status: running
-- last completed artifact: A-003 (AGENTS.md) plus PLAN.md agent-definition amendment
-- current artifact: A-004 docs/spec.md
-- next ready artifact: A-004 docs/spec.md
-- branch: feature/planner-spec
-- PR: none yet
-- notes: PLAN.md amendment merged (PR #5, merge commit eb3f15e). Global OpenCode agent configuration must mirror PLAN.md 9.2. A-004 and A-018 are the only ready artifacts. A stale feature/planner-spec branch from an out-of-order A-004 attempt still exists on origin; the new A-004 run supersedes it and it is kept, not deleted, until the coordinator decides.
+- last completed artifact: A-004 docs/spec.md
+- current artifact: none
+- next ready artifact: A-005 docs/architecture.md
+- branch: develop
+- PR: #6 merged into develop (merge commit c73be03)
+- notes: Ready artifacts are A-005 docs/architecture.md, A-006 docs/design.md, and A-018 docs/agent-rules.md. The out-of-order A-004 attempt is preserved on archive/out-of-order-planner-spec and its PR #2 is closed as superseded. Global OpenCode configuration at ~/.config/opencode/opencode.json mirrors PLAN.md 9.2 for all nine agents; the strata model limit now sets output 16384 so requests cannot exceed the 131027 context.
 
 ## Log
 
@@ -41,3 +41,7 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-02: PLAN.md amendment started. Branch feature/coordinator-plan created from develop at 322289d.
 - 2026-10-02: PLAN.md 9.2 agent definitions made explicit (5c0f32f): owned artifacts, upstream documents, downstream consumers for all nine agents; consistency rule in 1.6 and 9.2 preamble; programmer owns no document; AGENTS.md aligned; A-004 corrected blocked -> ready. JSON block re-validated.
 - 2026-10-02: Amendment PR #5 opened against develop, awaiting coordinator review. Not merged. status running.
+- 2026-10-02: PR #5 approved by coordinator and merged into develop at eb3f15e. feature/coordinator-plan deleted. Global config ~/.config/opencode/opencode.json updated to mirror PLAN.md 9.2 for all nine agents; strata model output limit set to 16384. Service restarted to reload configuration.
+- 2026-10-02: A-004 started. Out-of-order branch feature/planner-spec renamed to archive/out-of-order-planner-spec and pushed. Fresh feature/planner-spec created from develop at 6181875. PLAN.md A-004 ready -> doing.
+- 2026-10-02: A-004 docs/spec.md drafted by planner subagent (746 lines, 81b629e). PR #2 closed as superseded; stale remote branch deleted. New PR #6 opened against develop.
+- 2026-10-02: A-004 PR #6 approved by coordinator and merged into develop at c73be03. feature/planner-spec deleted. A-004 done; next ready A-005.
