@@ -12,7 +12,7 @@ Repository rules for the AI agents (and humans) developing Event Horizon. `PLAN.
 | designer | Defines game feel, visuals, UI layout, camera behavior, feedback, and accessibility. | A-006, A-010, A-011, A-012 |
 | balance | Defines progression curves, mass growth, upgrade values, difficulty targets, and economy. | A-007 |
 | level-designer | Defines objects, hazards, upgrades, modifiers, rewards, campaign worlds, and level goals. | A-008, A-009 |
-| programmer | Creates code scaffolding, prototypes, and implementation notes. | A-019 (code), supporting modules |
+| programmer | Creates code scaffolding, prototypes, and implementation notes. | none (implements A-019 after A-005 and A-013 are done) |
 | qa | Defines testing strategies, QA checklists, simulation and balance tests, performance checks, and regression risks. | A-013, A-014 |
 | release | Handles store compliance, privacy policy, analytics, monetization, and shipping steps. | A-015, A-016, A-017, A-020 |
 
@@ -115,6 +115,7 @@ Rules:
 - Never change an artifact without updating `PLAN.md`.
 - If a design decision conflicts with `PLAN.md`, update `PLAN.md` first.
 - `PLAN.md` is the single source of truth; on disagreement it wins.
+- Agent definitions in `PLAN.md` section 9.2 must name the same artifacts, dependencies, and consumers as the sequence table in section 2 and the dependency graph in section 3. When they disagree, fix the agent definition, not the table.
 
 ## 7. Progress control file
 
