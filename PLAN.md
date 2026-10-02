@@ -64,6 +64,7 @@ feature/coordinator-plan
 feature/coordinator-readme
 feature/coordinator-agents
 feature/planner-spec
+feature/coordinator-briefs
 feature/architect-architecture
 feature/designer-design
 feature/balance-balance
@@ -1135,3 +1136,27 @@ Global permissions must at least allow `edit` and `shell` so agents can draft ar
    ```text
    opencode run --agent planner "create docs/spec.md"
    ```
+
+### 9.4 Context briefs
+
+Role agents never read `PLAN.md` or an approved upstream artifact in full. The
+coordinator writes one brief per artifact at `docs/briefs/<artifact-id>.md`
+before launching the agent, and the agent prompt names only that brief.
+
+A brief contains:
+
+- the artifact contract: ID, owner, dependencies, acceptance criteria, purpose,
+  consumers
+- the hard design rule from PLAN.md section 8
+- only the PLAN.md excerpts that artifact depends on
+- the open questions from upstream artifacts that this artifact must answer
+- the scope boundaries that later artifacts own
+
+Rules:
+
+- The brief is distilled context, not a replacement for `PLAN.md`. If a brief
+  and `PLAN.md` disagree, `PLAN.md` wins and the brief is corrected.
+- A brief stays under roughly ten thousand tokens so a role agent session
+  cannot approach the model context limit.
+- The coordinator regenerates a brief when an upstream artifact changes.
+- Briefs are committed with the artifact that used them.

@@ -129,6 +129,8 @@ Rules:
 
 The roles in section 1 are implemented as OpenCode agents configured per `PLAN.md` section 9: `default_agent` set to `coordinator`, the nine agents defined with `mode: "all"`, and `subagent` permission for the coordinator so it can launch role agents. Global permissions must allow `edit` and `shell`.
 
+Role agents never read `PLAN.md` or an approved upstream artifact in full. Before launching a role agent, the coordinator writes a brief at `docs/briefs/<artifact-id>.md` containing the artifact contract, the PLAN.md section 8 design rule, only the PLAN.md excerpts that artifact depends on, the upstream open questions this artifact must answer, and the scope boundaries later artifacts own. The agent prompt names only that brief. Briefs are distilled context: on disagreement `PLAN.md` wins. Keeping briefs short is what keeps role-agent sessions far below the model context limit.
+
 ```sh
 opencode service restart
 opencode run "start development"
