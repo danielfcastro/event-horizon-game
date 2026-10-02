@@ -1,9 +1,9 @@
 ---
 project: Event Horizon
 updated: 2026-10-02
-status: idle
-last_artifact: A-001
-next_artifact: A-002
+status: running
+last_artifact: A-002
+next_artifact: A-003
 ---
 
 # Progress Control File
@@ -19,13 +19,17 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 ## Current state
 
-- status: idle
-- last completed artifact: A-001 (PLAN.md)
-- current artifact: none
-- next ready artifact: A-002 README.md
-- branch: develop
-- notes: none
+- status: running
+- last completed artifact: A-002 (README.md)
+- current artifact: A-002, awaiting coordinator review
+- next ready artifact: A-003 AGENTS.md
+- branch: feature/coordinator-readme
+- PR: #3 (feature/coordinator-readme -> develop)
+- notes: A-002 is committed on its feature branch and marked done in PLAN.md, but not merged; merge only on coordinator approval. Out-of-order work exists: feature/planner-spec carries a drafted docs/spec.md (A-004) and a modified PLAN.md while develop still marks A-004 blocked. Reconcile that branch before starting A-004.
 
 ## Log
 
 - 2026-10-02: Repo initialized. PLAN.md (A-001) done. develop branch created; PR #1 merged into main. Development run not started yet.
+- 2026-10-02: A-002 README.md started. Branch feature/coordinator-readme created from develop at 773beab.
+- 2026-10-02: A-002 README.md drafted (568f6c3): markdown repo overview, private-remote instructions, next steps. PLAN.md updated: A-002 done, next_artifact A-003, feature/coordinator-readme and docs(readme) added to naming and prefix lists.
+- 2026-10-02: A-002 PR #3 opened against develop, awaiting coordinator review. Not merged. status running.
