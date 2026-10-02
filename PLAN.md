@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-003
+next_artifact: A-004
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -49,6 +49,8 @@ Every artifact must follow this process:
    proposed -> ready -> doing -> done
    ```
 
+   Artifacts whose dependencies are not yet done are marked blocked in the sequence table until they become ready.
+
 6. Open a pull request.
 7. Wait for coordinator review.
 8. Merge to main only when approved.
@@ -86,7 +88,7 @@ Use:
 
 ```text
 docs(plan): ...
-docs(readme): ...
+docs(agents): ...
 docs(spec): ...
 docs(architecture): ...
 docs(design): ...
@@ -193,7 +195,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | --- | --- | --- | --- | --- | --- | --- |
 | A-001 | PLAN.md | coordinator | none | Master plan and coordination protocol | done | Contains game concept, artifact order, agent rules, git-flow requirement. |
 | A-002 | README.md | coordinator | A-001 | Repo overview | done | Explains repo and next steps. |
-| A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | ready | Defines agent responsibilities and branch rules. |
+| A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | done | Defines agent responsibilities and branch rules. |
 | A-004 | docs/spec.md | planner | A-001 | High-level game specification | blocked | Defines core loop, controls, goals, failure conditions. |
 | A-005 | docs/architecture.md | architect | A-004 | Technical architecture | blocked | Defines modules, simulation loop, data structures, platform plan. |
 | A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | blocked | Defines visual language, feedback, accessibility. |
@@ -293,7 +295,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-004 docs/spec.md
 
