@@ -146,6 +146,7 @@ Short summary of what was produced.
 - Do not change an artifact without updating PLAN.md.
 - If a design decision conflicts with PLAN.md, update PLAN.md first.
 - Keep one canonical source of truth: PLAN.md.
+- The coordinator MUST keep PROGRESS.md updated after every meaningful step so an interrupted run can resume.
 - Code must follow approved architecture and balance documents.
 - Monetization must not block core game completion.
 
@@ -173,6 +174,14 @@ git flow hotfix finish <version>
 ```
 
 If the git-flow command line tool is unavailable, use equivalent manual git-flow branch and merge operations with the same branch prefixes and merge targets.
+
+### 1.8 Progress control file
+
+- `PROGRESS.md` at the repo root is the run-state control file for the coordinator.
+- It records: current artifact, last completed artifact, next ready artifact, branch, PR, status (idle, running, interrupted, blocked), and a dated log.
+- The coordinator reads PLAN.md then PROGRESS.md at the start of every session and resumes exactly from the recorded state.
+- The coordinator updates PROGRESS.md after every meaningful step, including partial ones, and records the exact stopping point and reason when interrupted or blocked.
+- PROGRESS.md is run state only; design decisions belong in PLAN.md.
 
 ## 2. Artifact sequence
 
