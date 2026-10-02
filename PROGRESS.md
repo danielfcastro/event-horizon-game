@@ -20,12 +20,12 @@ This file is the run-state control file for the coordinator. It is not a design 
 ## Current state
 
 - status: running
-- last completed artifact: A-003 (AGENTS.md)
-- current artifact: PLAN.md agent-definition amendment (PR #5), awaiting coordinator review
+- last completed artifact: A-003 (AGENTS.md) plus PLAN.md agent-definition amendment
+- current artifact: A-004 docs/spec.md
 - next ready artifact: A-004 docs/spec.md
-- branch: feature/coordinator-plan
-- PR: #5 (feature/coordinator-plan -> develop)
-- notes: A-004 and A-018 are the only ready artifacts. A-004 was corrected blocked -> ready in the sequence table because its only dependency A-001 is done. Agent definitions in PLAN.md 9.2 now name owned artifacts, upstream documents, and downstream consumers; programmer owns no document artifact. Out-of-order work still exists: feature/planner-spec carries a drafted docs/spec.md (A-004) and a modified PLAN.md; reconcile or discard before starting A-004.
+- branch: feature/planner-spec
+- PR: none yet
+- notes: PLAN.md amendment merged (PR #5, merge commit eb3f15e). Global OpenCode agent configuration must mirror PLAN.md 9.2. A-004 and A-018 are the only ready artifacts. A stale feature/planner-spec branch from an out-of-order A-004 attempt still exists on origin; the new A-004 run supersedes it and it is kept, not deleted, until the coordinator decides.
 
 ## Log
 
