@@ -1,7 +1,7 @@
 ---
 project: Event Horizon
-updated: 2026-10-02
-status: running
+updated: 2026-10-03
+status: interrupted
 last_artifact: A-004
 next_artifact: A-005
 ---
@@ -19,13 +19,15 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 ## Current state
 
-- status: running
+- status: interrupted
 - last completed artifact: A-004 docs/spec.md
 - current artifact: A-005 docs/architecture.md
 - next ready artifact: A-005 docs/architecture.md
-- branch: feature/architect-architecture (created from develop, A-005 marked doing at 91cd7ad)
+- branch: feature/architect-architecture (created from develop, A-005 marked doing)
 - PR: #7 merged into develop (merge commit ef67cce)
-- notes: Context-brief protocol merged (PLAN.md 9.4, AGENTS.md section 8). Role agents now read docs/briefs/<artifact-id>.md instead of full documents; docs/briefs/A-005.md is on develop. Ready artifacts are A-005 docs/architecture.md, A-006 docs/design.md, and A-018 docs/agent-rules.md. The out-of-order A-004 attempt is preserved on archive/out-of-order-planner-spec and its PR #2 is closed as superseded. Global OpenCode configuration at ~/.config/opencode/opencode.json mirrors PLAN.md 9.2 for all nine agents; the strata model limit now sets output 16384 so requests cannot exceed the 131027 context.
+- stopping point: the architect subagent for A-005 died with "prompt (99332 tokens) + max tokens (31715) exceeds the context (131027)". It had read PLAN.md and docs/spec.md in full instead of using the brief.
+- controls applied: every project agent now caps output at max_tokens 16000 (both options and request.body in ~/.config/opencode/opencode.json); role-agent system prompts now read docs/briefs/<artifact-id>.md instead of full documents; PLAN.md 9.5 documents the controls.
+- resume: restart the service, then resume A-005 by relaunching the architect subagent against docs/briefs/A-005.md on feature/architect-architecture.
 
 ## Log
 
@@ -48,3 +50,4 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: Context-brief protocol drafted (92995ab): PLAN.md 9.4, AGENTS.md section 8, PLAN.md 1.3 branch entry, docs/briefs/A-005.md. PR #7 opened and approved by coordinator, merged into develop at ef67cce. feature/coordinator-briefs deleted.
 - 2026-10-03: Context-limit fix applied: compaction set in ~/.config/opencode/opencode.json (auto, keep 8000 tokens, buffer 32000) and role agents now read briefs instead of full documents. First architect attempt died after reading PLAN.md and docs/spec.md in full; brief is 351 lines.
 - 2026-10-03: A-005 started. Branch feature/architect-architecture created from develop at e7868e0; PLAN.md A-005 blocked -> doing (91cd7ad).
+- 2026-10-03: Context overflow hit by architect subagent (prompt 99332 + max tokens 31715 > 131027). Hard controls added: max_tokens 16000 per agent (options + request.body), role prompts switched to briefs, PLAN.md 9.5 documents the controls. status set to interrupted; resume A-005 with the architect against docs/briefs/A-005.md.
