@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-014
+next_artifact: A-015
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -208,8 +208,8 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-011 | docs/input.md | designer | A-010 | Mobile controls | done | Defines drag, joystick, tilt, accessibility. |
 | A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | done | Defines contrast, reduced motion, larger controls. |
 | A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | done | Defines simulation tests, balance tests, UI tests. |
-| A-014 | docs/qa.md | qa | A-013 | QA checklist | doing | Defines manual QA and performance checklist. |
-| A-015 | docs/store.md | release | A-014 | Store submission plan | blocked | Defines listing, screenshots, trailer, compliance. |
+| A-014 | docs/qa.md | qa | A-013 | QA checklist | done | Defines manual QA and performance checklist. |
+| A-015 | docs/store.md | release | A-014 | Store submission plan | ready | Defines listing, screenshots, trailer, compliance. |
 | A-016 | docs/monetization.md | release | A-015 | Monetization and economy | blocked | Defines ads, IAP, analytics, fairness. |
 | A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | blocked | Defines data collected, contact info, store compliance. |
 | A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | ready | Detailed rules for AI agents. |
@@ -418,7 +418,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- doing
+- done
 
 ### A-015 docs/store.md
 
@@ -429,7 +429,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- ready
 
 ### A-016 docs/monetization.md
 
