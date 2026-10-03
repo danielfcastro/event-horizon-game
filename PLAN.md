@@ -211,7 +211,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-014 | docs/qa.md | qa | A-013 | QA checklist | done | Defines manual QA and performance checklist. |
 | A-015 | docs/store.md | release | A-014 | Store submission plan | done | Defines listing, screenshots, trailer, compliance. |
 | A-016 | docs/monetization.md | release | A-015 | Monetization and economy | done | Defines ads, IAP, analytics, fairness. |
-| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | ready | Defines data collected, contact info, store compliance. |
+| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | doing | Defines data collected, contact info, store compliance. |
 | A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | ready | Detailed rules for AI agents. |
 | A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | ready | Defines first playable prototype modules. |
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | blocked | Defines final release steps. |
@@ -451,7 +451,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- doing
 
 ### A-018 docs/agent-rules.md
 
