@@ -26,6 +26,40 @@ text (A-017), or submission mechanics (A-020). Inherited, non-renumberable upstr
 | A-014 QA gate | Monetization items block ship only; store readiness row "Monetization disclosed in listing | SG-6 | A-016". | Section 7 and 8 add conditions only. |
 | A-013 test plan | Store category is a release-owned placeholder; A-10/A-11 machine checks exist. | Section 8 reuses A-10/A-11; no new test IDs or families. |
 
+## 2. Free-to-play structure and fairness rules
+
+The game ships free-to-play. All content required to complete the core game is free.
+
+Fairness rules (binding):
+
+1. **No pay-to-win.** The economy is play-only per A-007: the full permanent-upgrade total
+   (2,195 cores) is obtainable by play alone against economy supply 10,200. No IAP SKU
+   contains, converts to, or unlocks any stat-carrying currency. Purchasing nothing changes
+   nothing about obtainability.
+2. **Purchases are cosmetic only.** Per the PLAN §8 tension rule, no purchase may reduce
+   drain tables, soften absorb gating, reduce failure pressure, or alter pull behavior.
+   Every SKU in Section 4 changes appearance only.
+3. **Digest-identity rule (extends the A-012 no-softening precedent, machine-checked by
+   A-013 as A-10/A-11):** owning any monetization SKU — cosmetic, ad-removal, or premium —
+   must leave the run digest byte-identical. The simulation never reads SKU ownership,
+   ad state, or analytics state. Two players, one with every SKU and one with none,
+   produce identical digests for identical inputs.
+4. **Ad removal is never a stat buff.** The ad-removal SKU removes ad slots only. It grants
+   no currency, no modifier, no continue, no revive, and no simulation input.
+5. **Monetization never blocks core completion.** No gate, price, ad state, or SKU
+   ownership is required to finish the campaign. Monetization readiness conditions
+   (Section 7) block ship/submission only, mirroring A-015 SG gates and the A-014 gate.
+
+Structure summary:
+
+| Surface | Present at ship | Blocks completion? |
+| --- | --- | --- |
+| Base game | Free | — |
+| Ads | Optional, skippable | No |
+| Cosmetic IAP | Optional | No |
+| Ad-removal IAP | Optional | No |
+| Premium version | Absent (see §4.3) | No |
+
 ## 3. Ads
 
 Placements are exactly the PLAN §5.14 list — no others may be added:
@@ -117,7 +151,8 @@ Collection rules:
 - No names, no contact info, no precise location, no device identifiers beyond what the
   store SDK requires, no screenshots, no text input of any kind.
 - `seed_hash` and scores are gameplay telemetry only; they are never used to rank, match,
-  or compare players in-game (no leaderboards exist in scope).
+  or compare players. Daily/weekly leaderboards exist as a game surface (A-009 modes, score-only
+  per A-015 §2.5) and are a separate concern A-017 covers; analytics never feeds them.
 - Events fire client-side at the moments listed; storage/retention policy is A-017's to
   declare, scope is fixed here.
 
@@ -202,36 +237,3 @@ For A-020 (ship):
 3. Gate extension beyond SG-6: yes — SG-6.1..SG-6.6 (Section 7), extension only, all
    ship-blocking only.
 
-## 2. Free-to-play structure and fairness rules
-
-The game ships free-to-play. All content required to complete the core game is free.
-
-Fairness rules (binding):
-
-1. **No pay-to-win.** The economy is play-only per A-007: the full permanent-upgrade total
-   (2,195 cores) is obtainable by play alone against economy supply 10,200. No IAP SKU
-   contains, converts to, or unlocks any stat-carrying currency. Purchasing nothing changes
-   nothing about obtainability.
-2. **Purchases are cosmetic only.** Per the PLAN §8 tension rule, no purchase may reduce
-   drain tables, soften absorb gating, reduce failure pressure, or alter pull behavior.
-   Every SKU in Section 4 changes appearance only.
-3. **Digest-identity rule (extends the A-012 no-softening precedent, machine-checked by
-   A-013 as A-10/A-11):** owning any monetization SKU — cosmetic, ad-removal, or premium —
-   must leave the run digest byte-identical. The simulation never reads SKU ownership,
-   ad state, or analytics state. Two players, one with every SKU and one with none,
-   produce identical digests for identical inputs.
-4. **Ad removal is never a stat buff.** The ad-removal SKU removes ad slots only. It grants
-   no currency, no modifier, no continue, no revive, and no simulation input.
-5. **Monetization never blocks core completion.** No gate, price, ad state, or SKU
-   ownership is required to finish the campaign. Monetization readiness conditions
-   (Section 7) block ship/submission only, mirroring A-015 SG gates and the A-014 gate.
-
-Structure summary:
-
-| Surface | Present at ship | Blocks completion? |
-| --- | --- | --- |
-| Base game | Free | — |
-| Ads | Optional, skippable | No |
-| Cosmetic IAP | Optional | No |
-| Ad-removal IAP | Optional | No |
-| Premium version | Absent (see §4.3) | No |
