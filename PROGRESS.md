@@ -1,9 +1,9 @@
 ---
 project: Event Horizon
 updated: 2026-10-03
-status: interrupted
-last_artifact: A-006
-next_artifact: A-007
+status: running
+last_artifact: A-007
+next_artifact: A-008
 ---
 
 # Progress Control File
@@ -19,15 +19,15 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 ## Current state
 
-- status: interrupted
-- last completed artifact: A-006 docs/design.md
-- current artifact: A-007 docs/balance.md
-- next ready artifact: A-007 docs/balance.md (also ready: A-010 docs/ui.md, A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
-- branch: feature/balance-balance (created from develop at 30177d8; A-007 marked doing, brief docs/briefs/A-007.md written, commit 9b09479)
-- PR: #9 merged into develop (merge commit e69d273); feature/designer-design deleted
-- stopping point: A-007 blocked at the subagent stage. Balance subagent attempts 1 and 2 both completed without a text response and produced no artifact (docs/balance.md absent, working tree clean, no new commit). Reason: subagent runtime failure, not config (balance agent config mirrors working agents: max_tokens 16000 in options and request.body, inherits top-level model). Resume by relaunching the balance subagent against docs/briefs/A-007.md, instructing it to write docs/balance.md incrementally (one write per document section, then commit) so a single oversized generation call cannot be the failure cause.
-- controls applied: every project agent now caps output at max_tokens 16000 (both options and request.body in ~/.config/opencode/opencode.json); role-agent system prompts now read docs/briefs/<artifact-id>.md instead of full documents; PLAN.md 9.5 documents the controls.
-- resume: continue the orchestration loop at A-007 docs/balance.md (balance agent).
+- status: running
+- last completed artifact: A-007 docs/balance.md
+- current artifact: none (A-008 not yet started)
+- next ready artifact: A-008 docs/content.md (also ready: A-010 docs/ui.md, A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
+- branch: none active; feature/balance-balance merged and deleted
+- PR: #10 merged into develop (merge commit 4e93685); feature/balance-balance deleted locally and remotely
+- stopping point: none — A-007 completed and merged. Resume by continuing the orchestration loop at A-008 docs/content.md (level-designer agent): write brief docs/briefs/A-008.md, mark A-008 doing, create feature/level-designer-content from develop, launch the level-designer subagent against the brief only.
+- controls applied: every project agent caps output at max_tokens 16000 (options + request.body); role agents read docs/briefs/<artifact-id>.md, never PLAN.md or approved artifacts in full; PLAN.md 9.5 documents the controls.
+- resume: continue the orchestration loop at A-008 docs/content.md (level-designer agent).
 - 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
 
 ## Log
@@ -61,3 +61,7 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: A-007 balance subagent attempt 1 completed without a text response and produced no artifact (docs/balance.md absent, no new commit on feature/balance-balance). Retrying the balance subagent against the same brief.
 - 2026-10-03: A-007 balance subagent attempt 2 completed without a text response and produced no artifact (docs/balance.md absent, working tree clean, no new commit). Balance agent config verified identical in shape to working agents (max_tokens 16000 options + request.body, inherits top-level model). status set to interrupted; resume by relaunching the balance subagent against docs/briefs/A-007.md with instructions to write docs/balance.md incrementally, one section per write, then commit.
 - 2026-10-03: A-005 PLAN.md updated on branch: A-005 done, A-006 and A-013 unblocked to ready, next_artifact A-006 (416c1fa). PR #8 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at 7e806f7. feature/architect-architecture deleted. A-005 done; next ready A-006.
+- 2026-10-03: Development resumed from the recorded stopping point. Verified state before relaunch: on feature/balance-balance (from develop@30177d8), PLAN.md A-007 doing marker present, brief docs/briefs/A-007.md present (318 lines), docs/balance.md absent, working tree clean. status set to running.
+- 2026-10-03: A-007 docs/balance.md drafted by balance subagent attempt 3 against brief only, with incremental-write instructions (one section per write, then a single commit) to rule out an oversized generation call as the failure cause (450 lines, b96bf81). Sections: stats/types, growth model, mass pacing, horizon/zoom/bands, pull & speed decay, combo, stability/failure, targets/timers, hazard budgets, permanent upgrades, run upgrades, economy, fixed-point notes, open questions.
+- 2026-10-03: A-007 coordinator review against PLAN.md: approved. Formula shapes from PLAN 5.6 preserved (constants only); PLAN 5.10 target anchors exact; all seven PLAN 5.9 permanent upgrades named with run-upgrade reference values kept verbatim; PLAN 5.11 failure set used; PLAN 5.14 no pay-to-win with play-only economy. Section 8 tension rule survives every path (speed decay, combo window shrink, oversized-absorb drains, efficiency capped 1.00, no upgrade reduces drain tables). A-005 determinism honored (32.32 constants, mass ceiling 2^24, pullStrength max 655,360, seeded PRNG only). Arithmetic verified: upgrade total 2,195 cores; economy supply 10,200; speed at 1M = 14.3.
+- 2026-10-03: A-007 PLAN.md updated on branch: A-007 done, A-008 unblocked to ready, next_artifact A-008 (c02d646). PR #10 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at 4e93685. feature/balance-balance deleted locally and remotely. A-007 done; next ready A-008.
