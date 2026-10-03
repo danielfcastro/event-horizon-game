@@ -200,7 +200,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | done | Defines agent responsibilities and branch rules. |
 | A-004 | docs/spec.md | planner | A-001 | High-level game specification | done | Defines core loop, controls, goals, failure conditions. |
 | A-005 | docs/architecture.md | architect | A-004 | Technical architecture | done | Defines modules, simulation loop, data structures, platform plan. |
-| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | ready | Defines visual language, feedback, accessibility. |
+| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | doing | Defines visual language, feedback, accessibility. |
 | A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | blocked | Defines mass growth, upgrade values, target masses. |
 | A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | blocked | Lists objects, hazards, rewards, modifiers. |
 | A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | blocked | Defines worlds, objectives, difficulty curve. |
@@ -330,7 +330,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- doing
 
 ### A-007 docs/balance.md
 
