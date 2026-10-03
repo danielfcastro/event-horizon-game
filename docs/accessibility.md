@@ -31,7 +31,7 @@ Settings names are fixed by A-010 S7 (UI scale, safe-area reflow, reduced motion
 | Reduced motion | Animation of feedback | Timing windows, hazard contact, stability decay rate, pull strength |
 | High contrast | Stroke weight, background separation | Glyph shapes, hazard silhouettes, ring geometry |
 | Colorblind palette | Hue assignment only | Shape-first encoding, glyph families, dash counts, tick spacing |
-| Larger controls | Touch-target size (56 → 72 ru tier) | Control-zone width, pause anchor, spacing floor |
+| Larger controls | Touch-target size (64 → 72 ru tier) | Control-zone width, pause anchor, spacing floor |
 | Text size | Numeral and label size (tabular) | Which numbers exist; no new readouts by default |
 | Audio cues on/off | Audio channel | Visual/rhythm channels stay complete with audio off |
 | Haptics on/off | Physical pulse | Nothing visual; never the sole carrier of any state |
@@ -134,11 +134,11 @@ Rules:
 
 ## 6. Larger controls
 
-Default: **off**. The 72 ru tier is an accessibility tier above A-010's 56 ru default tier; it grows touch targets only, and it must fit A-011's ≥ 180 ru control zone **without moving pause**.
+Default: **off**. The 72 ru tier is an accessibility tier above A-010's 64 ru primary tier; it grows touch targets only, and it must fit A-011's ≥ 180 ru control zone **without moving pause**.
 
 Geometry (bottom band, smallest supported phone):
 
-- Two primary targets grow 56 → **72 ru**. Pair width = 72 + 12 + 72 = **156 ru**, inside the 180 ru zone, leaving **12 ru slack per side**.
+- Two primary targets grow 64 → **72 ru**. Pair width = 72 + 12 + 72 = **156 ru**, inside the 180 ru zone, leaving **12 ru slack per side**.
 - Spacing floor **≥ 12 ru is preserved** between the pair and between every target and the safe-area edge.
 - Pause stays at its A-010 anchor as a **64 ru** single-tap button; it does not move, does not grow, and is not inside the 180 ru zone.
 - Secondary actions (edge indicators, corner targets) keep their A-010 anchors and their ≥ 8 ru minimum; they do not grow, so the band does not widen past the zone.
@@ -167,8 +167,8 @@ This section adds **variants** to A-011's intent channels. It adds no verbs.
 
 **Default for one-handed players: tilt.** Joystick is the offered alternative, not the default.
 
-- Tilt requires **no screen contact**: the free hand never enters the play area, so the whole field stays visible and no target is occluded. A one-handed player has exactly one hand; a joystick needs a second contact point, so it is structurally unavailable to them.
-- Joystick is offered as the alternative for players who **cannot hold a steady neutral pose** (fatigue, low wrist control) but can operate two contacts. It keeps thumbs out of the play area per A-011.
+- Tilt requires **no screen contact**: the free hand never enters the play area, so the whole field stays visible and no target is occluded. A joystick uses one screen contact on A-011's floating base in the control zone; that contact competes with the one-handed grip and drags the calibrated neutral pose, so tilt stays the one-handed default.
+- Joystick is offered as the alternative for players who **cannot hold a steady neutral pose** (fatigue, low wrist control) but can operate the floating base with one contact in the control zone. It keeps thumbs out of the play area per A-011.
 - Selection is a single settings choice — `intent: tilt` / `intent: joystick` — surfaced in the one-handed setup flow, not buried in the settings sheet.
 - Neither alternative changes the verbs available, the absorb gate, or the cost of mass.
 
@@ -227,7 +227,7 @@ Rules of the contract:
 - **Palette purity**: switching palettes changes hue assignments only — glyph families, dash counts, and silhouettes are byte-identical.
 - **Touch geometry**: 72 ru pair fits the 180 ru zone with ≥ 12 ru spacing and pause unmoved, at every UI-scale tier.
 - **No-softening**: no accessibility configuration changes absorb gating, pull strength, decay rate, or hazard contact; a settings change never changes a balance-owned number.
-- **One-handed default**: `intent: tilt` is the offered default and requires zero screen contact; joystick requires exactly two contacts.
+- **One-handed default**: `intent: tilt` is the offered default and requires zero screen contact; joystick uses one screen contact in the control zone (A-011's floating base).
 - **Pause confirm-state**: only reachable on the 64 ru target; never adds a verb; default on only under one-handed or larger-controls configurations.
 - **Performance**: static variants and thicker strokes fit the same pooled, tier-budgeted draw calls (A-005) — no new render layers, no new pools.
 
