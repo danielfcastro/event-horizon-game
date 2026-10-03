@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-011
+next_artifact: A-012
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -205,7 +205,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | done | Lists objects, hazards, rewards, modifiers. |
 | A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | done | Defines worlds, objectives, difficulty curve. |
 | A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | done | Defines UI layout and mobile scaling. |
-| A-011 | docs/input.md | designer | A-010 | Mobile controls | ready | Defines drag, joystick, tilt, accessibility. |
+| A-011 | docs/input.md | designer | A-010 | Mobile controls | done | Defines drag, joystick, tilt, accessibility. |
 | A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | ready | Defines contrast, reduced motion, larger controls. |
 | A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | ready | Defines simulation tests, balance tests, UI tests. |
 | A-014 | docs/qa.md | qa | A-013 | QA checklist | blocked | Defines manual QA and performance checklist. |
@@ -385,7 +385,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-012 docs/accessibility.md
 
