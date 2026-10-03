@@ -132,7 +132,7 @@ The rating is not asserted from memory. It is asserted from:
 
 **Decision on A-014 open question 2:** Yes — M-5 SL-1 screenshots **are** part of age-rating evidence. They are the only QA-owned visual proof of the shipped build, and the rating claim is partly a visual claim ("nothing on screen depicts harm or fear"). They are **necessary but not sufficient**: the screenshots prove the visual content, the descriptor table proves the mechanics, and the A-016/A-017 hooks prove the interactive elements. A rating submitted without the M-5 shots is not backed evidence and fails SG-4.
 
-Capture requirement: the M-5 SL-1 set must cover at least one shot per world and the game-over/retry screens, because those are the screens where ad placement will appear and where a rating reviewer looks for interactive-element context.
+Capture requirement: the rating evidence bundle must include the M-5 SL-1 set as A-014 defines it (one full level, fixed seed, 10 checkpoint screenshots), plus SL-1-style captures covering at least one shot per world and the game-over/retry screens, because those are the screens where ad placement will appear and where a rating reviewer looks for interactive-element context. A-014 owns running the sessions; A-015 states the coverage SG-4 requires.
 
 ## 5. Screenshots
 
@@ -140,18 +140,18 @@ Capture requirement: the M-5 SL-1 set must cover at least one shot per world and
 
 | ID | Scene | Must show | Notes |
 | --- | --- | --- | --- |
-| S-01 | Campaign world 1, opening minutes | black hole, gravitational field, nearby bodies | first slot on both storefronts |
-| S-02 | Campaign mid-level | field radius vs grown mass, several bodies in flight | reads as "reach grows" |
-| S-03 | Hazard close call | hazard, near-miss, control pressure | reads as "costs, not free power" |
-| S-04 | Star capture | star target, absorption moment | campaign objective legible |
-| S-05 | Campaign world 5 late | large hole, dense field, hazard mix | late-game, not a fake endgame |
-| S-06 | Endless mode | score, distance, one hazard family | mode exists |
-| S-07 | Daily/weekly screen | seed label, leaderboard entry | mode exists |
-| S-08 | Settings screen | one-handed tilt default, reduced motion, high contrast, colorblind-safe palette | accessibility-forward line is provable |
-| S-09 | Upgrade/choice screen | a gain **and its cost** side by side | anti-power-fantasy proof shot |
-| S-10 | Game over / retry | the actual ad slot position | interactive-elements context for rating |
+| SH-01 | Campaign world 1, opening minutes | black hole, gravitational field, nearby bodies | first slot on both storefronts |
+| SH-02 | Campaign mid-level | field radius vs grown mass, several bodies in flight | reads as "reach grows" |
+| SH-03 | Hazard close call | hazard, near-miss, control pressure | reads as "costs, not free power" |
+| SH-04 | Star capture | star target, absorption moment | campaign objective legible |
+| SH-05 | Campaign world 5 late | large hole, dense field, hazard mix | late-game, not a fake endgame |
+| SH-06 | Endless mode | score, distance, one hazard family | mode exists |
+| SH-07 | Daily/weekly screen | seed label, leaderboard entry | mode exists |
+| SH-08 | Settings screen | one-handed tilt default, reduced motion, high contrast, colorblind-safe palette | accessibility-forward line is provable |
+| SH-09 | Upgrade/choice screen | a gain **and its cost** side by side | anti-power-fantasy proof shot |
+| SH-10 | Game over / retry | the actual ad slot position | interactive-elements context for rating |
 
-S-09 is mandatory: if no shot shows a cost, the listing reads as a power fantasy and fails SG-2.
+SH-09 is mandatory: if no shot shows a cost, the listing reads as a power fantasy and fails SG-2.
 
 ### 5.2 Capture procedure
 
@@ -196,7 +196,7 @@ PLAN §5.17 checklist, made concrete. Each row names the artifact that owns the 
 
 | PLAN §5.17 item | How it is satisfied here | Owner | Status |
 | --- | --- | --- | --- |
-| Screenshots clear | S-01..S-10 shot list, ship-build capture, S-09 cost shot mandatory | **A-015** | decided |
+| Screenshots clear | SH-01..SH-10 shot list, ship-build capture, SH-09 cost shot mandatory | **A-015** | decided |
 | Trailer short | 35 s target, ceiling 45 s, T-01..T-07 shot list | **A-015** | decided |
 | Age rating correct | iOS Everyone / Play IE; evidence bundle incl. M-5 SL-1 | **A-015** | decided |
 | Privacy policy exists | Listing carries one privacy URL placeholder; policy text and data scope are A-017's | A-017 | hook |
@@ -223,7 +223,7 @@ Restated from A-014's store readiness table (A-014 summary in the brief) with A-
 | A-014 store item | A-015 decision | Ready when |
 | --- | --- | --- |
 | Listing copy exists | §2 complete; tagline states the tension rule, not a power promise | SG-1 |
-| Screenshots exist and are clear | §5 shot list S-01..S-10, ship build, S-09 mandatory | SG-2 |
+| Screenshots exist and are clear | §5 shot list SH-01..SH-10, ship build, SH-09 mandatory | SG-2 |
 | Trailer exists and is short | §6, 35 s target, T-03 cost beat mandatory | SG-3 |
 | Age rating decided and evidenced | §4, iOS Everyone / Play IE, M-5 SL-1 required | SG-4 |
 | Privacy policy URL present | Placeholder only; live URL is A-017's | SG-5 |
