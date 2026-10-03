@@ -21,13 +21,14 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 - status: running
 - last completed artifact: A-005 docs/architecture.md
-- current artifact: none in progress
-- next ready artifact: A-006 docs/design.md (A-018 docs/agent-rules.md also ready)
-- branch: none (next: feature/designer-design from develop)
+- current artifact: A-006 docs/design.md
+- next ready artifact: A-006 docs/design.md
+- branch: feature/designer-design (created from develop at be6a264; A-006 marked doing, brief docs/briefs/A-006.md written, commit 1224b0a)
 - PR: #8 merged into develop (merge commit 7e806f7); feature/architect-architecture deleted
 - stopping point: none; A-005 drafted, reviewed, approved, merged. Resume by writing docs/briefs/A-006.md then launching the designer for A-006.
 - controls applied: every project agent now caps output at max_tokens 16000 (both options and request.body in ~/.config/opencode/opencode.json); role-agent system prompts now read docs/briefs/<artifact-id>.md instead of full documents; PLAN.md 9.5 documents the controls.
 - resume: continue the orchestration loop at A-006 docs/design.md (designer).
+- 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
 
 ## Log
 
