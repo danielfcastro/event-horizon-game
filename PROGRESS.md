@@ -27,7 +27,7 @@ This file is the run-state control file for the coordinator. It is not a design 
 - PR: PR #23 merged into develop (da9a8e1); last merged PR #23
 - stopping point: RUN COMPLETE. All 20 artifacts done in dependency order (A-001..A-020), each drafted by its role agent from a brief, reviewed by the coordinator, committed with its prefix, merged into develop via an approved PR. A-020: draft (221 lines, 383e929, PR #23 opened by subagent), one pre-merge fixup (283b62e: §4 row 4 'A-016 §-wording' -> 'A-016 §6 disclosure strings'), PLAN.md A-020 done + next_artifact none (290b027), PR #23 approved by comment and merged into develop at da9a8e1, branch deleted. Next phase (not part of this plan): programmer implements from docs/prototype-scaffold.md; release executes docs/ship.md steps STEP-01..STEP-18 with human review at STEP-14.
 - controls applied: every project agent caps output at max_tokens 16000 (options + request.body); role agents read docs/briefs/<artifact-id>.md, never PLAN.md or approved artifacts in full; PLAN.md 9.5 documents the controls.
-- resume: continue the orchestration loop at A-008 docs/content.md (level-designer agent).
+- resume: documentation run complete; next phase is code — programmer implements from docs/prototype-scaffold.md (A-019) on a new feature branch from develop; release executes docs/ship.md STEP-01..STEP-18 at ship time.
 - 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
 
 ## Log
