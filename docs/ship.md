@@ -102,7 +102,7 @@ Execution order. Each row names the gate owner (whose readiness condition it kee
 | 1 | A-014 release gate (all merge-gate stages) | qa | run stages in upstream order on the ship build; paste the stage log into ship notes | ship |
 | 2 | A-014 P-01/P-02, P-04/P-05 | qa | run on the named device classes; record device names and results | ship |
 | 3 | SG-1..SG-4 | A-015 | fill listing fields for all seven locales; capture the draft listing URL | ship |
-| 4 | A-016 disclosure wording | A-016 | carry the exact disclosure wording verbatim into the listing; diff against A-016 §-wording, zero tolerance | ship |
+| 4 | A-016 disclosure wording | A-016 | carry the exact disclosure wording verbatim into the listing; diff against A-016 §6 disclosure strings, zero tolerance | ship |
 | 5 | SG-6.1..SG-6.6 | A-016 | verify each monetization gate on the ship build; record pass evidence per gate | ship only |
 | 6 | Zero-purchase completion (A-015 §9 item 7) | A-015 | playtest a full completion with no purchase; record the run | ship |
 | 7 | PR-1..PR-4 | A-017 | confirm inventory, contact channel/value, no placeholders | ship |
