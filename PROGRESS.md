@@ -2,8 +2,8 @@
 project: Event Horizon
 updated: 2026-10-03
 status: running
-last_artifact: A-004
-next_artifact: A-005
+last_artifact: A-005
+next_artifact: A-006
 ---
 
 # Progress Control File
@@ -20,14 +20,14 @@ This file is the run-state control file for the coordinator. It is not a design 
 ## Current state
 
 - status: running
-- last completed artifact: A-004 docs/spec.md
-- current artifact: A-005 docs/architecture.md
-- next ready artifact: A-005 docs/architecture.md
-- branch: feature/architect-architecture (created from develop, A-005 marked doing)
-- PR: #7 merged into develop (merge commit ef67cce)
-- stopping point: the architect subagent for A-005 died with "prompt (99332 tokens) + max tokens (31715) exceeds the context (131027)". It had read PLAN.md and docs/spec.md in full instead of using the brief.
+- last completed artifact: A-005 docs/architecture.md
+- current artifact: none in progress
+- next ready artifact: A-006 docs/design.md (A-018 docs/agent-rules.md also ready)
+- branch: none (next: feature/designer-design from develop)
+- PR: #8 merged into develop (merge commit 7e806f7); feature/architect-architecture deleted
+- stopping point: none; A-005 drafted, reviewed, approved, merged. Resume by writing docs/briefs/A-006.md then launching the designer for A-006.
 - controls applied: every project agent now caps output at max_tokens 16000 (both options and request.body in ~/.config/opencode/opencode.json); role-agent system prompts now read docs/briefs/<artifact-id>.md instead of full documents; PLAN.md 9.5 documents the controls.
-- resume: resumed 2026-10-03; architect subagent relaunched against docs/briefs/A-005.md on feature/architect-architecture (brief confirmed present, 351 lines; controls already applied).
+- resume: continue the orchestration loop at A-006 docs/design.md (designer).
 
 ## Log
 
@@ -52,3 +52,5 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: A-005 started. Branch feature/architect-architecture created from develop at e7868e0; PLAN.md A-005 blocked -> doing (91cd7ad).
 - 2026-10-03: Context overflow hit by architect subagent (prompt 99332 + max tokens 31715 > 131027). Hard controls added: max_tokens 16000 per agent (options + request.body), role prompts switched to briefs, PLAN.md 9.5 documents the controls. status set to interrupted; resume A-005 with the architect against docs/briefs/A-005.md.
 - 2026-10-03: Development resumed. Verified state: feature/architect-architecture exists on develop with A-005 doing marker (17965c3); docs/briefs/A-005.md present (351 lines); docs/architecture.md not yet drafted. Relaunching architect subagent against the brief only. status running.
+- 2026-10-03: A-005 docs/architecture.md drafted by architect subagent against brief only (359 lines, c840c08): Unity 2D/C#/URP, pure-C# deterministic sim core (32.32 fixed-point, seeded PRNG, DT=1/60, MAX_CATCHUP=4), SoA BodyPool cap 300+24 hazards, uniform-grid spatial hash, density budgets + culling/LOD for readable field, leaderboard reproducible from (seed, inputDigest). Coordinator reviewed against PLAN.md: approved.
+- 2026-10-03: A-005 PLAN.md updated on branch: A-005 done, A-006 and A-013 unblocked to ready, next_artifact A-006 (416c1fa). PR #8 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at 7e806f7. feature/architect-architecture deleted. A-005 done; next ready A-006.
