@@ -3,7 +3,7 @@ project: Event Horizon
 updated: 2026-10-03
 status: running
 last_artifact: A-020
-next_artifact: none
+next_artifact: A-021
 ---
 
 # Progress Control File
@@ -21,17 +21,19 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 - status: running
 - last completed artifact: A-020 docs/ship.md (merged via PR #23 into develop at da9a8e1)
-- current artifact: none — all 20 artifacts done
-- next ready artifact: none (development run complete)
-- branch: none open; feature/release-ship merged and deleted. develop head da9a8e1
-- PR: PR #23 merged into develop (da9a8e1); last merged PR #23
+- current artifact: A-021 Phase 1 prototype code (Assets/ + tools/harness/) — doing
+- next ready artifact: A-021 (in progress)
+- branch: feature/programmer-prototype created from develop at c9169c6; PLAN.md A-021 registered (9b8fb84), AGENTS.md aligned (0d54812), brief docs/briefs/A-021.md (7493c68)
+- PR: none open yet for A-021; last merged PR #23
+- stopping point: A-021 started; brief committed; next step is launching the programmer subagent against docs/briefs/A-021.md only. Toolchain note: .NET SDK 8.0.425 installed at /home/dfcastro/.local/dotnet (not committed; environment state).
 - stopping point: RUN COMPLETE. All 20 artifacts done in dependency order (A-001..A-020), each drafted by its role agent from a brief, reviewed by the coordinator, committed with its prefix, merged into develop via an approved PR. A-020: draft (221 lines, 383e929, PR #23 opened by subagent), one pre-merge fixup (283b62e: §4 row 4 'A-016 §-wording' -> 'A-016 §6 disclosure strings'), PLAN.md A-020 done + next_artifact none (290b027), PR #23 approved by comment and merged into develop at da9a8e1, branch deleted. Next phase (not part of this plan): programmer implements from docs/prototype-scaffold.md; release executes docs/ship.md steps STEP-01..STEP-18 with human review at STEP-14.
 - controls applied: every project agent caps output at max_tokens 16000 (options + request.body); role agents read docs/briefs/<artifact-id>.md, never PLAN.md or approved artifacts in full; PLAN.md 9.5 documents the controls.
-- resume: documentation run complete; next phase is code — programmer implements from docs/prototype-scaffold.md (A-019) on a new feature branch from develop; release executes docs/ship.md STEP-01..STEP-18 at ship time.
+- resume: A-021 doing on feature/programmer-prototype; if interrupted, verify branch state then relaunch programmer against docs/briefs/A-021.md; release executes docs/ship.md STEP-01..STEP-18 at ship time.
 - 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
 
 ## Log
 
+- 2026-10-03: A-021 Phase 1 prototype code started. Branch feature/programmer-prototype created from develop at c9169c6; PLAN.md registered A-021 (sequence row doing, §4 contract, §3 graph edge, 1.3 branch entry, 1.4 prefixes docs(prototype)/code(prototype), 9.2 programmer definition names A-021) at 9b8fb84; AGENTS.md role table aligned at 0d54812; context brief docs/briefs/A-021.md committed at 7493c68 (contract, PLAN §8 + 5.18/5.6/5.2/5.16, A-019 module contract + formats, A-007 canonical numbers, A-008 catalog, A-009 L1 params, A-013 spine, scope boundaries, build procedure with .NET SDK 8 at /home/dfcastro/.local/dotnet). Programmer subagent launching against the brief only.
 - 2026-10-02: Repo initialized. PLAN.md (A-001) done. develop branch created; PR #1 merged into main. Development run not started yet.
 - 2026-10-02: A-002 README.md started. Branch feature/coordinator-readme created from develop at 773beab.
 - 2026-10-02: A-002 README.md drafted (568f6c3): markdown repo overview, private-remote instructions, next steps. PLAN.md updated: A-002 done, next_artifact A-003, feature/coordinator-readme and docs(readme) added to naming and prefix lists.
