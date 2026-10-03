@@ -297,7 +297,7 @@ Entry points the programmer starts from:
 ```sh
 dotnet build game-standalone.csproj   # desktop dev target (Android/iOS: same project, switch)
 dotnet build tools/harness/harness.csproj -o build/harness   # desktop only
-./build/harness sim --seed 0x1F4A --digest @replays/p1-level-01.json --level p1-level-01
+./build/harness sim --seed 0x1F4A --digest @replays/p1-level-01.digest.bin --level p1-level-01
 ```
 
 `GameLoop.cs` `Start()` is the Unity entry (build `SimState` via `LevelLoader`, then call
@@ -334,3 +334,6 @@ Filing (A-018's fail routing and its third open question):
    from shipped player and store packages.
 6. (A-020 ship) Confirm no `dev.*` knob is reachable in a store build, since a reachable
    time-scale knob is an affordance that could soften the mass tension.
+7. (programmer) Platform tilt API mapping (which axis is yaw vs pitch per device orientation,
+   calibration anchor captured from device telemetry) is implemented inside `InputAdapter`;
+   A-011's intent channel is the required output and the digest format in section 8 is fixed.
