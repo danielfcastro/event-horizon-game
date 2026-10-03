@@ -2,8 +2,8 @@
 project: Event Horizon
 updated: 2026-10-03
 status: running
-last_artifact: A-008
-next_artifact: A-009
+last_artifact: A-009
+next_artifact: A-010
 ---
 
 # Progress Control File
@@ -20,12 +20,12 @@ This file is the run-state control file for the coordinator. It is not a design 
 ## Current state
 
 - status: running
-- last completed artifact: A-008 docs/content.md
-- current artifact: A-009 docs/levels.md (doing)
-- next ready artifact: A-009 docs/levels.md (also ready: A-010 docs/ui.md, A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
-- branch: feature/level-designer-levels (created from develop at ebfcf06; A-009 marked doing, brief docs/briefs/A-009.md written, commit d1b1e10)
-- PR: none yet for A-009; last merged PR #11 into develop (ad3d935)
-- stopping point: A-009 blocked at the subagent stage, attempt 1 (no text response, no artifact, working tree clean). Resume by relaunching the level-designer subagent against docs/briefs/A-009.md with a write-first instruction: write docs/levels.md section by section before any other action, one write per section, document capped near 320 lines, then a single docs(levels): commit.
+- last completed artifact: A-009 docs/levels.md (merged via PR #12 into develop at fce73f7)
+- current artifact: none in progress
+- next ready artifact: A-010 docs/ui.md (also ready: A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
+- branch: none; on develop at fce73f7, feature/level-designer-levels deleted after merge
+- PR: last merged PR #12 into develop (fce73f7)
+- stopping point: none. Resume by starting A-010 docs/ui.md: write brief docs/briefs/A-010.md, mark A-010 doing in PLAN.md, create feature/designer-ui from develop, launch designer subagent against the brief with write-first incremental-write instructions.
 - controls applied: every project agent caps output at max_tokens 16000 (options + request.body); role agents read docs/briefs/<artifact-id>.md, never PLAN.md or approved artifacts in full; PLAN.md 9.5 documents the controls.
 - resume: continue the orchestration loop at A-008 docs/content.md (level-designer agent).
 - 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
@@ -71,3 +71,5 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: A-008 PLAN.md updated on branch: A-008 done, A-009 unblocked to ready, next_artifact A-009 (aae9691). PR #11 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at ad3d935. feature/level-designer-content deleted locally and remotely. A-008 done; next ready A-009.
 - 2026-10-03: A-009 started. Branch feature/level-designer-levels created from develop at ebfcf06; PLAN.md A-009 ready -> doing; brief docs/briefs/A-009.md written (contract, PLAN 8 rule + 5.8/5.10/5.11/5.12/5.13/5.9/5.18/5.14 excerpts, A-007 curves and economy to honor, A-008 catalog/modifiers/rewards to reference, spec 17 questions 14-15 + A-008 §10 items 1-4, scope boundaries, A-005 determinism). Commit d1b1e10. Level-designer subagent launching against the brief only.
 - 2026-10-03: A-009 level-designer subagent attempt 1 completed without a text response and produced no artifact (docs/levels.md absent, working tree clean, no new commit on feature/level-designer-levels). Same runtime failure mode as A-007 attempts 1-2. Retrying with a write-first instruction (write the file before any other action, one section per write, document capped near 320 lines) — the mitigation that unblocked A-007 on attempt 3.
+- 2026-10-03: A-009 docs/levels.md drafted by level-designer subagent attempt 2 against brief only, write-first incremental instructions (462 lines, 5c9e3c2). Sections: dial reading per level, curve reading and unlock system, five worlds mapped to A-007 bands (Dust Belt 1-8, Asteroid Field 9-16, Ship Graveyard 17-24, Planet Ring 25-32, Quantum Nebula 33-40), per-level goal/secondary/dial/hazard tables, anomaly-start rule, recipes as seeds-and-rules, modifier placement and stacking policy, endless/daily/weekly modes.
+- 2026-10-03: A-009 coordinator review against PLAN.md: approved with two pre-merge fixups applied by coordinator (4dd278f): (1) where A-009's table and A-007's §8.1 table differ (verified 19 intermediates, max deviation 0.215% at L39), A-007's table declared canonical for code; (2) A-008's Quantum-run restriction on Volatile seed stated on L37 and L40 rows. PLAN.md updated on branch: A-009 done, next_artifact A-010 (5af453a). PR #12 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at fce73f7. feature/level-designer-levels deleted. A-009 done; next ready A-010.
