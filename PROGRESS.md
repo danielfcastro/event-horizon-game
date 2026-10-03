@@ -1,7 +1,7 @@
 ---
 project: Event Horizon
 updated: 2026-10-03
-status: interrupted
+status: running
 last_artifact: A-004
 next_artifact: A-005
 ---
@@ -19,7 +19,7 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 ## Current state
 
-- status: interrupted
+- status: running
 - last completed artifact: A-004 docs/spec.md
 - current artifact: A-005 docs/architecture.md
 - next ready artifact: A-005 docs/architecture.md
@@ -27,7 +27,7 @@ This file is the run-state control file for the coordinator. It is not a design 
 - PR: #7 merged into develop (merge commit ef67cce)
 - stopping point: the architect subagent for A-005 died with "prompt (99332 tokens) + max tokens (31715) exceeds the context (131027)". It had read PLAN.md and docs/spec.md in full instead of using the brief.
 - controls applied: every project agent now caps output at max_tokens 16000 (both options and request.body in ~/.config/opencode/opencode.json); role-agent system prompts now read docs/briefs/<artifact-id>.md instead of full documents; PLAN.md 9.5 documents the controls.
-- resume: restart the service, then resume A-005 by relaunching the architect subagent against docs/briefs/A-005.md on feature/architect-architecture.
+- resume: resumed 2026-10-03; architect subagent relaunched against docs/briefs/A-005.md on feature/architect-architecture (brief confirmed present, 351 lines; controls already applied).
 
 ## Log
 
@@ -51,3 +51,4 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: Context-limit fix applied: compaction set in ~/.config/opencode/opencode.json (auto, keep 8000 tokens, buffer 32000) and role agents now read briefs instead of full documents. First architect attempt died after reading PLAN.md and docs/spec.md in full; brief is 351 lines.
 - 2026-10-03: A-005 started. Branch feature/architect-architecture created from develop at e7868e0; PLAN.md A-005 blocked -> doing (91cd7ad).
 - 2026-10-03: Context overflow hit by architect subagent (prompt 99332 + max tokens 31715 > 131027). Hard controls added: max_tokens 16000 per agent (options + request.body), role prompts switched to briefs, PLAN.md 9.5 documents the controls. status set to interrupted; resume A-005 with the architect against docs/briefs/A-005.md.
+- 2026-10-03: Development resumed. Verified state: feature/architect-architecture exists on develop with A-005 doing marker (17965c3); docs/briefs/A-005.md present (351 lines); docs/architecture.md not yet drafted. Relaunching architect subagent against the brief only. status running.
