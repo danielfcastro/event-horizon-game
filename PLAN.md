@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-007
+next_artifact: A-008
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -201,8 +201,8 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-004 | docs/spec.md | planner | A-001 | High-level game specification | done | Defines core loop, controls, goals, failure conditions. |
 | A-005 | docs/architecture.md | architect | A-004 | Technical architecture | done | Defines modules, simulation loop, data structures, platform plan. |
 | A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | done | Defines visual language, feedback, accessibility. |
-| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | ready | Defines mass growth, upgrade values, target masses. |
-| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | blocked | Lists objects, hazards, rewards, modifiers. |
+| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | done | Defines mass growth, upgrade values, target masses. |
+| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | ready | Lists objects, hazards, rewards, modifiers. |
 | A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | blocked | Defines worlds, objectives, difficulty curve. |
 | A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | ready | Defines UI layout and mobile scaling. |
 | A-011 | docs/input.md | designer | A-010 | Mobile controls | blocked | Defines drag, joystick, tilt, accessibility. |
@@ -341,7 +341,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-008 docs/content.md
 
@@ -352,7 +352,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- ready
 
 ### A-009 docs/levels.md
 
