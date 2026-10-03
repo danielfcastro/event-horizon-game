@@ -207,7 +207,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | done | Defines UI layout and mobile scaling. |
 | A-011 | docs/input.md | designer | A-010 | Mobile controls | done | Defines drag, joystick, tilt, accessibility. |
 | A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | done | Defines contrast, reduced motion, larger controls. |
-| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | ready | Defines simulation tests, balance tests, UI tests. |
+| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | doing | Defines simulation tests, balance tests, UI tests. |
 | A-014 | docs/qa.md | qa | A-013 | QA checklist | blocked | Defines manual QA and performance checklist. |
 | A-015 | docs/store.md | release | A-014 | Store submission plan | blocked | Defines listing, screenshots, trailer, compliance. |
 | A-016 | docs/monetization.md | release | A-015 | Monetization and economy | blocked | Defines ads, IAP, analytics, fairness. |
@@ -407,7 +407,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- doing
 
 ### A-014 docs/qa.md
 
