@@ -1211,6 +1211,12 @@ window. Two controls prevent this:
   (`"model": "strata/qwen3.8-flash-next-coder-iq1_m#low"`) and splits large
   artifacts into staged subagent calls, each scoped to a few files, with
   files persisting on disk between stages.
+- If the lower variant does not shrink the reasoning below the output budget,
+  that agent's `max_tokens` is raised to 32000 — still at most a quarter of
+  the 131027-token context — so a single message can finish its reasoning and
+  emit content; each assistant message in a session gets its own budget, so
+  staged file-by-file work stays bounded regardless of artifact size. The
+  programmer agent for A-021 carries this raise.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
