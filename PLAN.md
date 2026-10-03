@@ -1202,6 +1202,15 @@ window. Two controls prevent this:
   `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
   stays far below the context limit. The coordinator regenerates briefs
   instead of re-sending documents.
+- The project model is a reasoning model whose internal reasoning counts
+  against the output budget; a single request can spend the whole budget
+  reasoning and return no content (observed with the programmer on A-021:
+  reasoning-only messages of ~60,000 characters hit the 16,000 cap and the
+  subagent produced no files). When an agent hits this failure mode, the
+  coordinator sets a lower reasoning variant for that agent
+  (`"model": "strata/qwen3.8-flash-next-coder-iq1_m#low"`) and splits large
+  artifacts into staged subagent calls, each scoped to a few files, with
+  files persisting on disk between stages.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
