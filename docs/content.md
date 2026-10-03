@@ -389,6 +389,9 @@ Cores, earned by play only — no pay-to-win, PLAN 5.14):
   §7.2 language) marks a token on the codex card. Cosmetic only; a self-imposed
   precision badge that proves the stay-precise lane was played.
 
+No reward here grants stat relief: nothing reduces drain tables (A-007 rule),
+and no reward touches efficiency past the 1.00 cap.
+
 ## 9. Determinism and pool accounting (A-005 contract, honored)
 
 - Every random event in this catalog consumes the seeded run PRNG only: respawn
@@ -435,5 +438,3 @@ For A-013 docs/test-plan.md:
    switches the tension dial off (Quiet field still runs oversized-absorb).
 8. Balance cross-check: §5.3 chain burst total mass vs A-007 §8 targets — the
    wave must not let a Quantum run skip the strained-absorb decision.
-- No reward here grants stat relief: nothing reduces drain tables (A-007 rule),
-  and no reward touches efficiency past the 1.00 cap.
