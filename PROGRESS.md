@@ -2,8 +2,8 @@
 project: Event Horizon
 updated: 2026-10-03
 status: running
-last_artifact: A-009
-next_artifact: A-010
+last_artifact: A-010
+next_artifact: A-011
 ---
 
 # Progress Control File
@@ -20,12 +20,12 @@ This file is the run-state control file for the coordinator. It is not a design 
 ## Current state
 
 - status: running
-- last completed artifact: A-009 docs/levels.md (merged via PR #12 into develop at fce73f7)
-- current artifact: A-010 docs/ui.md (doing)
-- next ready artifact: A-010 docs/ui.md (also ready: A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
-- branch: feature/designer-ui (created from develop at f69156a; A-010 marked doing, brief docs/briefs/A-010.md written, commit 1c1f19c)
-- PR: none yet for A-010; last merged PR #12 into develop (fce73f7)
-- stopping point: A-010 started, designer subagent not yet launched. Resume by launching the designer subagent against docs/briefs/A-010.md with write-first instruction: write docs/ui.md section by section before any other action, one write per section, document under ~350 lines, then a single docs(ui): commit.
+- last completed artifact: A-010 docs/ui.md (merged via PR #13 into develop at 99c97db)
+- current artifact: none in progress
+- next ready artifact: A-011 docs/input.md (also ready: A-012 docs/accessibility.md, A-013 docs/test-plan.md, A-018 docs/agent-rules.md)
+- branch: none; on develop at 99c97db, feature/designer-ui deleted after merge
+- PR: last merged PR #13 into develop (99c97db)
+- stopping point: none. Resume by starting A-011 docs/input.md: write brief docs/briefs/A-011.md, mark A-011 doing in PLAN.md, create feature/designer-input from develop, launch designer subagent against the brief with write-first incremental-write instructions.
 - controls applied: every project agent caps output at max_tokens 16000 (options + request.body); role agents read docs/briefs/<artifact-id>.md, never PLAN.md or approved artifacts in full; PLAN.md 9.5 documents the controls.
 - resume: continue the orchestration loop at A-008 docs/content.md (level-designer agent).
 - 2026-10-03: A-006 started. Branch feature/designer-design created from develop at be6a264; PLAN.md A-006 ready -> doing; brief docs/briefs/A-006.md written (contract, PLAN 5.3/5.4/5.5/5.7/5.16/5.17 excerpts, spec 2.2/3.2/5.1/5.2/7.4/8.1-8.3/15 excerpts, A-005 render hooks, open questions 4-7, scope boundaries). Designer subagent launching against the brief only.
@@ -74,3 +74,5 @@ This file is the run-state control file for the coordinator. It is not a design 
 - 2026-10-03: A-009 docs/levels.md drafted by level-designer subagent attempt 2 against brief only, write-first incremental instructions (462 lines, 5c9e3c2). Sections: dial reading per level, curve reading and unlock system, five worlds mapped to A-007 bands (Dust Belt 1-8, Asteroid Field 9-16, Ship Graveyard 17-24, Planet Ring 25-32, Quantum Nebula 33-40), per-level goal/secondary/dial/hazard tables, anomaly-start rule, recipes as seeds-and-rules, modifier placement and stacking policy, endless/daily/weekly modes.
 - 2026-10-03: A-009 coordinator review against PLAN.md: approved with two pre-merge fixups applied by coordinator (4dd278f): (1) where A-009's table and A-007's §8.1 table differ (verified 19 intermediates, max deviation 0.215% at L39), A-007's table declared canonical for code; (2) A-008's Quantum-run restriction on Volatile seed stated on L37 and L40 rows. PLAN.md updated on branch: A-009 done, next_artifact A-010 (5af453a). PR #12 opened against develop, approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at fce73f7. feature/level-designer-levels deleted. A-009 done; next ready A-010.
 - 2026-10-03: A-010 started. Branch feature/designer-ui created from develop at f69156a; PLAN.md A-010 ready -> doing; brief docs/briefs/A-010.md written (contract, PLAN 8 rule, A-006 ring guarantee/indicator semantics and cap/ring-fracture cue language/minimum sizes/handoff to A-010, A-007 numbers to display not renumber, A-008 quantum and modifier surfacing, A-009 modes and stars, spec 17 question 16, scope boundaries A-011/A-012/A-013/A-005, mobile-first constraints, output requirements). Commit 1c1f19c. Designer subagent launching against the brief only.
+- 2026-10-03: A-010 docs/ui.md drafted by designer subagent against brief only, write-first incremental instructions (370 lines, 58fdef6, PR #13 opened by subagent). Sections: contract and inherited rules, screen inventory (7 screens), HUD layout with ru reference frame and clamped safe-area insets and four bands, ring zone as hard exclusion rect, answer to spec question 16 (mass meter top-left, stability bar top-right in top safe band hugging ring shoulder, timer top-center; bottom band touch-only), mass meter as 12-segment pressure gauge with five-lever pressure cluster pips, stability bar as 10-segment arc reusing A-006 fracture/pulse/tick language with static flicker fallback and no color-only state, edge-indicator rail on ring-zone edge (14 ru nominal, 8 ru floor, chevron vs bracketed X, +n overflow badge, one pooled batch), menus/settings hooks for A-012, scale factor clamp 0.82-1.45 with five ordered reflow rules, touch floors 64/48/44 ru + 12 ru spacing, results screens (stars, 35% tick track, efficiency cap end-cap, modifier badges), testability list for A-013, seven open questions assigned downstream.
+- 2026-10-03: A-010 coordinator review against PLAN.md: approved with one pre-merge editorial fixup (3d3169d): §3.1 called the 390×844 reference frame "the smallest supported phone" while §7.1 defines the supported range 320×568..430×932; reworded to design frame vs supported range. Verified: ring guarantee exclusion honored at all reflow rules, A-006 anchors preserved verbatim in cue language and caps, PLAN §8 tension legible via pressure cluster and no-power-affordance rule, A-007 numbers displayed not renumbered, scope boundaries respected. PLAN.md updated on branch: A-010 done, A-011 and A-012 unblocked to ready, next_artifact A-011 (444f1bc). PR #13 approved by coordinator (comment; GitHub blocks approving own PR), merged into develop at 99c97db. feature/designer-ui deleted. A-010 done; next ready A-011.
