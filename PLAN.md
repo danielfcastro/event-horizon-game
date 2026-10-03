@@ -204,7 +204,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | done | Defines mass growth, upgrade values, target masses. |
 | A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | done | Lists objects, hazards, rewards, modifiers. |
 | A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | done | Defines worlds, objectives, difficulty curve. |
-| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | ready | Defines UI layout and mobile scaling. |
+| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | doing | Defines UI layout and mobile scaling. |
 | A-011 | docs/input.md | designer | A-010 | Mobile controls | blocked | Defines drag, joystick, tilt, accessibility. |
 | A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | blocked | Defines contrast, reduced motion, larger controls. |
 | A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | ready | Defines simulation tests, balance tests, UI tests. |
@@ -374,7 +374,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- doing
 
 ### A-011 docs/input.md
 
