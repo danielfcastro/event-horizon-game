@@ -59,8 +59,10 @@ Screen rules:
 ### 3.1 Reference frame
 
 All layout is authored in **reference units (ru)** against a 390 × 844 ru
-portrait frame — the smallest supported phone. Section 7 defines the mapping
-from ru to physical pixels. Nothing in this document is authored in pixels.
+portrait reference frame — the design frame, not the smallest supported phone;
+§7.1 defines the supported range (320 × 568 to 430 × 932 ru). Section 7 defines
+the mapping from ru to physical pixels. Nothing in this document is authored in
+pixels.
 
 ### 3.2 Safe areas
 
