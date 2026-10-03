@@ -109,9 +109,9 @@ p50/p95/p99.9 frame time and worst hitch. Targets: 16.6 ms p95 on modern phones
 | P-04 | Memory: sample RSS every 5 s over 10 min endless play; flatness = max−min ≤ 2 MB after warm-up; sawtooth growth = fail (leak). |
 | P-05 | Steady state allocates from pools only; per-frame allocation counters must read 0 after warm-up (nonzero = leak). |
 | P-06 | Particle cap: count live particles at worst bloom; must not exceed the A-013 cap. |
-| P-07 | Culling and grid: offscreen entities not drawn; spatial hash cell counts match S-08 expectations. |
-| P-08 | Draw calls ≤ A-013 bound with batched layers (U-11) active. |
-| P-09 | LOD switch observed at distance; digest unchanged (cross-check with S-04). |
+| P-07 | Culling and grid: offscreen entities not drawn; spatial hash cell counts match S-13 expectations. |
+| P-08 | Draw calls ≤ A-013 bound with batched layers (U-10) active. |
+| P-09 | LOD switch observed at distance; digest unchanged (cross-check with S-05). |
 | P-10 | Same seed/digest run on two device classes; final digest byte-equal (also T1 headless). |
 | P-11 | Hitch test: inject a 40 ms render hitch; sim digest unchanged, catch-up ≤ 4 steps, drop is render-only. |
 
