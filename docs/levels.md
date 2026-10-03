@@ -44,8 +44,10 @@ Conventions used throughout:
 - **Target mass** is A-007's 40-level table; PLAN anchors (L1 1,000 · L5 10,000
   · L10 50,000 · L20 250,000 · L40 1,000,000) are exact, intermediates are
   A-007's log-linear curve re-rounded to three significant figures, which A-007
-  permitted. **Timer** is A-007's `150 + 5n` s and the 3-star line (≥35% timer
-  remaining) are unmodified. **Hazard counts** are live hazards at any instant,
+  permitted. Where this table and A-007's §8.1 table disagree (19 intermediates,
+  all within 0.22%), **A-007's table is canonical for code**; this document's
+  table is for human reading. **Timer** is A-007's `150 + 5n` s and the 3-star
+  line (≥35% timer remaining) are unmodified. **Hazard counts** are live hazards at any instant,
   never above A-007's world budgets (6 / 10 / 14 / 18 / 22). **Secondary goals**
   are A-007's: at most one per level, extra reward only, never a gate.
   **Determinism** is seeded-PRNG only (A-005): recipes are seeds-and-rules, and
@@ -205,10 +207,10 @@ names its regen affordance.
 | 34 | 659,700 | 320 s | Reach target mass | Efficiency | `nav` + `collision`: phase particles gate a Phase window; missing it costs the 3-star, not the clear |
 | 35 | 707,100 | 325 s | Reach target mass | Maintain combo | Drift current: `speed` + `pull`; chain reactions are the combo answer, and they cost stability |
 | 36 | 757,800 | 330 s | Reach target mass | Avoid hazards | `collision` + `nav` + `stab`: 17 hazards, unstable cores read as high-value bait |
-| 37 | 812,200 | 335 s | Reach target mass (mass-below-threshold **active**) | Absorb anomalies | Volatile seed: `stab` + `speed` + `pull`; the seed makes the safe route the low-mass route |
+| 37 | 812,200 | 335 s | Reach target mass (mass-below-threshold **active**) | Absorb anomalies | Volatile seed: `stab` + `speed` + `pull`; the seed makes the safe route the low-mass route. Quantum run — A-008's Quantum-only restriction on Volatile seed is satisfied |
 | 38 | 870,500 | 340 s | Reach target mass | Efficiency | `pull` vs `nav` at 20 hazards; Phase is the only route that keeps the timer line |
 | 39 | 933,000 | 345 s | Reach target mass | — | `collision` + `speed` + `stab`: regen affordance is the one Sift window A-008's rules place mid-level |
-| 40 | 1,000,000 | 350 s | Reach target mass | Absorb anomalies | PLAN anchor. Anomaly bloom + Volatile seed (the only stacked campaign pair): all five levers at max, and the 2^24 ceiling is reachable-but-punishing here |
+| 40 | 1,000,000 | 350 s | Reach target mass | Absorb anomalies | PLAN anchor. Anomaly bloom + Volatile seed (the only stacked campaign pair): all five levers at max, and the 2^24 ceiling is reachable-but-punishing here. Quantum run — A-008's Quantum-only restriction on Volatile seed is satisfied |
 
 **Anomaly-start rule.** A-008's "quantum anomalies never inside the first 20 s
 of field" holds on **all 40 levels, with no per-level override** — including
