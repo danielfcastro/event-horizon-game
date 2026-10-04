@@ -1212,13 +1212,14 @@ window. Two controls prevent this:
   artifacts into staged subagent calls, each scoped to a few files, with
   files persisting on disk between stages.
 - If the lower variant does not shrink the reasoning below the output budget,
-  that agent's `max_tokens` is raised to 32000 — still at most a quarter of
-  the 131027-token context — so a single message can finish its reasoning and
-  emit content; each assistant message in a session gets its own budget, so
-  staged file-by-file work stays bounded regardless of artifact size. The
-  programmer agent for A-021 carries this raise. The raise must also be
-  applied to the provider model's declared `limit.output` (16384 -> 32000),
-  because OpenCode clamps any agent-level `max_tokens` to that provider limit.
+  that agent's `max_tokens` and the provider model's declared `limit.output`
+  are both raised to 32000 (OpenCode clamps agent-level `max_tokens` to the
+  provider limit), still at most a quarter of the 131027-token context. This
+  alone was not sufficient for a 15-file scope (reasoning-only message of
+  86,004 characters at `finish: length`); the operative control is the
+  scope split — subagent calls scoped to three or four files keep the
+  model's drafting reasoning inside one message budget. The programmer
+  agent for A-021 carries the raise.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
