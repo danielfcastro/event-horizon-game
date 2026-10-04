@@ -1216,7 +1216,9 @@ window. Two controls prevent this:
   the 131027-token context — so a single message can finish its reasoning and
   emit content; each assistant message in a session gets its own budget, so
   staged file-by-file work stays bounded regardless of artifact size. The
-  programmer agent for A-021 carries this raise.
+  programmer agent for A-021 carries this raise. The raise must also be
+  applied to the provider model's declared `limit.output` (16384 -> 32000),
+  because OpenCode clamps any agent-level `max_tokens` to that provider limit.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
