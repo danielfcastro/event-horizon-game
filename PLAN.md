@@ -1220,6 +1220,22 @@ window. Two controls prevent this:
   scope split — subagent calls scoped to three or four files keep the
   model's drafting reasoning inside one message budget. The programmer
   agent for A-021 carries the raise.
+- Launch guard: OpenCode rejects a request when prompt + max_tokens
+  exceeds the model context ("requests are never truncated"). A
+  programmer launch at the 32000 raise failed exactly this way (prompt
+  99,714 + 32,000 = 131,714 > 131,027): a role-agent baseline prompt
+  runs near 100,000 tokens, so the agent-level budget must leave
+  headroom below the window, not just stay under a quarter of it. The
+  programmer's max_tokens was therefore trimmed from 32000 to 24000
+  (options + request.body), keeping the scope split as the operative
+  control.
+- Context-watch plugin: `opencode.json` carries a `plugins` entry for
+  `opencode-context-watch` (npm package; OpenCode 2.x only, silent
+  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
+  `verbose: true`. It watches each session's context usage and injects
+  a synthetic warning into every above-threshold request so agents
+  wrap up or compact before the window fills. It adds no tool and
+  never compacts; compaction remains OpenCode's job.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
