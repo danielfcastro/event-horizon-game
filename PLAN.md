@@ -533,6 +533,39 @@ reported as done without the evidence their acceptance criteria name.
 - Own the weak-device switch and the quality-tier probe of A-019 §10 without touching `DT`.
 - Consumed by A-023, which renders through the same frame driver.
 
+**Design decisions this artifact owns (recorded before the code, per the rule that
+a design decision updates `PLAN.md` first):**
+
+- **Per-step intent entry point in `FixedStepDriver`.** A-019 §4 requires input
+  sampled once per step, and A-019 §10 says a 30 fps target runs two sim steps
+  per rendered frame through the same accumulator. The phase-1 `advance(s, wall, i)`
+  carries ONE `Intent` for the whole frame, so at 30 fps the second step would
+  silently reuse the first step's intent, and H-07 could never show the 30 fps
+  trajectory equal to the 60 fps one. A-022 adds `advanceDigest(s, wall, digest)`
+  beside it: exactly one `InputDigest.decode` per delivered step (`InputDigest`
+  already lives in `SimCore`, so this adds no Bridge dependency to the sim),
+  sharing ONE accumulator/catch-up/dropped-step implementation with `advance`
+  through a single private `deliver` — no duplicated budget logic. `advance`
+  keeps its meaning (one intent for the whole frame: the live-device entry, where
+  the per-frame to per-step mapping at 30 fps is A-011's decision, not this
+  artifact's) and its comment states that boundary. `FixedStepDriver.cs` is a
+  hashed `SimCore` file, so `forkExpected` is re-blessed and both goldens re-verified;
+  the goldens step through `FixedStepDriver.step`, which is unchanged, so they
+  must stay byte-identical.
+- **The frame clock is per-run state, not globals.** H-06/H-07/H-09 compare two
+  or three frame-driven runs at once, so `FrameDriver` owns a `FrameClock` object
+  (frame index, hitch schedule, tier) handed to `frame(clock, state, digest)`;
+  static globals would let one run's clock corrupt another's comparison.
+- **H-06's precise assertion.** A-019 §9 words the hitch test as "changes
+  `droppedSteps` and nothing else". A hitch smaller than the catch-up budget
+  does NOT change `droppedSteps` — A-019 §10 already says `droppedSteps` "only
+  grows through the `MAX_CATCHUP = 4` rule". The honest assertion implemented
+  here is stronger and stated precisely: the hitch changes frame accounting
+  (`framesToGoal`) and, when it exceeds the catch-up budget, `droppedSteps`,
+  and nothing else — the goal step index and every observable snapshot are
+  byte-identical. Both a within-budget (42 ms) and an over-budget (100 ms)
+  schedule are run so the drop path is proven live, not dead code.
+
 **Status:**
 
 - doing (2026-10-07, on `feature/programmer-frame-driver` from `develop`)
