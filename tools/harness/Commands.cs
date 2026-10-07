@@ -178,7 +178,10 @@ namespace EH
             {
                 int d = Counters.dig(t[i]);
                 Fail.check(d >= 0, "parseHexU64: bad digit in " + s);
-                v = (v << 4) | (ulong)d;
+                // (ushort) first is load-bearing: int -> ulong is a sign-extending
+                // conversion regardless of the mask, which is what CS0675 warns about;
+                // probing showed (ushort) then (ulong) compiles warning-free.
+                v = (v << 4) | (ulong)(ushort)(d & 0xF);
             }
             return v;
         }
