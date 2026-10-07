@@ -83,7 +83,7 @@ feature/architect-prototype-scaffold
 feature/release-ship
 feature/programmer-prototype
 feature/programmer-harness-warning
-release/1.0.0
+release/0.20
 ```
 
 ### 1.4 Commit prefixes
