@@ -47,7 +47,7 @@ namespace EH
         // hard FIXED-FORK failure, never a silent pass. Blessed 2026-10-07 from the
         // 19-file set after the MulDiv/ISqrtQ algorithm fixes and the BodyPool.tierCount
         // active-flag fix (see PROGRESS.md).
-        public static ulong forkExpected = 0xb6b01e1cff3f7710UL;
+        public static ulong forkExpected = 0x99dd49de20c48bc4UL;
 
         // ---- guard 1: fixed-point helper self-tests (A-019 §5) ----------------
         public static bool selfTestFixed()
