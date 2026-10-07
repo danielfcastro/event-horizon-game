@@ -291,7 +291,7 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 
 **Status:**
 
-- done
+- done (extended 2026-10-07 on `feature/coordinator-readme`: a "Build and run the prototype" section was added, because after A-021 merged there was no documented way for a human to build or run anything. Two stale claims were corrected in the same pass: "20 artifacts, A-001 through A-020" -> 21 artifacts through A-021, and "not the game code" -> the repo now also carries the phase-1 headless prototype (`Assets/`, `tools/harness/`, `replays/`, `harness.csproj`). The run guide documents only commands verified in this session, the A-019 §9 exit-code contract (0 pass / 1 fail / 2 harness error), and the toolchain gotchas (`dotnet run` masks the app exit code when piped; the native launcher `./obj/harness` fails with exit 131; use `dotnet exec obj/harness.dll`).)
 
 ### A-003 AGENTS.md
 
