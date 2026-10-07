@@ -6,3 +6,6 @@ dist/
 private/
 *.tmp
 *.log
+obj/
+bin/
+artifacts/
