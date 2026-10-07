@@ -148,7 +148,21 @@ namespace EH
                     return 2;
                 }
             }
-            return Commands.run(argv);
+            // A malformed argument (e.g. --seed 0xZZZ) throws SystemicFailure from
+            // parseHexU64. Left uncaught, that aborts the process (exit 134, core
+            // dumped), which violates A-019 §9: a harness/user error must exit 2.
+            // This catch keeps the exit-code contract. It must NOT swallow a
+            // simulation failure: those return 1 from Commands.run normally, never
+            // as an exception, so exit 1 stays distinguishable from exit 2 here.
+            try
+            {
+                return Commands.run(argv);
+            }
+            catch (SystemicFailure e)
+            {
+                System.Console.Write("harness: " + e.reason + " (command did not complete)\n");
+                return 2;
+            }
         }
     }
 }
