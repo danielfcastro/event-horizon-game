@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    A-021 Phase 1 headless harness target (brief §10: "author the csproj so the
+    headless target compiles exactly the API-free set; exclude GameLoop/
+    RenderLayer/UIRoot from it").
+
+    Two build facts about this NuGet SDK 8.0.425 csproj dialect are load-bearing
+    and were verified by probe, not assumed:
+
+    1. EnableDefaultCompileItems defaults to true, which implicitly includes
+       EVERY .cs under the project directory. Declaring <Compile Include=...>
+       on top of that is NETSDK1022 "Duplicate 'Compile' items" (a build
+       failure, not a warning), and it also silently pulls the Unity-API files
+       into the headless build. Hence the property is set to false here.
+
+    2. With default items off, the <Compile> element's Exclude ATTRIBUTE works;
+       the <Exclude> ELEMENT form is inert (it is treated as another include).
+
+    The exclusion is provably real, not vacuous: GameLoop.cs / RenderLayer.cs /
+    UIRoot.cs reference UnityEngine.* which does not exist in this toolchain, so
+    if the Exclude clause ever stopped working the build would fail with CS0234/
+    CS0103 rather than quietly pass. Brief §9 keeps those three files authored-
+    per-contract but NOT compiled headless (no Unity toolchain in this
+    environment).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Assets/**/*.cs"
+             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs" />
+    <Compile Include="tools/harness/*.cs" />
+  </ItemGroup>
+</Project>

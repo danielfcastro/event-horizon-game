@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-002
+next_artifact: none (all 21 artifacts done; ship executes docs/ship.md STEP-01..STEP-18)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -49,6 +49,8 @@ Every artifact must follow this process:
    proposed -> ready -> doing -> done
    ```
 
+   Artifacts whose dependencies are not yet done are marked blocked in the sequence table until they become ready.
+
 6. Open a pull request.
 7. Wait for coordinator review.
 8. Merge to main only when approved.
@@ -59,8 +61,10 @@ Use:
 
 ```text
 feature/coordinator-plan
+feature/coordinator-readme
 feature/coordinator-agents
 feature/planner-spec
+feature/coordinator-briefs
 feature/architect-architecture
 feature/designer-design
 feature/balance-balance
@@ -77,6 +81,9 @@ feature/release-privacy-policy
 feature/planner-agent-rules
 feature/architect-prototype-scaffold
 feature/release-ship
+feature/programmer-prototype
+feature/programmer-harness-warning
+release/0.20
 ```
 
 ### 1.4 Commit prefixes
@@ -85,6 +92,7 @@ Use:
 
 ```text
 docs(plan): ...
+docs(agents): ...
 docs(spec): ...
 docs(architecture): ...
 docs(design): ...
@@ -102,6 +110,8 @@ docs(privacy-policy): ...
 docs(agent-rules): ...
 docs(prototype-scaffold): ...
 docs(ship): ...
+docs(prototype): ...
+code(prototype): ...
 chore(repo): ...
 ```
 
@@ -146,6 +156,8 @@ Short summary of what was produced.
 - Do not change an artifact without updating PLAN.md.
 - If a design decision conflicts with PLAN.md, update PLAN.md first.
 - Keep one canonical source of truth: PLAN.md.
+- The coordinator MUST keep PROGRESS.md updated after every meaningful step so an interrupted run can resume.
+- Agent definitions in section 9.2 MUST name the same artifacts, dependencies, and consumers as the sequence table in section 2 and the dependency graph in section 3.
 - Code must follow approved architecture and balance documents.
 - Monetization must not block core game completion.
 
@@ -174,6 +186,14 @@ git flow hotfix finish <version>
 
 If the git-flow command line tool is unavailable, use equivalent manual git-flow branch and merge operations with the same branch prefixes and merge targets.
 
+### 1.8 Progress control file
+
+- `PROGRESS.md` at the repo root is the run-state control file for the coordinator.
+- It records: current artifact, last completed artifact, next ready artifact, branch, PR, status (idle, running, interrupted, blocked), and a dated log.
+- The coordinator reads PLAN.md then PROGRESS.md at the start of every session and resumes exactly from the recorded state.
+- The coordinator updates PROGRESS.md after every meaningful step, including partial ones, and records the exact stopping point and reason when interrupted or blocked.
+- PROGRESS.md is run state only; design decisions belong in PLAN.md.
+
 ## 2. Artifact sequence
 
 The sequence below is ordered so that AI agents can coordinate work safely.
@@ -181,25 +201,26 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | ID | Artifact | Agent | Depends on | Purpose | Status | Acceptance criteria |
 | --- | --- | --- | --- | --- | --- | --- |
 | A-001 | PLAN.md | coordinator | none | Master plan and coordination protocol | done | Contains game concept, artifact order, agent rules, git-flow requirement. |
-| A-002 | README.md | coordinator | A-001 | Repo overview | ready | Explains repo and next steps. |
-| A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | ready | Defines agent responsibilities and branch rules. |
-| A-004 | docs/spec.md | planner | A-001 | High-level game specification | blocked | Defines core loop, controls, goals, failure conditions. |
-| A-005 | docs/architecture.md | architect | A-004 | Technical architecture | blocked | Defines modules, simulation loop, data structures, platform plan. |
-| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | blocked | Defines visual language, feedback, accessibility. |
-| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | blocked | Defines mass growth, upgrade values, target masses. |
-| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | blocked | Lists objects, hazards, rewards, modifiers. |
-| A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | blocked | Defines worlds, objectives, difficulty curve. |
-| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | blocked | Defines UI layout and mobile scaling. |
-| A-011 | docs/input.md | designer | A-010 | Mobile controls | blocked | Defines drag, joystick, tilt, accessibility. |
-| A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | blocked | Defines contrast, reduced motion, larger controls. |
-| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | blocked | Defines simulation tests, balance tests, UI tests. |
-| A-014 | docs/qa.md | qa | A-013 | QA checklist | blocked | Defines manual QA and performance checklist. |
-| A-015 | docs/store.md | release | A-014 | Store submission plan | blocked | Defines listing, screenshots, trailer, compliance. |
-| A-016 | docs/monetization.md | release | A-015 | Monetization and economy | blocked | Defines ads, IAP, analytics, fairness. |
-| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | blocked | Defines data collected, contact info, store compliance. |
-| A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | ready | Detailed rules for AI agents. |
-| A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | blocked | Defines first playable prototype modules. |
-| A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | blocked | Defines final release steps. |
+| A-002 | README.md | coordinator | A-001 | Repo overview | done | Explains repo and next steps. |
+| A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | done | Defines agent responsibilities and branch rules. |
+| A-004 | docs/spec.md | planner | A-001 | High-level game specification | done | Defines core loop, controls, goals, failure conditions. |
+| A-005 | docs/architecture.md | architect | A-004 | Technical architecture | done | Defines modules, simulation loop, data structures, platform plan. |
+| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | done | Defines visual language, feedback, accessibility. |
+| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | done | Defines mass growth, upgrade values, target masses. |
+| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | done | Lists objects, hazards, rewards, modifiers. |
+| A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | done | Defines worlds, objectives, difficulty curve. |
+| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | done | Defines UI layout and mobile scaling. |
+| A-011 | docs/input.md | designer | A-010 | Mobile controls | done | Defines drag, joystick, tilt, accessibility. |
+| A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | done | Defines contrast, reduced motion, larger controls. |
+| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | done | Defines simulation tests, balance tests, UI tests. |
+| A-014 | docs/qa.md | qa | A-013 | QA checklist | done | Defines manual QA and performance checklist. |
+| A-015 | docs/store.md | release | A-014 | Store submission plan | done | Defines listing, screenshots, trailer, compliance. |
+| A-016 | docs/monetization.md | release | A-015 | Monetization and economy | done | Defines ads, IAP, analytics, fairness. |
+| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | done | Defines data collected, contact info, store compliance. |
+| A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | done | Detailed rules for AI agents. |
+| A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
+| A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
+| A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 
 ## 3. Dependency graph
 
@@ -242,6 +263,7 @@ A-001 PLAN.md
 
 A-019 prototype-scaffold.md depends on A-005 and A-013.
 A-020 ship.md depends on A-015, A-016, A-017.
+A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 ```
 
 ## 4. Artifact contracts
@@ -269,7 +291,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-003 AGENTS.md
 
@@ -282,7 +304,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-004 docs/spec.md
 
@@ -293,7 +315,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-005 docs/architecture.md
 
@@ -304,7 +326,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-006 docs/design.md
 
@@ -315,7 +337,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-007 docs/balance.md
 
@@ -326,7 +348,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-008 docs/content.md
 
@@ -337,7 +359,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-009 docs/levels.md
 
@@ -348,7 +370,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-010 docs/ui.md
 
@@ -359,7 +381,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-011 docs/input.md
 
@@ -370,7 +392,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-012 docs/accessibility.md
 
@@ -381,7 +403,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-013 docs/test-plan.md
 
@@ -392,7 +414,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-014 docs/qa.md
 
@@ -403,7 +425,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-015 docs/store.md
 
@@ -414,7 +436,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-016 docs/monetization.md
 
@@ -425,7 +447,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-017 docs/privacy-policy.md
 
@@ -436,7 +458,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done (amended 2026-10-07 on `release/0.20`: policy text version bumped `1.0` -> `1.1`. Reason: filling the §3 third-party bracket left the sentence "anything extra the provider records is disclosed separately in the store forms and in the bracket above" referring to a bracket that no longer exists on the published page. §3 wording changed only where the reference was ship-time meta-language: "we name it here at release:" -> "we name it here:", and "in the bracket above" -> "in the sentence above". The three version assertions move together: §3 line 82, §6 line 226, §7 PR-1 line 297. The verbatim rule is unchanged: the published page is still A-017 §3 copied verbatim with only its two bracketed values filled.)
 
 ### A-018 docs/agent-rules.md
 
@@ -447,7 +469,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- ready
+- done
 
 ### A-019 docs/prototype-scaffold.md
 
@@ -458,7 +480,7 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
 
 ### A-020 docs/ship.md
 
@@ -469,7 +491,19 @@ A-020 ship.md depends on A-015, A-016, A-017.
 
 **Status:**
 
-- blocked
+- done
+
+### A-021 Phase 1 prototype code
+
+**Purpose:**
+
+- First playable prototype code: PLAN 5.18 Phase 1 (one black hole, one level, move/attract/absorb/grow).
+- Implements the module contract of A-019 docs/prototype-scaffold.md under the architecture of A-005 and the test plan of A-013.
+- Consumed by every later code phase (game feel, balance, content, mobile polish).
+
+**Status:**
+
+- done (merged into develop via PR #24 at 8f52d25; commit 2770f53 code(prototype):)
 
 ## 5. Core game design plan
 
@@ -960,6 +994,7 @@ level-designer:
 ```text
 event-horizon-game/
 ├── PLAN.md
+├── PROGRESS.md
 ├── README.md
 ├── AGENTS.md
 ├── docs/
@@ -1004,3 +1039,206 @@ Stay smaller and move precisely?
 Upgrade for efficiency or pull?
 Absorb large objects or avoid hazards?
 ```
+
+## 9. Agent runtime configuration (OpenCode)
+
+The agents in section 1.1 are implemented as OpenCode agents. This section records the configuration so any agent or person can reproduce the setup.
+
+### 9.1 Configuration location
+
+- Global (applies to every project, currently in use): `~/.config/opencode/opencode.json`
+- Project-scoped alternative (applies only to this repo): `.opencode/opencode.json` at the repo root
+- Use one location or the other, not both, to avoid confusing precedence.
+
+### 9.2 Required configuration
+
+Set `default_agent` to `coordinator` and define the nine agents with `mode: "all"` so the coordinator can run as the session agent and launch the role agents as subagents. The coordinator also needs `subagent` permission to launch role agents.
+
+Each agent definition names the artifacts it owns, the upstream documents it must read before writing, and the artifacts that consume its output. Those names MUST match the sequence table in section 2 and the dependency graph in section 3. When they disagree, fix the agent definition, not the table.
+
+```jsonc
+{
+  "default_agent": "coordinator",
+  "agents": {
+    "coordinator": {
+      "description": "Master orchestrator: runs the whole development plan, delegates each artifact to the right agent, and keeps progress resumable.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the coordinator and single orchestrator for the Event Horizon game repo. PLAN.md is the canonical source of truth for design; PROGRESS.md at the repo root is the control file for run state. You own the document artifacts A-001 PLAN.md, A-002 README.md, and A-003 AGENTS.md; every other artifact is delegated to the role agent that owns it. Resume protocol: at the start of every session read PLAN.md then PROGRESS.md and continue exactly from the recorded state; never redo completed work and never skip dependencies. Orchestration loop: select the first artifact whose status is ready in PLAN.md; set it to doing in PLAN.md; launch the matching role agent as a subagent (planner, architect, designer, balance, level-designer, programmer, qa, release) passing the artifact ID, its purpose, and its acceptance criteria; when the subagent returns the artifact, review it against PLAN.md and its acceptance criteria; commit and merge through git-flow (feature/<agent>-<artifact-id> branch from develop, merge into develop, pull request into main only when approved); set the artifact to done in PLAN.md; then append a dated entry to PROGRESS.md recording artifact ID, branch, PR, key decisions, and the next ready artifact. Update PROGRESS.md after every meaningful step, including partial ones, so an interrupted run can resume exactly where it stopped. If interrupted or blocked, record the exact stopping point and reason in PROGRESS.md and stop. Do not make design decisions that conflict with PLAN.md; update PLAN.md first. Use the documented commit prefixes such as docs(plan): and chore(repo):.",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "allow" }
+      ]
+    },
+    "planner": {
+      "description": "Writes specifications, design plans, and game systems.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the planner for the Event Horizon game repo. You own A-004 docs/spec.md (depends on A-001 PLAN.md) and A-018 docs/agent-rules.md (depends on A-003 AGENTS.md). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-005 docs/architecture.md, A-006 docs/design.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md. Read PLAN.md first and follow the artifact workflow and Git-flow rules there. Write specifications, design plans, and game system documents that are consistent with PLAN.md. Do not start an artifact whose dependencies are not done. If a design decision conflicts with PLAN.md, update PLAN.md first. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "architect": {
+      "description": "Defines technical architecture, data structures, modules, and platform plan.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the architect for the Event Horizon game repo. You own A-005 docs/architecture.md (depends on A-004 docs/spec.md) and A-019 docs/prototype-scaffold.md (depends on A-005 and A-013 docs/test-plan.md). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-013 docs/test-plan.md, A-019 docs/prototype-scaffold.md, and all code work. Read PLAN.md first and keep every technical decision consistent with it and with approved upstream artifacts. Define technical architecture, modules, simulation loops, data structures, performance plans, and platform choices. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "designer": {
+      "description": "Defines game feel, visuals, UI, camera, feedback, and accessibility.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the designer for the Event Horizon game repo. You own A-006 docs/design.md (depends on A-004 docs/spec.md), A-010 docs/ui.md (depends on A-006), A-011 docs/input.md (depends on A-010), and A-012 docs/accessibility.md (depends on A-010). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-007 docs/balance.md and A-008 docs/content.md. Read PLAN.md first and keep every decision consistent with it and with approved upstream artifacts. Define game feel, visuals, UI layout, camera behavior, feedback, and accessibility for mobile. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "balance": {
+      "description": "Defines progression curves, economy, difficulty, upgrade values.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the balance agent for the Event Horizon game repo. You own A-007 docs/balance.md (depends on A-006 docs/design.md). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-008 docs/content.md and A-009 docs/levels.md. Read PLAN.md first and keep every number consistent with it and with approved upstream artifacts. Define progression curves, mass growth, upgrade values, difficulty targets, and economy. Respect the design rule that more mass creates tension; do not make the game a pure power fantasy. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "level-designer": {
+      "description": "Defines objects, hazards, levels, worlds, and content.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the level-designer for the Event Horizon game repo. You own A-008 docs/content.md (depends on A-006 docs/design.md and A-007 docs/balance.md) and A-009 docs/levels.md (depends on A-008). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-009 docs/levels.md and the shipping artifacts. Read PLAN.md first and keep every decision consistent with it and with approved upstream artifacts. Define objects, hazards, upgrades, modifiers, rewards, campaign worlds, level goals, and the difficulty curve. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "programmer": {
+      "description": "Creates code scaffolding, prototypes, and implementation notes.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
+    },
+    "qa": {
+      "description": "Defines tests, QA checklist, performance checks, and regression risks.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the qa agent for the Event Horizon game repo. You own A-013 docs/test-plan.md (depends on A-005 docs/architecture.md) and A-014 docs/qa.md (depends on A-013). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Your output is consumed by A-015 docs/store.md and A-019 docs/prototype-scaffold.md. Read PLAN.md first and define testing strategies, QA checklists, simulation and balance tests, performance checks, and regression risks. Work on a git-flow feature branch created from develop and open a pull request; never push directly to main."
+    },
+    "release": {
+      "description": "Handles store compliance, privacy, analytics, monetization, submission.",
+      "mode": "all",
+      "options": { "max_tokens": 16000 },
+      "system": "You are the release agent for the Event Horizon game repo. You own A-015 docs/store.md (depends on A-014 docs/qa.md), A-016 docs/monetization.md (depends on A-015), A-017 docs/privacy-policy.md (depends on A-015), and A-020 docs/ship.md (depends on A-015, A-016, A-017). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Read PLAN.md first and keep store listings, monetization, privacy policy, and shipping steps compliant with it and with platform rules. Monetization must not block core game completion. Use git-flow release/* and hotfix/* branches for shipping work; never push directly to main without coordinator approval."
+    }
+  }
+}
+```
+
+Global permissions must at least allow `edit` and `shell` so agents can draft artifacts and run git commands:
+
+```jsonc
+{
+  "permissions": [
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "*", "effect": "allow" }
+  ]
+}
+```
+
+### 9.3 Starting autonomous development
+
+1. Restart the OpenCode service so the configuration reloads:
+
+   ```text
+   opencode service restart
+   ```
+
+2. Start the coordinator from the repo root (it is the default agent):
+
+   ```text
+   cd /mnt/data/projetos/event-horizon-game
+   opencode run "start development"
+   ```
+
+   Or open the interactive TUI with `opencode`; the coordinator is selected automatically.
+
+3. The coordinator then works autonomously: it reads PLAN.md and PROGRESS.md, picks the first ready artifact, delegates it to the matching role subagent, reviews the result, commits and merges through git-flow, updates the artifact status in PLAN.md, and records every step in PROGRESS.md. It continues until all artifacts are done or it is interrupted or blocked.
+
+4. To interrupt: stop the session at any point. To resume later, start a new session:
+
+   ```text
+   opencode run "resume development"
+   ```
+
+   The coordinator reads PROGRESS.md and continues exactly from the recorded stopping point.
+
+5. To run one role standalone instead of the full loop:
+
+   ```text
+   opencode run --agent planner "create docs/spec.md"
+   ```
+
+### 9.4 Context briefs
+
+Role agents never read `PLAN.md` or an approved upstream artifact in full. The
+coordinator writes one brief per artifact at `docs/briefs/<artifact-id>.md`
+before launching the agent, and the agent prompt names only that brief.
+
+A brief contains:
+
+- the artifact contract: ID, owner, dependencies, acceptance criteria, purpose,
+  consumers
+- the hard design rule from PLAN.md section 8
+- only the PLAN.md excerpts that artifact depends on
+- the open questions from upstream artifacts that this artifact must answer
+- the scope boundaries that later artifacts own
+
+Rules:
+
+- The brief is distilled context, not a replacement for `PLAN.md`. If a brief
+  and `PLAN.md` disagree, `PLAN.md` wins and the brief is corrected.
+- A brief stays under roughly ten thousand tokens so a role agent session
+  cannot approach the model context limit.
+- The coordinator regenerates a brief when an upstream artifact changes.
+- Briefs are committed with the artifact that used them.
+
+### 9.5 Context controls
+
+Requests fail with "prompt + max tokens exceeds the context; requests are never
+truncated" when the prompt plus the model's output budget pass the context
+window. Two controls prevent this:
+
+- Every project agent in the configuration of section 9.2 sets
+  `"options": { "max_tokens": 16000 }`. With a 131027-token context this caps
+  any single request at prompt + 16000 output tokens, leaving headroom for the
+  largest expected prompt. Never raise this value above a quarter of the
+  context window.
+- Role agents work from the context briefs of section 9.4 and never read
+  `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
+  stays far below the context limit. The coordinator regenerates briefs
+  instead of re-sending documents.
+- The project model is a reasoning model whose internal reasoning counts
+  against the output budget; a single request can spend the whole budget
+  reasoning and return no content (observed with the programmer on A-021:
+  reasoning-only messages of ~60,000 characters hit the 16,000 cap and the
+  subagent produced no files). When an agent hits this failure mode, the
+  coordinator sets a lower reasoning variant for that agent
+  (`"model": "strata/qwen3.8-flash-next-coder-iq1_m#low"`) and splits large
+  artifacts into staged subagent calls, each scoped to a few files, with
+  files persisting on disk between stages.
+- If the lower variant does not shrink the reasoning below the output budget,
+  that agent's `max_tokens` and the provider model's declared `limit.output`
+  are both raised to 32000 (OpenCode clamps agent-level `max_tokens` to the
+  provider limit), still at most a quarter of the 131027-token context. This
+  alone was not sufficient for a 15-file scope (reasoning-only message of
+  86,004 characters at `finish: length`); the operative control is the
+  scope split — subagent calls scoped to three or four files keep the
+  model's drafting reasoning inside one message budget. The programmer
+  agent for A-021 carries the raise.
+- Launch guard: OpenCode rejects a request when prompt + max_tokens
+  exceeds the model context ("requests are never truncated"). A
+  programmer launch at the 32000 raise failed exactly this way (prompt
+  99,714 + 32,000 = 131,714 > 131,027): a role-agent baseline prompt
+  runs near 100,000 tokens, so the agent-level budget must leave
+  headroom below the window, not just stay under a quarter of it. The
+  programmer's max_tokens was therefore trimmed from 32000 to 24000
+  (options + request.body), keeping the scope split as the operative
+  control.
+- Context-watch plugin: `opencode.json` carries a `plugins` entry for
+  `opencode-context-watch` (npm package; OpenCode 2.x only, silent
+  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
+  `verbose: true`. It watches each session's context usage and injects
+  a synthetic warning into every above-threshold request so agents
+  wrap up or compact before the window fills. It adds no tool and
+  never compacts; compaction remains OpenCode's job.
+
+If a coordinator session itself grows too large, OpenCode compacts it
+automatically into a summary; the `max_tokens` cap guarantees that even an
+uncompacted request never exceeds the context.
