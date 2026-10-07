@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: none (all 21 artifacts done; ship executes docs/ship.md STEP-01..STEP-18)
+next_artifact: none (all 21 artifacts done; ship phase executed STEP-01..STEP-02 and STEP-16..STEP-18 on release/0.20, STEP-03..STEP-15 await a player build and store access)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
