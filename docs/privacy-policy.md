@@ -79,7 +79,7 @@ bracketed ship-time values are filled in.
 
 ```text
 Event Horizon — Privacy Policy
-Policy version: 1.0    Effective date: [date this version is first published]
+Policy version: 1.1    Effective date: [date this version is first published]
 
 We publish Event Horizon as a game. This page explains what the game records
 about you, why we record it, and how you can turn it off.
@@ -129,10 +129,10 @@ ADVERTISING
 Event Horizon shows a limited number of ads placed by our advertising provider.
 Ads are chosen by slot, not by who you are. The provider may use its own cookies
 or identifiers to serve and count ads. If it records anything beyond the eight
-events listed above, we name it here at release: [third-party collection
+events listed above, we name it here: [third-party collection
 disclosure, filled at ship if applicable]. The "Play statistics" switch controls
 our own recording only; anything extra the provider records is disclosed
-separately in the store forms and in the bracket above.
+separately in the store forms and in the sentence above.
 
 CHILDREN
 This game is not directed at children under 13 and is not sold as a children's
@@ -223,7 +223,7 @@ defines what a passing URL is; A-020 executes the hosting.
 | HTTPS, public, no login, no paywall, no region gate, reachable at review time | Reviewers and players must be able to open it; a dead link blocks submission |
 | One single URL used everywhere | The listing has exactly one privacy URL field; the in-game privacy screen and both store listings point at the same URL |
 | Stable, not a redirect chain, not a search result, not a file path that changes on rename | Reviewers re-check between submissions; a moved URL silently breaks SG-5 |
-| Serves the §3 text, version 1.0, with the effective date filled | The page must be the policy, not a stub or a repo README |
+| Serves the §3 text, version 1.1, with the effective date filled | The page must be the policy, not a stub or a repo README |
 | No placeholder token anywhere on the page (URL, contact, third-party bracket) | Placeholder content is what SG-5 exists to catch |
 | Page names the game and the data types in §2 terms | A reviewer can match the page to the Data Safety / App Privacy forms |
 
@@ -294,7 +294,7 @@ the prototype, the build, or core game completion (A-014 and A-015 rules).
 
 | ID | Condition (all must hold before store submission) |
 | --- | --- |
-| PR-1 | §3 policy text is final, version 1.0, no bracketed placeholder left |
+| PR-1 | §3 policy text is final, version 1.1, no bracketed placeholder left |
 | PR-2 | Hosted at one stable HTTPS URL per §6, live and reachable at review time |
 | PR-3 | The URL is non-placeholder and is the only URL wired into the single listing privacy field (A-015) and the in-game privacy screen |
 | PR-4 | CONTACT_VALUE in §5 is real and monitored; the same value appears in policy, listing, and in-game screen |
