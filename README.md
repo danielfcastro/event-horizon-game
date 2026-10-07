@@ -80,7 +80,7 @@ Three gotchas that will bite if you improvise:
 - Filter build output with `error|warning|Build`, not `error CS` — the narrower filter hides project-level failures *and warnings*, which is how a warning once hid itself for a whole artifact.
 - `rm -rf obj` before re-probing. A stale DLL in `obj` produced a false diff once.
 
-Known deviation from the exit-code contract: a malformed hex seed (`--seed 0xZZZ`) aborts with exit 134 instead of exiting 2, because argument parsing throws `SystemicFailure` and `Main` does not catch it.
+A malformed argument exits **2** with the reason it rejected, for example `--seed 0xZZZ` prints `harness: parseHexU64: bad digit in 0xZZZ (command did not complete)` and exits 2. A simulation failure is distinct: it exits **1**.
 
 ## How to contribute
 
