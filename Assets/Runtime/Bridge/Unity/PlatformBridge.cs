@@ -62,11 +62,34 @@ namespace EH
         /// </summary>
         public static long frameWallDelta()
         {
-            // one frame of wall time at targetFps: 1/60 or 1/30 s as exact
-            // multiples of the DT constant (30 fps -> 2 * DT).
-            long framesDT = devTargetFps == 30 ? 2L : 1L;
+            return frameWallDeltaFor(devTargetFps, devTimeScaleRaw);
+        }
+
+        /// <summary>
+        /// A-022: the same formula, parameterised, so the frame driver can run
+        /// two frame clocks at once (H-07 compares a 30 fps clock against the
+        /// step-driven golden) without a global knob deciding both budgets.
+        /// One implementation, no duplicated budget math.
+        /// </summary>
+        public static long frameWallDeltaFor(int targetFps, long timeScaleRaw)
+        {
+            long framesDT = targetFps == 30 ? 2L : 1L;
             long wall = FixedStepDriver.DT * framesDT; // exact, no rounding
-            return MulDiv.muldiv(wall, devTimeScaleRaw, FixedQ.ONE); // scale wall-clock only
+            return MulDiv.muldiv(wall, timeScaleRaw, FixedQ.ONE); // scale wall-clock only
+        }
+
+        /// <summary>
+        /// A-022: the live-device knob (A-019 §10 keeps it here; the frame
+        /// driver's per-run clock is authoritative for probe runs). Setting it
+        /// re-runs the startup gate, so an unreachable targetFps is a hard
+        /// rejection at the same place FixedStepDriver owns it, never a silent
+        /// acceptance.
+        /// </summary>
+        public static void setDevKnobs(int targetFps, long timeScaleRaw)
+        {
+            devTargetFps = targetFps;
+            devTimeScaleRaw = timeScaleRaw;
+            configureStartup();
         }
 
         /// <summary>

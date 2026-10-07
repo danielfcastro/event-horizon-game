@@ -1,0 +1,17 @@
+# ehpointer1 — H-08 synthetic telemetry script (A-022)
+# One directive per line, steps non-decreasing:
+#   <step> contact <thrustX> <thrustY> <rate>   Q32.32 raw decimal
+#   <step> dup     <thrustX> <thrustY> <rate>   a SECOND contact in the same step
+#   <step> pause
+# Values are ALREADY-RESOLVED intents: InputAdapter is transport only and A-011
+# owns pointer-position -> intent resolution, which is not implemented here.
+0 contact 4294967296 0 4294967296
+1 contact 0 4294967296 2147483648
+1 dup 4294967296 0 4294967296
+2 pause
+3 contact -4294967296 0 4294967296
+4 contact 4294967296 4294967296 1073741824
+5 contact 0 -4294967296 4294967296
+5 dup 0 0 4294967296
+6 contact 4294967296 0 0
+7 contact -4294967296 -4294967296 3779570688

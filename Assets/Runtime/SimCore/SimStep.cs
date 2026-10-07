@@ -41,6 +41,19 @@ namespace EH
             // every subsystem can trust it.
             Fail.check(stepIndex == s.stepIndex, "SimStep.run: stepIndex disagrees with state.stepIndex");
 
+            // 0) SpawnDirector — A-022 moved this call here from Commands.runLoop.
+            //    SpawnDirector's own contract says "called by SimStep before
+            //    AttractionSystem so a body spawned this step is eligible for
+            //    attraction/absorption checks in the same step", but phase 1 had
+            //    runLoop calling it instead, so any other entry point (the frame
+            //    driver) would have run a level with no spawns at all. Owning it
+            //    in the per-step body means the step-driven and the frame-driven
+            //    path both get spawns EXACTLY once, which is what lets H-06/H-07
+            //    compare a frame-driven run against the golden. It stays first,
+            //    before PlayerController, so the order the goldens were produced
+            //    with is unchanged and they must stay byte-identical.
+            SpawnDirector.apply(s);
+
             // 1) PlayerController — black hole is body index 0; movement intent only
             s.intent = intent;
             PlayerController.apply(s);
