@@ -458,7 +458,7 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 
 **Status:**
 
-- done
+- done (amended 2026-10-07 on `release/0.20`: policy text version bumped `1.0` -> `1.1`. Reason: filling the §3 third-party bracket left the sentence "anything extra the provider records is disclosed separately in the store forms and in the bracket above" referring to a bracket that no longer exists on the published page. §3 wording changed only where the reference was ship-time meta-language: "we name it here at release:" -> "we name it here:", and "in the bracket above" -> "in the sentence above". The three version assertions move together: §3 line 82, §6 line 226, §7 PR-1 line 297. The verbatim rule is unchanged: the published page is still A-017 §3 copied verbatim with only its two bracketed values filled.)
 
 ### A-018 docs/agent-rules.md
 
