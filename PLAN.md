@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-021 (Phase 1 prototype code, in progress)
+next_artifact: none (all 21 artifacts done; ship executes docs/ship.md STEP-01..STEP-18)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -218,7 +218,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | done | Detailed rules for AI agents. |
 | A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
-| A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | doing | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
+| A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 
 ## 3. Dependency graph
 
@@ -501,7 +501,7 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 
 **Status:**
 
-- doing
+- done (merged into develop via PR #24 at 8f52d25; commit 2770f53 code(prototype):)
 
 ## 5. Core game design plan
 
