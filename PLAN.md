@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: none (all 20 artifacts done)
+next_artifact: A-021 (Phase 1 prototype code, in progress)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -81,6 +81,7 @@ feature/release-privacy-policy
 feature/planner-agent-rules
 feature/architect-prototype-scaffold
 feature/release-ship
+feature/programmer-prototype
 ```
 
 ### 1.4 Commit prefixes
@@ -107,6 +108,8 @@ docs(privacy-policy): ...
 docs(agent-rules): ...
 docs(prototype-scaffold): ...
 docs(ship): ...
+docs(prototype): ...
+code(prototype): ...
 chore(repo): ...
 ```
 
@@ -215,6 +218,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | done | Detailed rules for AI agents. |
 | A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
+| A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | doing | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 
 ## 3. Dependency graph
 
@@ -257,6 +261,7 @@ A-001 PLAN.md
 
 A-019 prototype-scaffold.md depends on A-005 and A-013.
 A-020 ship.md depends on A-015, A-016, A-017.
+A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 ```
 
 ## 4. Artifact contracts
@@ -485,6 +490,18 @@ A-020 ship.md depends on A-015, A-016, A-017.
 **Status:**
 
 - done
+
+### A-021 Phase 1 prototype code
+
+**Purpose:**
+
+- First playable prototype code: PLAN 5.18 Phase 1 (one black hole, one level, move/attract/absorb/grow).
+- Implements the module contract of A-019 docs/prototype-scaffold.md under the architecture of A-005 and the test plan of A-013.
+- Consumed by every later code phase (game feel, balance, content, mobile polish).
+
+**Status:**
+
+- doing
 
 ## 5. Core game design plan
 
@@ -1084,7 +1101,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Creates code scaffolding, prototypes, and implementation notes.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the programmer for the Event Horizon game repo. You own no document artifact; you implement code. Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
+      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
     },
     "qa": {
       "description": "Defines tests, QA checklist, performance checks, and regression risks.",
@@ -1185,6 +1202,40 @@ window. Two controls prevent this:
   `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
   stays far below the context limit. The coordinator regenerates briefs
   instead of re-sending documents.
+- The project model is a reasoning model whose internal reasoning counts
+  against the output budget; a single request can spend the whole budget
+  reasoning and return no content (observed with the programmer on A-021:
+  reasoning-only messages of ~60,000 characters hit the 16,000 cap and the
+  subagent produced no files). When an agent hits this failure mode, the
+  coordinator sets a lower reasoning variant for that agent
+  (`"model": "strata/qwen3.8-flash-next-coder-iq1_m#low"`) and splits large
+  artifacts into staged subagent calls, each scoped to a few files, with
+  files persisting on disk between stages.
+- If the lower variant does not shrink the reasoning below the output budget,
+  that agent's `max_tokens` and the provider model's declared `limit.output`
+  are both raised to 32000 (OpenCode clamps agent-level `max_tokens` to the
+  provider limit), still at most a quarter of the 131027-token context. This
+  alone was not sufficient for a 15-file scope (reasoning-only message of
+  86,004 characters at `finish: length`); the operative control is the
+  scope split — subagent calls scoped to three or four files keep the
+  model's drafting reasoning inside one message budget. The programmer
+  agent for A-021 carries the raise.
+- Launch guard: OpenCode rejects a request when prompt + max_tokens
+  exceeds the model context ("requests are never truncated"). A
+  programmer launch at the 32000 raise failed exactly this way (prompt
+  99,714 + 32,000 = 131,714 > 131,027): a role-agent baseline prompt
+  runs near 100,000 tokens, so the agent-level budget must leave
+  headroom below the window, not just stay under a quarter of it. The
+  programmer's max_tokens was therefore trimmed from 32000 to 24000
+  (options + request.body), keeping the scope split as the operative
+  control.
+- Context-watch plugin: `opencode.json` carries a `plugins` entry for
+  `opencode-context-watch` (npm package; OpenCode 2.x only, silent
+  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
+  `verbose: true`. It watches each session's context usage and injects
+  a synthetic warning into every above-threshold request so agents
+  wrap up or compact before the window fills. It adds no tool and
+  never compacts; compaction remains OpenCode's job.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an

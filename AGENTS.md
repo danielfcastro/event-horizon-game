@@ -12,7 +12,7 @@ Repository rules for the AI agents (and humans) developing Event Horizon. `PLAN.
 | designer | Defines game feel, visuals, UI layout, camera behavior, feedback, and accessibility. | A-006, A-010, A-011, A-012 |
 | balance | Defines progression curves, mass growth, upgrade values, difficulty targets, and economy. | A-007 |
 | level-designer | Defines objects, hazards, upgrades, modifiers, rewards, campaign worlds, and level goals. | A-008, A-009 |
-| programmer | Creates code scaffolding, prototypes, and implementation notes. | none (implements A-019 after A-005 and A-013 are done) |
+| programmer | Creates code scaffolding, prototypes, and implementation notes. | A-021 (implements from A-019 after A-005 and A-013 are done) |
 | qa | Defines testing strategies, QA checklists, simulation and balance tests, performance checks, and regression risks. | A-013, A-014 |
 | release | Handles store compliance, privacy policy, analytics, monetization, and shipping steps. | A-015, A-016, A-017, A-020 |
 
