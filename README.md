@@ -25,7 +25,7 @@ This repository holds the **design and coordination plan** for that game, and si
 
 ## Artifact sequence
 
-Work proceeds through 21 artifacts, `A-001` through `A-021`, in the dependency order given in `PLAN.md`. Each artifact is one file or module, owned by one agent role, and moves through four statuses:
+Work proceeds through 25 artifacts, `A-001` through `A-025`, in the dependency order given in `PLAN.md`. Each artifact is one file or module, owned by one agent role, and moves through four statuses:
 
 ```text
 proposed -> ready -> doing -> done
@@ -40,6 +40,28 @@ An artifact must not be started before its dependencies are `done`. The current 
 ## Build and run the prototype
 
 The prototype is **headless**: it runs the deterministic simulation and prints results. There is no window, no player input, and no rendering — the frame driver and render layer are phase 2. You need a .NET 8 toolchain (`dotnet`); the build is the plain `harness.csproj` at the repo root.
+
+### Getting `dotnet` on PATH (EndeavourOS / Arch)
+
+The commands below use `$D` for the toolchain binary; with the two exports below you can call them as plain `dotnet` instead. Verified on EndeavourOS (Arch, `pacman`), from a fresh shell:
+
+```sh
+# A .NET 8 install whose layout is dotnet + sdk + packs + shared + host.
+export DOTNET_ROOT="$HOME/.local/dotnet"
+export PATH="$PATH:$HOME/.local/dotnet"
+
+dotnet --version                                  # 8.0.425
+dotnet build harness.csproj -o obj                # Build succeeded.
+dotnet exec obj/harness.dll sim --seed 0x1F4A \
+    --digest @replays/p1-level-01.digest.bin --level p1-level-01 --out /tmp/run.json
+```
+
+Two ways to get that toolchain, and the honest state of each:
+
+- **Verified working here — the .NET 8 SDK tarball** (RID `linux-x64`, version 8.0.425). Get it from <https://dotnet.microsoft.com/en-us/download/dotnet/8.0>, the `sdk-8.0.425-linux-x64-binaries` link. The download was **not** run in this session: the page resolves the file with JavaScript, so no stable `curl` URL could be verified. The extracted layout is the one this repo's goldens were produced with, and the `--version` / `build` / `exec` sequence above was run verbatim.
+- **Native Arch route — not verified here.** `extra` ships `dotnet-sdk-8.0` (`8.0.31.sdk131-1`), `dotnet-runtime-8.0`, `dotnet-host`, `dotnet-source-built-artifacts-8.0`, and `dotnet-targeting-pack-8.0`. Installing them needs `sudo`, which this session cannot supply. Do **not** hand-assemble that set: an extracted equivalent of the first four fails at `build` with `NU1101: Unable to find package Microsoft.NETCore.App.Host.arch-x64`, because that RID-specific host pack is in none of them — let `pacman` resolve the set. What *is* verified about that route: Arch's runtime (driver 8.0.131, RID `arch-x64`) **runs** the harness byte-identically — H-01 `digest=6d25ff0add639448 steps=2828 exit=0`, H-02 `PASS snapshotsCompared=6 exit=0`.
+
+Unity is not needed for anything in this repository and is not installable in this environment: the headless prototype builds and runs without it. The artifact that needs the Unity toolchain is A-023, the player package, which carries that gate.
 
 ```sh
 cd <repo>
