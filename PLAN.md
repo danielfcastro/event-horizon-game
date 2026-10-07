@@ -83,6 +83,7 @@ feature/architect-prototype-scaffold
 feature/release-ship
 feature/programmer-prototype
 feature/programmer-harness-warning
+feature/programmer-harness-exitcode
 release/0.20
 ```
 
