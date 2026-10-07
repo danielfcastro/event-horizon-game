@@ -84,6 +84,10 @@ feature/release-ship
 feature/programmer-prototype
 feature/programmer-harness-warning
 feature/programmer-harness-exitcode
+feature/programmer-frame-driver
+feature/programmer-player-package
+feature/release-policy-hosting
+feature/release-submission
 release/0.20
 ```
 
@@ -222,6 +226,10 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
+| A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | ready | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
+| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
+| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | ready | Environment gate: requires a host for the page, which is not present in this environment, so the artifact records the decision and stays blocked until hosting exists. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
+| A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 
 ## 3. Dependency graph
 
@@ -265,6 +273,16 @@ A-001 PLAN.md
 A-019 prototype-scaffold.md depends on A-005 and A-013.
 A-020 ship.md depends on A-015, A-016, A-017.
 A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
+
+Post-plan artifacts (registered 2026-10-07 so the rows of A-020 §4 stop being unreachable):
+A-022 phase 2 frame driver depends on A-005, A-019, A-021.
+A-023 Unity player package depends on A-005, A-022.
+A-024 policy-hosting.md depends on A-017, A-020.
+A-025 submission.md and ship notes depend on A-020, A-023, A-024.
+
+A-023 and A-025 additionally carry an environment gate (Unity toolchain, store consoles):
+they are not startable in an environment that lacks the tool, and they are never
+reported as done without the evidence their acceptance criteria name.
 ```
 
 ## 4. Artifact contracts
@@ -505,6 +523,52 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 **Status:**
 
 - done (merged into develop via PR #24 at 8f52d25; commit 2770f53 code(prototype):)
+
+### A-022 Phase 2 frame driver and render state
+
+**Purpose:**
+
+- Turn the phase-1 stubs H-06..H-09 into real commands: hitch detection, fps accounting, pointer mapping, quality-tier probe.
+- Own the weak-device switch and the quality-tier probe of A-019 §10 without touching `DT`.
+- Consumed by A-023, which renders through the same frame driver.
+
+**Status:**
+
+- ready
+
+### A-023 Unity player package
+
+**Purpose:**
+
+- The player-facing build for the device classes named in A-014.
+- Render layer, UI root, input adapter, platform bridge over the same `SimCore`.
+- The candidate ship build whose version string is governed by A-020 §2.
+
+**Status:**
+
+- proposed (carries an environment gate: no Unity toolchain in this environment)
+
+### A-024 docs/policy-hosting.md
+
+**Purpose:**
+
+- Publish the policy page and record the single `POLICY_URL` (A-020 STEP-10, PR-2/PR-3).
+- Name the host, the policy text version published, and every place the URL is reused.
+
+**Status:**
+
+- ready (carries an environment gate: no host for the page in this environment)
+
+### A-025 docs/submission.md and docs/ship-notes/<version>.md
+
+**Purpose:**
+
+- Execute A-020 §4.1 submission mechanics against the real consoles.
+- File the ship notes of A-020 §9, one line of gate evidence per row of A-020 §4.
+
+**Status:**
+
+- proposed (carries an environment gate: no store consoles and no A-023 ship build in this environment)
 
 ## 5. Core game design plan
 
@@ -956,6 +1020,8 @@ Store:
 
 ## 6. First next actions for agents
 
+As of 2026-10-07 every artifact `A-001`..`A-021` is done, so the list below is **historical**. The next artifacts to develop are `A-022` (programmer) and `A-024` (release); `A-023` and `A-025` wait on them and on tooling this environment does not have (Unity toolchain, store consoles).
+
 The next artifacts to develop should be:
 
 ```text
@@ -1015,7 +1081,24 @@ event-horizon-game/
 │   ├── privacy-policy.md
 │   ├── agent-rules.md
 │   ├── prototype-scaffold.md
-│   └── ship.md
+│   ├── ship.md
+│   ├── policy-hosting.md
+│   ├── submission.md
+│   ├── ship-notes/
+│   │   └── <version>.md
+│   ├── briefs/
+│   │   └── <artifact-id>.md
+│   └── policy-page/
+│       └── <policy-text-version>.md
+├── Assets/
+│   └── Runtime/
+│       ├── Fixed/
+│       ├── SimCore/
+│       └── Bridge/Unity/
+├── tools/
+│   └── harness/
+├── replays/
+├── harness.csproj
 ```
 
 ## 8. Important design rule
@@ -1104,7 +1187,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Creates code scaffolding, prototypes, and implementation notes.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
+      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point), A-022 Phase 2 frame driver and render state (depends on A-005, A-019, A-021), and A-023 Unity player package (depends on A-005, A-022). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. A-023 carries an environment gate: it is not startable without the Unity toolchain, and it is never reported done without the evidence its acceptance criteria name. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
     },
     "qa": {
       "description": "Defines tests, QA checklist, performance checks, and regression risks.",
@@ -1116,7 +1199,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Handles store compliance, privacy, analytics, monetization, submission.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the release agent for the Event Horizon game repo. You own A-015 docs/store.md (depends on A-014 docs/qa.md), A-016 docs/monetization.md (depends on A-015), A-017 docs/privacy-policy.md (depends on A-015), and A-020 docs/ship.md (depends on A-015, A-016, A-017). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Read PLAN.md first and keep store listings, monetization, privacy policy, and shipping steps compliant with it and with platform rules. Monetization must not block core game completion. Use git-flow release/* and hotfix/* branches for shipping work; never push directly to main without coordinator approval."
+      "system": "You are the release agent for the Event Horizon game repo. You own A-015 docs/store.md (depends on A-014 docs/qa.md), A-016 docs/monetization.md (depends on A-015), A-017 docs/privacy-policy.md (depends on A-015), A-020 docs/ship.md (depends on A-015, A-016, A-017), A-024 docs/policy-hosting.md (depends on A-017, A-020), and A-025 docs/submission.md plus docs/ship-notes/<version>.md (depends on A-020, A-023, A-024). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Read PLAN.md first and keep store listings, monetization, privacy policy, hosting, and shipping steps compliant with it and with platform rules. Monetization must not block core game completion. A-024 and A-025 carry environment gates (a host for the policy page, store consoles): they are never reported done without the evidence their acceptance criteria name. Use git-flow release/* and hotfix/* branches for shipping work; never push directly to main without coordinator approval."
     }
   }
 }
