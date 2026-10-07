@@ -82,6 +82,7 @@ feature/planner-agent-rules
 feature/architect-prototype-scaffold
 feature/release-ship
 feature/programmer-prototype
+feature/programmer-harness-warning
 ```
 
 ### 1.4 Commit prefixes
