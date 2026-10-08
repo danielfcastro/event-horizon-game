@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    A-026 non-Unity player package — the C# half of the two-process client.
+
+    This is the SAME verified build shape as harness.csproj, not a new guess:
+    EnableDefaultCompileItems must be false (default true plus an explicit
+    <Compile> is NETSDK1022 "Duplicate 'Compile' items", a build failure),
+    globs resolve relative to the CS PROJ (repo root), and with default items
+    off the <Compile> element's Exclude ATTRIBUTE works while an <Exclude>
+    ELEMENT is inert.
+
+    Why the harness files are in this build: Commands.emitSnapshot is the ONE
+    snapshot emitter in the repo, and the payload-vs-snapshot acceptance
+    criterion is byte-exact by construction only if the player embeds THAT
+    emitter's output. Re-implementing it here would be a second emitter, which
+    A-019 forbids.
+
+    Why tools/harness/main.cs is excluded: it owns HarnessEntry.Main, the fork
+    guard, and forkExpected. The player supplies its own entry point
+    (SimHost.Main), and two entry points in one target is a link error. No
+    other harness file references those symbols (probed by grep), so excluding
+    it cannot break the build; if that ever stopped being true the build would
+    fail loudly, not pass quietly.
+
+    The three contract-only Unity stubs are excluded exactly as in the harness
+    target. The exclusion is provably real, not vacuous: RenderLayer.cs and
+    UIRoot.cs reference UnityEngine.* which does not exist in this toolchain,
+    so a broken Exclude yields CS0234/CS0103 rather than a quiet pass.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Assets/**/*.cs"
+             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs" />
+    <Compile Include="tools/harness/*.cs"
+             Exclude="tools/harness/main.cs" />
+    <Compile Include="tools/player/SimHost.cs" />
+  </ItemGroup>
+</Project>

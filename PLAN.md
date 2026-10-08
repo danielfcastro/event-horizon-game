@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-024 (release; ready, carries an environment gate — no host for the policy page in this environment). A-022 done. A-023 and A-025 wait on tooling this environment does not have (Unity toolchain, store consoles); ship phase STEP-03..STEP-15 still await a player build and store access.
+next_artifact: A-026 (programmer; doing on feature/programmer-player-sdl — the SDL2 windowed client that makes the game visible and steerable without Unity). A-022 done. A-024 stays dependency-ready but hosting-gated; A-023 and A-025 wait on tooling this environment does not have (Unity toolchain, store consoles); ship phase STEP-03..STEP-15 still await a player build and store access.
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -86,6 +86,7 @@ feature/programmer-harness-warning
 feature/programmer-harness-exitcode
 feature/programmer-frame-driver
 feature/programmer-player-package
+feature/programmer-player-sdl
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
@@ -117,6 +118,8 @@ docs(prototype-scaffold): ...
 docs(ship): ...
 docs(prototype): ...
 code(prototype): ...
+docs(briefs): ...
+code(player): ...
 chore(repo): ...
 ```
 
@@ -230,6 +233,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | ready | Environment gate: requires a host for the page, which is not present in this environment, so the artifact records the decision and stays blocked until hosting exists. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
+| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | doing | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
 
 ## 3. Dependency graph
 
@@ -279,10 +283,17 @@ A-022 phase 2 frame driver depends on A-005, A-019, A-021.
 A-023 Unity player package depends on A-005, A-022.
 A-024 policy-hosting.md depends on A-017, A-020.
 A-025 submission.md and ship notes depend on A-020, A-023, A-024.
+A-026 non-Unity player package depends on A-005, A-019, A-021, A-022.
 
 A-023 and A-025 additionally carry an environment gate (Unity toolchain, store consoles):
 they are not startable in an environment that lacks the tool, and they are never
 reported as done without the evidence their acceptance criteria name.
+
+A-026 exists precisely because that gate leaves the repo with nothing a human can
+see: A-023 is the Unity player package and this environment has no Unity toolchain,
+so before A-026 the only runnable artifact was a text harness. A-026 is not a
+second simulation. It is a renderer over the SAME SimState, and it is the artifact
+that makes the black hole of A-005 §5.1 visible and steerable without Unity.
 ```
 
 ## 4. Artifact contracts
@@ -667,6 +678,52 @@ a design decision updates `PLAN.md` first):**
 **Status:**
 
 - proposed (carries an environment gate: no store consoles and no A-023 ship build in this environment)
+
+### A-026 Non-Unity player package (SDL2 windowed client)
+
+**Purpose:**
+
+- Put the black hole of A-005 §5.1 on a screen and let a person steer it, in an
+  environment that cannot run A-023 because it has no Unity toolchain.
+- Keep the rule that made A-021..A-022 worth having: one simulation, proven
+  deterministic. A-026 adds a renderer, never a second simulation.
+
+**Design decisions this artifact owns (recorded before the code):**
+
+- **Two processes, one simulation.** The C# side owns the sim and the frame
+  clock; the C side owns the window and the keyboard. This shape is forced, not
+  chosen: this .NET 8 toolchain cannot call a C library from C#. Probed, not
+  assumed — `#pragma DLI_Import` is rejected as `CS1633 Unrecognized #pragma
+  directive` and `extern "C"` parses as a storage modifier (`CS1003 'alias'
+  expected`), so dynamic-library linking into SDL2 is unavailable. The compiler
+  is the oracle here, as everywhere in this repo.
+- **The renderer reads `SimState`, it never writes to it.** This is the contract
+  `RenderLayer.cs` was written and excluded for, made real and compiled. The
+  sim side reaches the run through `FrameDriver.frameLive(clock, state, intent)`,
+  the documented live-device entry, so the exactly-one-loop rule of A-019 §11
+  still holds and no stepping code is duplicated.
+- **Live input uses the same quantization as the replay channel.** A key selects
+  one of the 16 direction codes of `InputDigest.ANGLE_X/ANGLE_Y` (16 = coast),
+  and the `Intent` is built from that table, so a keyboard run and a recorded
+  run of the same key sequence agree. Pointer-position -> intent resolution
+  stays A-011's and out of scope.
+- **Exchange is by file, atomically, never by pipe.** The sim writes the newest
+  frame payload to a temp file and renames it into place; the renderer reads
+  whatever complete payload is newest. A pipe would block the sim whenever the
+  renderer has not consumed a frame, which is a stall that looks like a bug in
+  the sim. The renderer writes the newest key state the same way; the sim reads
+  it once per frame, which is exactly the sampling granularity A-019 §4 already
+  defines.
+- **The payload is the observable state, not a render product.** Step index,
+  hole position/radius/mass, active bodies, `pixelsPerUnit`, result flag. That
+  is what makes the acceptance criterion checkable: a payload dumped at step N
+  must agree with the harness snapshot emitted at step N.
+- **`pixelsPerUnit` stays render-only.** The camera follows the hole and the
+  WU -> px mapping happens in the renderer, per A-019 §6. `DT` is untouched.
+
+**Status:**
+
+- doing (2026-10-07, on `feature/programmer-player-sdl` from `develop`)
 
 ## 5. Core game design plan
 
@@ -1118,7 +1175,7 @@ Store:
 
 ## 6. First next actions for agents
 
-As of 2026-10-07 every artifact `A-001`..`A-021` is done, so the list below is **historical**. The next artifacts to develop are `A-022` (programmer) and `A-024` (release); `A-023` and `A-025` wait on them and on tooling this environment does not have (Unity toolchain, store consoles).
+As of 2026-10-07 every artifact `A-001`..`A-021` is done, so the list below is **historical**. `A-022` is done and merged. The next artifact to develop is `A-026` (programmer, the SDL2 windowed client); `A-024` is dependency-ready but hosting-gated, and `A-023` and `A-025` wait on tooling this environment does not have (Unity toolchain, store consoles).
 
 The next artifacts to develop should be:
 
@@ -1285,7 +1342,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Creates code scaffolding, prototypes, and implementation notes.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point), A-022 Phase 2 frame driver and render state (depends on A-005, A-019, A-021), and A-023 Unity player package (depends on A-005, A-022). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. A-023 carries an environment gate: it is not startable without the Unity toolchain, and it is never reported done without the evidence its acceptance criteria name. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
+      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point), A-022 Phase 2 frame driver and render state (depends on A-005, A-019, A-021), and A-023 Unity player package (depends on A-005, A-022). You also own A-026 Non-Unity player package, an SDL2 windowed client that renders the SAME SimState without Unity (depends on A-005, A-019, A-021, A-022), because A-023's Unity gate otherwise leaves the repo with nothing a human can see. Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. A-023 carries an environment gate: it is not startable without the Unity toolchain, and it is never reported done without the evidence its acceptance criteria name. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
     },
     "qa": {
       "description": "Defines tests, QA checklist, performance checks, and regression risks.",
@@ -1378,10 +1435,10 @@ truncated" when the prompt plus the model's output budget pass the context
 window. Two controls prevent this:
 
 - Every project agent in the configuration of section 9.2 sets
-  `"options": { "max_tokens": 16000 }`. With a 131027-token context this caps
-  any single request at prompt + 16000 output tokens, leaving headroom for the
-  largest expected prompt. Never raise this value above a quarter of the
-  context window.
+  `"options": { "max_tokens": 16000 }`. With the 262144-token context window
+  of the bullet below, this caps any single request at prompt + 16000 output
+  tokens, leaving headroom for the largest expected prompt. Never raise this
+  value above a quarter of the context window (65536 tokens at 262144).
 - Role agents work from the context briefs of section 9.4 and never read
   `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
   stays far below the context limit. The coordinator regenerates briefs
@@ -1415,11 +1472,29 @@ window. Two controls prevent this:
   control.
 - Context-watch plugin: `opencode.json` carries a `plugins` entry for
   `opencode-context-watch` (npm package; OpenCode 2.x only, silent
-  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
-  `verbose: true`. It watches each session's context usage and injects
-  a synthetic warning into every above-threshold request so agents
-  wrap up or compact before the window fills. It adds no tool and
-  never compacts; compaction remains OpenCode's job.
+  no-op on 1.x) with `warnPercent: 0.95`, `warnTokens: 249037`,
+  `verbose: true`. Verified against the plugin source: the percent band
+  is relative to the window the plugin reads from the model's declared
+  `limit.context`, so it follows the window automatically; `warnTokens`
+  is an absolute band (OR semantics) and must be kept equal to
+  `warnPercent` of the window (0.95 × 262144 = 249037). It watches
+  each session's context usage and injects a synthetic warning into
+  every above-threshold request so agents wrap up or compact before
+  the window fills. It adds no tool and never compacts; compaction
+  remains OpenCode's job.
+- Context budget (changed 2026-10-08): the project model declares
+  `limit.context: 262144` (halved from 524288) and `limit.output: 64000`
+  (halved with the window, keeping the same share of it). Derived
+  controls scale with it: `compaction.buffer` 16000 (the same ~6%
+  headroom, so automatic compaction starts at the same fraction of the
+  window), `compaction.keep.tokens` 8000 (absolute, unchanged), and the
+  plugin's `warnTokens` band at 95% of the window. Agent `max_tokens`
+  (16000; programmer 24000) stay far below a quarter of the window
+  (65536), and a role-agent baseline prompt near 100,000 tokens plus
+  its budget still fits (124,000 < 262,144). The google model keeps
+  its own real 1048576-token limit; it is not part of this budget.
+  If the window changes again, update every one of these numbers in
+  the same commit.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
