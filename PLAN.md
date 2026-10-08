@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-026 (programmer; doing on feature/programmer-player-sdl — the SDL2 windowed client that makes the game visible and steerable without Unity). A-022 done. A-024 stays dependency-ready but hosting-gated; A-023 and A-025 wait on tooling this environment does not have (Unity toolchain, store consoles); ship phase STEP-03..STEP-15 still await a player build and store access.
+next_artifact: none executable (A-026 done and merged via PR #31 at 79ed193; A-024 stays dependency-ready but hosting-gated, A-023 and A-025 wait on tooling this environment does not have — Unity toolchain, store consoles; ship phase STEP-03..STEP-15 now have a non-Unity player build but still await the Unity player package and store access). The run is at a gate.
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -233,7 +233,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | ready | Environment gate: requires a host for the page, which is not present in this environment, so the artifact records the decision and stays blocked until hosting exists. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
-| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | doing | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
+| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
 
 ## 3. Dependency graph
 
@@ -723,7 +723,7 @@ a design decision updates `PLAN.md` first):**
 
 **Status:**
 
-- doing (2026-10-07, on `feature/programmer-player-sdl` from `develop`)
+- done (merged into develop via PR #31 at 79ed193; branch `feature/programmer-player-sdl` deleted locally and remotely; commits d8bdd34 docs(briefs):, c161717 code(player):, d1e98ee chore(repo):). Verified post-merge on develop from a clean obj: harness build 0 Warning(s) 0 Error(s), fork guard silent (forkExpected 0x99dd49de20c48bc4 unchanged), H-01 digest=6d25ff0add639448 steps=2828 droppedSteps=0 result=goal exit 0, fresh sim BYTE-IDENTICAL to the golden, H-02 PASS snapshotsCompared=6, player build 0/0 and replay goalStep=2828 droppedSteps=0 exit 0. Full checklist evidence and the three defects found by running and fixed (wu_to_px Q64.64 shift, --live flag, the documented gcc link command needing -lm) are recorded in PROGRESS.md 2026-10-08 entries. The visual desktop confirmation of the window is recorded as not-executable in this environment — never claimed green.)
 
 ## 5. Core game design plan
 
@@ -1175,7 +1175,7 @@ Store:
 
 ## 6. First next actions for agents
 
-As of 2026-10-07 every artifact `A-001`..`A-021` is done, so the list below is **historical**. `A-022` is done and merged. The next artifact to develop is `A-026` (programmer, the SDL2 windowed client); `A-024` is dependency-ready but hosting-gated, and `A-023` and `A-025` wait on tooling this environment does not have (Unity toolchain, store consoles).
+As of 2026-10-08 every artifact `A-001`..`A-022` and `A-026` is done, so the list below is **historical**. `A-026` merged via PR #31 at 79ed193. No further artifact is executable in this environment: `A-024` is dependency-ready but hosting-gated, and `A-023` and `A-025` wait on tooling this environment does not have (Unity toolchain, store consoles). The run is at a gate, not finished.
 
 The next artifacts to develop should be:
 
