@@ -7,5 +7,6 @@ private/
 *.tmp
 *.log
 obj/
+obj-player/
 bin/
 artifacts/
