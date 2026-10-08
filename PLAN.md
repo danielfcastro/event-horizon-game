@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-026 (programmer; ready — the SDL2 windowed client that makes the game visible and steerable without Unity). A-022 done. A-024 stays dependency-ready but hosting-gated; A-023 and A-025 wait on tooling this environment does not have (Unity toolchain, store consoles); ship phase STEP-03..STEP-15 still await a player build and store access.
+next_artifact: A-026 (programmer; doing on feature/programmer-player-sdl — the SDL2 windowed client that makes the game visible and steerable without Unity). A-022 done. A-024 stays dependency-ready but hosting-gated; A-023 and A-025 wait on tooling this environment does not have (Unity toolchain, store consoles); ship phase STEP-03..STEP-15 still await a player build and store access.
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -118,6 +118,8 @@ docs(prototype-scaffold): ...
 docs(ship): ...
 docs(prototype): ...
 code(prototype): ...
+docs(briefs): ...
+code(player): ...
 chore(repo): ...
 ```
 
@@ -231,7 +233,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | ready | Environment gate: requires a host for the page, which is not present in this environment, so the artifact records the decision and stays blocked until hosting exists. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
-| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | ready | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
+| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | doing | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
 
 ## 3. Dependency graph
 
@@ -1433,10 +1435,10 @@ truncated" when the prompt plus the model's output budget pass the context
 window. Two controls prevent this:
 
 - Every project agent in the configuration of section 9.2 sets
-  `"options": { "max_tokens": 16000 }`. With a 131027-token context this caps
-  any single request at prompt + 16000 output tokens, leaving headroom for the
-  largest expected prompt. Never raise this value above a quarter of the
-  context window.
+  `"options": { "max_tokens": 16000 }`. With the 262144-token context window
+  of the bullet below, this caps any single request at prompt + 16000 output
+  tokens, leaving headroom for the largest expected prompt. Never raise this
+  value above a quarter of the context window (65536 tokens at 262144).
 - Role agents work from the context briefs of section 9.4 and never read
   `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
   stays far below the context limit. The coordinator regenerates briefs
@@ -1470,11 +1472,29 @@ window. Two controls prevent this:
   control.
 - Context-watch plugin: `opencode.json` carries a `plugins` entry for
   `opencode-context-watch` (npm package; OpenCode 2.x only, silent
-  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
-  `verbose: true`. It watches each session's context usage and injects
-  a synthetic warning into every above-threshold request so agents
-  wrap up or compact before the window fills. It adds no tool and
-  never compacts; compaction remains OpenCode's job.
+  no-op on 1.x) with `warnPercent: 0.95`, `warnTokens: 249037`,
+  `verbose: true`. Verified against the plugin source: the percent band
+  is relative to the window the plugin reads from the model's declared
+  `limit.context`, so it follows the window automatically; `warnTokens`
+  is an absolute band (OR semantics) and must be kept equal to
+  `warnPercent` of the window (0.95 × 262144 = 249037). It watches
+  each session's context usage and injects a synthetic warning into
+  every above-threshold request so agents wrap up or compact before
+  the window fills. It adds no tool and never compacts; compaction
+  remains OpenCode's job.
+- Context budget (changed 2026-10-08): the project model declares
+  `limit.context: 262144` (halved from 524288) and `limit.output: 64000`
+  (halved with the window, keeping the same share of it). Derived
+  controls scale with it: `compaction.buffer` 16000 (the same ~6%
+  headroom, so automatic compaction starts at the same fraction of the
+  window), `compaction.keep.tokens` 8000 (absolute, unchanged), and the
+  plugin's `warnTokens` band at 95% of the window. Agent `max_tokens`
+  (16000; programmer 24000) stay far below a quarter of the window
+  (65536), and a role-agent baseline prompt near 100,000 tokens plus
+  its budget still fits (124,000 < 262,144). The google model keeps
+  its own real 1048576-token limit; it is not part of this budget.
+  If the window changes again, update every one of these numbers in
+  the same commit.
 
 If a coordinator session itself grows too large, OpenCode compacts it
 automatically into a summary; the `max_tokens` cap guarantees that even an
