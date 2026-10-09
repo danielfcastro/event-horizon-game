@@ -155,7 +155,7 @@ Ordering rules that this document enforces:
 | --- | --- |
 | Host | GitHub Pages for this repo. The policy page is the published A-017 §3 text, built from the repo's own docs, served over HTTPS. |
 | Verbatim rule | The published page is A-017 §3 copied verbatim. The only permitted changes are the two bracketed values A-020 supplies. No paraphrase, no added marketing copy, no removed section. |
-| Single URL record | `POLICY_URL = https://event-horizon-game.github.io/privacy-policy/`. The org/user segment is fixed at the moment of publishing and the final value is written into ship notes. Every consumer reads the recorded value; nothing re-derives or hand-copies it. |
+| Single URL record | `POLICY_URL = https://danielfcastro.github.io/privacy-policy/`. The org/user segment is fixed at the moment of publishing and the final value is written into ship notes. Every consumer reads the recorded value; nothing re-derives or hand-copies it. Corrected 2026-10-09 by A-024: the pre-named event-horizon-game.github.io segment is squatted by an unrelated GitHub org (probed, not assumed); the account created is danielfcastro. See docs/policy-hosting.md. |
 | Reuse | POLICY_URL appears in: every store listing privacy field, the in-game privacy screen, the credits line, and ship notes. One string, four places (PR-2, PR-3). |
 | Contact | `CONTACT_CHANNEL = email`; `CONTACT_VALUE = support@event-horizon.game`; `MONITORED = yes`, held by the human ship decision. Taken from A-017 §5. No placeholder, no bot-only channel, no unmonitored inbox. |
 | Contact verification | Before row 7 of §4 turns green: send one test message to CONTACT_VALUE and confirm a human reply within 7 days; record the date in ship notes. |
