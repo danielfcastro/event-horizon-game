@@ -33,9 +33,16 @@
 //   18  holeX           i64   Q32.32 world units
 //   26  holeY           i64   Q32.32 world units
 //   34  holeRadius      i64   Q32.32
-//   42  holeMass        i64   Q32.32
-//   50  bodyCount       u16   active bodies (bodyFlags bit0)
-//   52  bodyCount x ( i64 x, i64 y, i64 radius, u8 kind ) = 25 bytes each
+//   42  holeEventRadius i64   Q32.32  eventRadius = baseRadius + a*isqrt(mass)
+//                             ADDED 2026-10-10: this is the VISIBLE hole (§5.3
+//                             "keep event horizon visible"). The field below it
+//                             is constant, so drawing holeRadius is what made
+//                             the hole look frozen at every step. Both halves
+//                             of the protocol move together: view.c parses this
+//                             same offset.
+//   50  holeMass        i64   Q32.32
+//   58  bodyCount       u16   active bodies (bodyFlags bit0)
+//   60  bodyCount x ( i64 x, i64 y, i64 radius, u8 kind ) = 25 bytes each
 //       pixelsPerUnit   u64   Q32.32, render-only
 //       resultFlag      u8    0 running, 1 goal, 2 timeout
 //       snapshotLen     u32   0 for live frames; a dump frame carries the
@@ -384,6 +391,7 @@ namespace EH
                 putI64(s.holeX);
                 putI64(s.holeY);
                 putI64(s.holeRadius);
+                putI64(s.holeEventRadius); // the visible hole: §5.3 (view.c parses this offset)
                 putI64(s.holeMass);
                 int active = 0;
                 for (int b = 0; b < SimState.BODY_CAPACITY; b++)
