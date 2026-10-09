@@ -765,6 +765,23 @@ a design decision updates `PLAN.md` first):**
   `holeEventRadius` at the §5.3 zoom; `holeRadius` (the collision core) is not
   drawn as the hole. This is what §5.4 means by "Event Horizon Radius | Visual
   gravitational boundary".
+- **Outcome (2026-10-10), frames looked at rather than counted.** Before: the
+  drawn disc was `holeRadius` = 1.0 WU, 32 px at every step. After: the renderer
+  draws `holeEventRadius` at the §5.3 zoom, and the dump proof reports
+  `eventRadiusPx=167` with `ppuUsed` 5 -> 3 -> 2 at steps 1 -> 1800 -> 2827, so
+  the horizon is held at 62% of the short edge and the camera only ever zooms
+  out. The protocol moved in both halves together and the embedded snapshot at
+  step 1800 is still BYTE-IDENTICAL to the golden snapshot at 1800 (17291 bytes
+  found intact inside the payload), so the observable-state criterion survived.
+- **Residual, recorded as an open question, not fixed here.** A constant
+  fraction of the frame makes the on-screen hole the same 334 px across the whole
+  run; the growth cue becomes the field shrinking around it. §5.3's "the black
+  hole starts small" cannot be met with A-007's constants (baseRadius 8.0, a =
+  2.0) at A-009's starting mass 100, because the horizon is already 28 WU in a
+  128x96 world — wider than the default 30 WU opening view. Making the hole
+  visibly grow inside a fixed world view is a balance and level decision
+  (A-007's `a`, A-009's starting mass), not a renderer decision, and is left
+  open rather than invented.
 
 **Status:**
 
