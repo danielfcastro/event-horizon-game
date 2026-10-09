@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: none executable (A-026 done and merged via PR #31 at 79ed193; A-024 stays dependency-ready but hosting-gated, A-023 and A-025 wait on tooling this environment does not have — Unity toolchain, store consoles; ship phase STEP-03..STEP-15 now have a non-Unity player build but still await the Unity player package and store access). The run is at a gate.
+next_artifact: none executable (A-024 done and merged via PR #32 at 866fa08; A-023 waits on the Unity toolchain and on real device classes, A-025 waits on store consoles and on A-023; contact verification needs a real inbox and a human reply. The run is at a gate.)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -231,7 +231,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 | A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
-| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | doing | Environment gate closed 2026-10-09: the host is GitHub Pages at `danielfcastro/privacy-policy`, because the segment pre-named in A-020 §6 is squatted by an unrelated org (probed, see §4 A-024), so the canonical `POLICY_URL` is `https://danielfcastro.github.io/privacy-policy/`. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
+| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | done | Host gate closed 2026-10-09: the segment pre-named in A-020 §6 is squatted by an unrelated GitHub org (probed), so the canonical POLICY_URL is `https://danielfcastro.github.io/privacy-policy/`. Merged via PR #32 into develop at 866fa08. Evidence in docs/policy-hosting.md §5: GET 200 with zero redirects; served text equals the page source verbatim after documented host rendering (the default theme emits an h1 "privacy-policy" heading, recorded not removed); no placeholder tokens; live page carries policy text version 1.1 and the effective date. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 | A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
 
@@ -687,8 +687,10 @@ a design decision updates `PLAN.md` first):**
 
 **Status:**
 
-- doing (on feature/release-policy-hosting from develop; the hosting gate is
-  closed by the probe above, so the artifact is startable)
+- done (merged via PR #32 into develop at 866fa08, branch deleted locally and
+  remotely; the hosting gate was closed by probing the segment, not by declaring
+  it, and the live page was fetched and diffed against the page source by the
+  coordinator rather than trusting the author's report)
 
 ### A-025 docs/submission.md and docs/ship-notes/<version>.md
 
@@ -1197,7 +1199,7 @@ Store:
 
 ## 6. First next actions for agents
 
-As of 2026-10-08 every artifact `A-001`..`A-022` and `A-026` is done, so the list below is **historical**. `A-026` merged via PR #31 at 79ed193. No further artifact is executable in this environment: `A-024` is dependency-ready but hosting-gated, and `A-023` and `A-025` wait on tooling this environment does not have (Unity toolchain, store consoles). The run is at a gate, not finished.
+As of 2026-10-09 every artifact `A-001`..`A-022`, `A-024` and `A-026` is done, so the list below is **historical**. `A-026` merged via PR #31 at 79ed193; `A-024` merged via PR #32 at 866fa08, its hosting gate closed by publishing the policy page at a real HTTPS URL and fetching it back. No further artifact is executable in this environment: `A-023` waits on the Unity toolchain and on real iOS/Android device classes, `A-025` waits on store consoles and on `A-023`, and contact verification needs a real inbox with a human reply within 7 days. The run is at a gate, not finished.
 
 The next artifacts to develop should be:
 
