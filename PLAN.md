@@ -231,7 +231,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 | A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
-| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | ready | Environment gate: requires a host for the page, which is not present in this environment, so the artifact records the decision and stays blocked until hosting exists. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
+| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | doing | Environment gate closed 2026-10-09: the host is GitHub Pages at `danielfcastro/privacy-policy`, because the segment pre-named in A-020 §6 is squatted by an unrelated org (probed, see §4 A-024), so the canonical `POLICY_URL` is `https://danielfcastro.github.io/privacy-policy/`. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 | A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. |
 
@@ -664,9 +664,31 @@ a design decision updates `PLAN.md` first):**
 - Publish the policy page and record the single `POLICY_URL` (A-020 STEP-10, PR-2/PR-3).
 - Name the host, the policy text version published, and every place the URL is reused.
 
+**Design decisions this artifact owns (recorded before the artifact):**
+
+- **Host segment (probed 2026-10-09, not assumed).** A-020 §6 pre-names
+  `POLICY_URL = https://event-horizon-game.github.io/privacy-policy/` and its
+  own rule fixes the org/user segment at the moment of publishing. That
+  segment is not ours: `api.github.com/orgs/Event-Horizon-Game` returns an
+  organization created 2024-07-26 holding zero repositories, and `gh api
+  user/orgs` returns no organization for the authenticated account
+  `danielfcastro`. GitHub names are unique and case-insensitive, so no
+  casing of that segment is available to us and the pre-named URL can never
+  be published. A-020 §6 therefore resolves to the writable host: user
+  segment `danielfcastro`, repository `privacy-policy`, GitHub Pages over
+  HTTPS, giving the canonical recorded value
+  `POLICY_URL = https://danielfcastro.github.io/privacy-policy/`. The
+  pre-named string in A-020 §6 and in the page-source header is corrected to
+  this value in the same branch, so no consumer re-derives a URL that
+  cannot exist.
+- **The gate is closed, not claimed.** A-024 is done only with the live URL
+  fetched and its served body compared against the page source; a repo
+  created and a build scheduled are not evidence that a page was published.
+
 **Status:**
 
-- ready (carries an environment gate: no host for the page in this environment)
+- doing (on feature/release-policy-hosting from develop; the hosting gate is
+  closed by the probe above, so the artifact is startable)
 
 ### A-025 docs/submission.md and docs/ship-notes/<version>.md
 
