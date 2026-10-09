@@ -1495,7 +1495,21 @@ window. Two controls prevent this:
   its own real 1048576-token limit; it is not part of this budget.
   If the window changes again, update every one of these numbers in
   the same commit.
+- Fit guard (changed 2026-10-09): the agent-level `max_tokens` of section
+  9.2 bounds the requests an agent starts, not every request a session
+  makes. A coordinator request at prompt 199,774 asked for 62,407 output
+  tokens - the provider's `limit.output` 64000, not any agent's 16000 or
+  24000 - and the serve engine refused it with a 400 ("prompt + max
+  tokens exceeds the context; requests are never truncated", #545). The
+  durable control is `"fit_max_tokens": true` in the model's run
+  config `~/Strata/strata-coder-iq1_m.json`, which shortens such a
+  `max_tokens` to the room left instead of refusing. A prompt that
+  leaves no room at all is still refused. The serve engine reads that
+  file when it starts, so the key takes effect at the next start of the
+  server, not on the next request; the file lives outside the repo and
+  is never committed.
 
 If a coordinator session itself grows too large, OpenCode compacts it
-automatically into a summary; the `max_tokens` cap guarantees that even an
-uncompacted request never exceeds the context.
+automatically into a summary; the `max_tokens` cap bounds an agent-initiated
+request and `fit_max_tokens` bounds the others, so an uncompacted request
+never exceeds the context in either case.
