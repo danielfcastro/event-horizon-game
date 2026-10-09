@@ -747,6 +747,42 @@ a design decision updates `PLAN.md` first):**
 - **`pixelsPerUnit` stays render-only.** The camera follows the hole and the
   WU -> px mapping happens in the renderer, per A-019 §6. `DT` is untouched.
 
+**Extension (2026-10-10), recorded before the code, after looking at the frames:**
+
+- **Defect found by sight, not by arithmetic.** `view.c` drew
+  `wu_to_px(p.holeRadius, p.ppu)` — the collision radius, which is constant at
+  1.0 WU — so the rendered hole was the same 32 px disc at step 1 and at step
+  1800 while `holeMass` went 100 -> 567. The earlier proof passed because it
+  counted non-background pixels of a constant disc. PLAN.md §5.3 says to keep the
+  event horizon visible and to zoom as the hole grows; the client did neither.
+- **The payload must carry `holeEventRadius`.** This is a protocol change: the
+  documented layout in `SimHost.cs` and the parser in `view.c` move together, in
+  one change, so the two halves cannot drift. The golden snapshot already carries
+  the field (`Snapshot.cs:196`, "seventh hole i64 = eventRadius", A-019 §7), so
+  the payload-vs-snapshot acceptance criterion stays checkable and no new state
+  is invented.
+- **The visible hole is the event horizon.** `RenderLayer` draws
+  `holeEventRadius` at the §5.3 zoom; `holeRadius` (the collision core) is not
+  drawn as the hole. This is what §5.4 means by "Event Horizon Radius | Visual
+  gravitational boundary".
+- **Outcome (2026-10-10), frames looked at rather than counted.** Before: the
+  drawn disc was `holeRadius` = 1.0 WU, 32 px at every step. After: the renderer
+  draws `holeEventRadius` at the §5.3 zoom, and the dump proof reports
+  `eventRadiusPx=167` with `ppuUsed` 5 -> 3 -> 2 at steps 1 -> 1800 -> 2827, so
+  the horizon is held at 62% of the short edge and the camera only ever zooms
+  out. The protocol moved in both halves together and the embedded snapshot at
+  step 1800 is still BYTE-IDENTICAL to the golden snapshot at 1800 (17291 bytes
+  found intact inside the payload), so the observable-state criterion survived.
+- **Residual, recorded as an open question, not fixed here.** A constant
+  fraction of the frame makes the on-screen hole the same 334 px across the whole
+  run; the growth cue becomes the field shrinking around it. §5.3's "the black
+  hole starts small" cannot be met with A-007's constants (baseRadius 8.0, a =
+  2.0) at A-009's starting mass 100, because the horizon is already 28 WU in a
+  128x96 world — wider than the default 30 WU opening view. Making the hole
+  visibly grow inside a fixed world view is a balance and level decision
+  (A-007's `a`, A-009's starting mass), not a renderer decision, and is left
+  open rather than invented.
+
 **Status:**
 
 - done (merged into develop via PR #31 at 79ed193; branch `feature/programmer-player-sdl` deleted locally and remotely; commits d8bdd34 docs(briefs):, c161717 code(player):, d1e98ee chore(repo):). Verified post-merge on develop from a clean obj: harness build 0 Warning(s) 0 Error(s), fork guard silent (forkExpected 0x99dd49de20c48bc4 unchanged), H-01 digest=6d25ff0add639448 steps=2828 droppedSteps=0 result=goal exit 0, fresh sim BYTE-IDENTICAL to the golden, H-02 PASS snapshotsCompared=6, player build 0/0 and replay goalStep=2828 droppedSteps=0 exit 0. Full checklist evidence and the three defects found by running and fixed (wu_to_px Q64.64 shift, --live flag, the documented gcc link command needing -lm) are recorded in PROGRESS.md 2026-10-08 entries. The visual desktop confirmation of the window is recorded as not-executable in this environment — never claimed green.)
@@ -802,6 +838,23 @@ As the black hole grows:
 camera follows black hole
 zoom = f(event horizon radius, mass)
 ```
+
+`f` is made concrete here (decided 2026-10-10, because A-026 shipped a fixed
+`pixelsPerUnit` and the visible hole never grew):
+
+```text
+pixelsPerUnit = clamp(0.62 * viewportShortEdgePx / (2 * eventRadiusWU),
+                      MIN_PPU, MAX_PPU)
+MIN_PPU = 2      MAX_PPU = 32
+```
+
+The event horizon diameter is held at 62% of the viewport short edge, so it is
+always on screen and the camera only ever zooms out as mass grows. `MAX_PPU`
+keeps the opening view equal to the client's original fixed scale; `MIN_PPU`
+keeps bodies at a few pixels so the field stays readable at the end of a run.
+The value is continuous in `eventRadius`, so the zoom is smooth, not stepped.
+`pixelsPerUnit` stays render-only: it is chosen by the renderer and never
+reaches `SimCore`.
 
 ### 5.4 Black hole stats
 

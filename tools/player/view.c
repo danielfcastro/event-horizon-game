@@ -53,6 +53,19 @@ static uint32_t fnv32(const unsigned char *p, size_t n)
 
 /* ---- framebuffer: one drawing path feeds BOTH the window and the PPM ------ */
 static int VW = 960, VH = 540;
+
+/* §5.3 camera constants. The event horizon is held at HORIZON_PCT percent of
+ * the viewport short edge so it is always on screen, and the scale never drops
+ * below MIN_PPU px/WU so bodies stay readable at the end of a long run. The
+ * upper bound is the tier's pixelsPerUnit carried in the payload, so a device
+ * tier still decides sharpness; the camera only ever zooms out as the hole
+ * grows. Render-only: none of this reaches SimCore. */
+#define HORIZON_PCT 62
+#define MIN_PPU 2
+
+/* render-only diagnostic: the camera scale actually used for the last frame,
+ * so the dump proof can report what was drawn rather than re-deriving it. */
+static int64_t g_ppuUsed = 0;
 static uint32_t *fb = NULL;
 
 static inline uint32_t pack_px(uint32_t r, uint32_t g, uint32_t b)
@@ -130,7 +143,7 @@ static long long wu_to_px(long long delta_q, uint64_t ppu_q)
 typedef struct
 {
     int64_t step;
-    int64_t holeX, holeY, holeRadius, holeMass;
+    int64_t holeX, holeY, holeRadius, holeEventRadius, holeMass;
     int count;
     int64_t *bx, *by, *br;
     unsigned char *kind;
@@ -207,6 +220,8 @@ static int read_payload(const char *path, Payload *out)
     at += 8;
     out->holeRadius = be_i64(raw + at);
     at += 8;
+    out->holeEventRadius = be_i64(raw + at); /* the visible hole: §5.3 */
+    at += 8;
     out->holeMass = be_i64(raw + at);
     at += 8;
     int count = (int)((raw[at] << 8) | raw[at + 1]);
@@ -249,7 +264,35 @@ static int draw(const Payload *p)
 
     int cx = VW / 2;
     int cy = VH / 2;
-    int hr = (int)wu_to_px(p->holeRadius, p->ppu);
+
+    /* §5.3 camera: the visible hole is the event horizon, and the zoom keeps
+     * it on screen. ppu_eff = clamp(HORIZON_PCT percent of the viewport short
+     * edge divided by the horizon diameter in WU, MIN_PPU, the tier's pixelsPerUnit
+     * from the payload). The scale is chosen in double because it is render-only:
+     * it never reaches SimCore, so it cannot change what the simulation did;
+     * the fixed-point wu_to_px below still does the actual mapping. */
+    double evWu = (double)p->holeEventRadius / 4294967296.0;
+    long long tierPpu = (long long)(p->ppu >> 32);
+    if (tierPpu < MIN_PPU)
+    {
+        tierPpu = MIN_PPU;
+    }
+    long shortEdge = (VH < VW) ? (long)VH : (long)VW;
+    double want = (evWu > 0.0)
+                      ? ((double)shortEdge * (double)HORIZON_PCT / 100.0) / (2.0 * evWu)
+                      : (double)tierPpu;
+    if (want < (double)MIN_PPU)
+    {
+        want = (double)MIN_PPU;
+    }
+    if (want > (double)tierPpu)
+    {
+        want = (double)tierPpu;
+    }
+    int64_t ppuEff = (int64_t)(want * 4294967296.0);
+    g_ppuUsed = ppuEff;
+
+    int hr = (int)wu_to_px(p->holeEventRadius, ppuEff);
     if (hr < 1)
     {
         hr = 1;
@@ -258,13 +301,13 @@ static int draw(const Payload *p)
     /* bodies first: the hole absorbs, so it occludes what it has caught */
     for (int i = 0; i < p->count; i++)
     {
-        long long sx = (long long)cx + wu_to_px(p->bx[i] - p->holeX, p->ppu);
-        long long sy = (long long)cy - wu_to_px(p->by[i] - p->holeY, p->ppu);
+        long long sx = (long long)cx + wu_to_px(p->bx[i] - p->holeX, ppuEff);
+        long long sy = (long long)cy - wu_to_px(p->by[i] - p->holeY, ppuEff);
         if (sx < -256 || sx > VW + 256 || sy < -256 || sy > VH + 256)
         {
             continue; /* off-screen */
         }
-        int rr = (int)wu_to_px(p->br[i], p->ppu);
+        int rr = (int)wu_to_px(p->br[i], ppuEff);
         if (rr < 1)
         {
             rr = 1;
@@ -302,7 +345,10 @@ static int draw(const Payload *p)
         disc((int)sx, (int)sy, rr, pack_px(r, g, b));
     }
 
-    /* the black hole: a true black disc with a bright accretion rim */
+    /* the black hole: the event horizon is the visible hole (§5.4 "Visual
+     * gravitational boundary"), drawn as a true black disc with a bright
+     * accretion rim. The collision core (holeRadius) is NOT drawn as the hole:
+     * it is constant, and drawing it is what made the hole look frozen. */
     disc(cx, cy, hr, pack_px(0, 0, 0));
     ring(cx, cy, hr, pack_px(140, 236, 255));
     if (hr > 2)
@@ -458,10 +504,11 @@ int main(int argc, char **argv)
             }
         }
         fprintf(stderr,
-            "view: ppm=%s size=%dx%d step=%lld holeRadiusPx=%lld bodies=%d "
-            "nonbg=%ld\n",
+            "view: ppm=%s size=%dx%d step=%lld eventRadiusPx=%lld ppuUsed=%lld "
+            "bodies=%d nonbg=%ld\n",
             ppmPath, VW, VH, (long long)p.step,
-            (long long)wu_to_px(p.holeRadius, p.ppu), p.count, nonbg);
+            (long long)wu_to_px(p.holeEventRadius, g_ppuUsed),
+            (long long)(g_ppuUsed >> 32), p.count, nonbg);
         return 0;
     }
 
