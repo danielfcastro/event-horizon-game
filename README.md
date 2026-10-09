@@ -2,7 +2,7 @@
 
 A mobile game (iOS, Android) where the player controls a growing black hole. It starts small, drifts across the screen, pulls nearby bodies into its gravitational field, absorbs them, and grows in mass, event horizon, and pull strength.
 
-This repository holds the **design and coordination plan** for that game, and since the phase-1 prototype merged it also holds the **headless simulation code** that plan produced: the deterministic core (`Assets/Runtime/SimCore/`, `Assets/Runtime/Fixed/`), a command-line harness (`tools/harness/`), and blessed golden fixtures (`replays/`). What it does **not** hold is a player-facing build: there is no app package, no render layer running, and no store submission. Everything is written so that AI agents can pick up work in a predictable order without duplicating effort or making incompatible decisions.
+This repository holds the **design and coordination plan** for that game, and since the phase-1 prototype merged it also holds the **deterministic simulation code** that plan produced: the fixed-point core (`Assets/Runtime/Fixed/`), the simulation (`Assets/Runtime/SimCore/`), a command-line harness (`tools/harness/`), blessed golden fixtures (`replays/`), and a **non-Unity windowed client** (`tools/player/`, built by A-026) that draws the same simulation in an SDL2 window. What it does **not** hold is a store-facing build: there is no app package, no Unity player package (A-023 is gated on the Unity toolchain), and no store submission. Everything is written so that AI agents can pick up work in a predictable order without duplicating effort or making incompatible decisions.
 
 ## What is in this repository
 
@@ -14,10 +14,13 @@ This repository holds the **design and coordination plan** for that game, and si
 | `docs/` | Design and specification artifacts (`spec.md`, `architecture.md`, `design.md`, …), produced in the order defined in `PLAN.md`. |
 | `docs/briefs/` | Per-artifact context briefs. A role agent reads only its brief, never `PLAN.md` or an approved upstream document in full. |
 | `docs/policy-page/` | The filled privacy policy page source, at the current policy text version. |
+| `docs/policy-hosting.md` | A-024: the published policy page, the single `POLICY_URL`, and the live-page verification. Every consumer reads the value recorded there. |
 | `Assets/Runtime/Fixed/` | Fixed-point arithmetic and the PRNG. Part of the hashed fork set. |
 | `Assets/Runtime/SimCore/` | The deterministic simulation: level loader, fixed-step driver, spawn director, snapshot codec. Part of the hashed fork set. |
 | `Assets/Runtime/Bridge/Unity/` | Contract-only Unity-facing files. Three of them (`GameLoop.cs`, `RenderLayer.cs`, `UIRoot.cs`) are excluded from the headless build by `harness.csproj` and do not compile without the Unity toolchain; the other three (`InputAdapter.cs`, `LevelLoader.cs`, `PlatformBridge.cs`) are compiled headless. |
 | `tools/harness/` | The command-line harness: the H-01..H-09 command surface, golden registry, snapshot codecs. Not hashed by the fork guard. |
+| `tools/player/` | The non-Unity windowed client: `SimHost.cs` runs the same simulation over `FrameDriver.frameLive` and writes a frame payload; `view.c` is a C SDL2 renderer that READS that payload and never writes to `SimState`. |
+| `player.csproj` | Build manifest for the windowed client's C# side. The C side is built with `gcc` and SDL2. |
 | `replays/` | Blessed golden fixtures: the committed run digest and the golden replay. These are the oracle for regression checks. |
 | `harness.csproj` | Headless build manifest at the repo root, with root-relative source globs and the three Unity files excluded. |
 
@@ -25,7 +28,7 @@ This repository holds the **design and coordination plan** for that game, and si
 
 ## Artifact sequence
 
-Work proceeds through 25 artifacts, `A-001` through `A-025`, in the dependency order given in `PLAN.md`. Each artifact is one file or module, owned by one agent role, and moves through four statuses:
+Work proceeds through 26 artifacts, `A-001` through `A-026`, in the dependency order given in `PLAN.md`. Each artifact is one file or module, owned by one agent role, and moves through four statuses:
 
 ```text
 proposed -> ready -> doing -> done
@@ -39,7 +42,7 @@ An artifact must not be started before its dependencies are `done`. The current 
 
 ## Build and run the prototype
 
-The prototype is **headless**: it runs the deterministic simulation and prints results. There is no window, no player input, and no rendering — the frame driver and render layer are phase 2. You need a .NET 8 toolchain (`dotnet`); the build is the plain `harness.csproj` at the repo root.
+There are two runnable surfaces, and they share one simulation. The **harness** is headless: it runs the deterministic simulation and prints results, which is what makes the golden fixtures a regression oracle. The **windowed client** (`tools/player/`) draws the same `SimState` in an SDL2 window and takes keyboard thrust; it adds a renderer, never a second simulation, and `DT` stays `71582788L` in both. You need a .NET 8 toolchain (`dotnet`) for either; the harness build is the plain `harness.csproj` at the repo root, the client's C# side is `player.csproj`, and its C renderer needs SDL2.
 
 ### Getting `dotnet` on PATH (EndeavourOS / Arch)
 
@@ -94,7 +97,7 @@ $D exec obj/harness.dll counters --seed 0x1F4A --digest @replays/p1-level-01.dig
 
 Before any command runs, every invocation checks two guards silently: the fixed-point self-tests (`MulDiv`, `ISqrtQ`) and the **FIXED-FORK** hash over the enumerated `Assets/Runtime/Fixed/` and `Assets/Runtime/SimCore/` sources against a committed expected value. Silence means both passed. If a hashed file is missing or the digest moved, no command runs — that guard is what makes the golden fixtures a real regression oracle rather than a suggestion.
 
-Exit codes are the contract in `PLAN.md` / A-019 §9: **0 pass, 1 fail, 2 harness error**. `hitch`, `fps`, `pointer`, and `tier` (H-06..H-09) are phase-2 stubs: they print why they cannot run and exit **2**, never a fake success.
+Exit codes are the contract in `PLAN.md` / A-019 §9: **0 pass, 1 fail, 2 harness error**. `hitch`, `fps`, `pointer`, and `tier` (H-06..H-09) are implemented, not stubs: A-022 merged the frame driver they test, and each one needs its scenario argument (`--at`/`--ms`, `--target`, `--script`, `--probe`) — called without it the command reports that it has no observable effect and exits 2, never a fake success.
 
 Three gotchas that will bite if you improvise:
 
@@ -103,6 +106,54 @@ Three gotchas that will bite if you improvise:
 - `rm -rf obj` before re-probing. A stale DLL in `obj` produced a false diff once.
 
 A malformed argument exits **2** with the reason it rejected, for example `--seed 0xZZZ` prints `harness: parseHexU64: bad digit in 0xZZZ (command did not complete)` and exits 2. A simulation failure is distinct: it exits **1**.
+
+### Phase 2: frame accounting (H-06..H-09)
+
+Each command below was run in this session after the A-024 merge; the `expect` lines are what it printed. None of them changes `DT`.
+
+```sh
+# H-06: force a 100 ms hitch at two frames and check the accounting absorbs it.
+$D exec obj/harness.dll hitch --at 1200,1800 --ms 100 \
+    --seed 0x1F4A --digest @replays/p1-level-01.digest.bin --level p1-level-01
+# expect: framesHitched=2818 droppedStepsHitched=2 maxStepsPerFrame=4 ... PASS result=goal
+
+# H-07: run at a 30 fps schedule and prove the trajectory still reaches the goal.
+$D exec obj/harness.dll fps --target 30 --seed 0x1F4A \
+    --digest @replays/p1-level-01.digest.bin --level p1-level-01
+# expect: stepsPerFrame=2 (expected 2) framesToGoal=1414 droppedSteps=0 PASS result=goal hardwareOnly=true
+# note: --time-scale 2.0 is rejected with a named reason at exit 2; the schedule is not a speed dial.
+
+# H-08: replay a scripted input fixture (replays/h-08-pointer.txt is committed).
+$D exec obj/harness.dll pointer --script @replays/h-08-pointer.txt --seed 0x1F4A --level p1-level-01
+# expect: scriptDirectives=10 scriptedSteps=7 dupSteps=2 pauseSteps=1 ... PASS snapshotsCompared=17 result=timeout
+
+# H-09: probe the render tiers and prove the simulation is identical across them.
+$D exec obj/harness.dll tier --probe --seed 0x1F4A \
+    --digest @replays/p1-level-01.digest.bin --level p1-level-01
+# expect: tiersProbed=3 goalSteps=2828,2828,2828 renderPixelsPerUnit distinct PASS
+```
+
+### Run the windowed client (no Unity)
+
+```sh
+# C# side. Must print "Build succeeded." with 0 warnings.
+$D build player.csproj -o obj-player
+
+# C renderer. The bare `-lSDL2` form does NOT link (undefined sqrt/sin/cos);
+# these are the flags that were probed to work.
+gcc tools/player/view.c -o obj-player/view \
+    -I/usr/include/SDL2 -D_GNU_SOURCE=1 -D_REENTRANT -lm -lSDL2
+
+# Replay mode reproduces H-01 through the same frame driver.
+$D exec obj-player/player.dll --replay --level p1-level-01 --seed 0x1F4A \
+    --digest @replays/p1-level-01.digest.bin
+# expect: mode=replay frames=2828 steps=2828 goalStep=2828 goalReached=True droppedSteps=0 result=goal
+```
+
+The window itself needs a desktop (`DISPLAY` set, SDL2 installed). What a headless
+environment can honestly claim is that the window process creates a window and draws
+a frame into it; it cannot observe the screen, so a clean exit here is not evidence
+that a picture was seen.
 
 ## How to contribute
 
