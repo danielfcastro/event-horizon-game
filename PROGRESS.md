@@ -1,7 +1,7 @@
 ---
 project: Event Horizon
-updated: 2026-10-08
-status: running (A-026 checklist complete with evidence, PR #31 open into develop awaiting approval)
+updated: 2026-10-09
+status: blocked (A-026 done and merged via PR #31 at 79ed193; no artifact is executable in this environment — run at a gate; resumed 2026-10-09 after a context-overflow 400, config fix applied)
 last_artifact: A-026
 next_artifact: none executable (A-024 hosting-gated; A-023/A-025 tooling-gated)
 ---
@@ -19,7 +19,8 @@ This file is the run-state control file for the coordinator. It is not a design 
 
 ## Current state
 
-- status: running (A-026 done and merged via PR #31; run at a gate — saved and stopped on request)
+- status: blocked (A-026 done and merged via PR #31; run at a gate — resumed 2026-10-09, nothing executable, stopped here)
+- stopping point: RESUMED 2026-10-09 AFTER A CONTEXT-OVERFLOW 400, CONFIG FIX APPLIED, RUN STILL AT A GATE (2026-10-09) — the previous session died with the serve engine's 400: "prompt (199774 tokens) + max tokens (62407) exceeds the context (262144); requests are never truncated". DIAGNOSED BY PROBING, NOT ASSUMED: a curl POST /v1/chat/completions against the running server (pid 8233, port 11434, config ~/Strata/strata-coder-iq1_m.json) with a 53-token prompt and max_tokens 300000 returns exactly that error shape, and grep showed fit_max_tokens absent from that config. The 62,407 request is NOT any agent's max_tokens — every project agent is capped at 16000 (programmer 24000) — it is the provider's limit.output 64000 path, so the agent-level cap of PLAN.md §9.2 never bounded this request and the §9.5 claim that "the max_tokens cap guarantees an uncompacted request never exceeds the context" was false for non-agent requests. FIX APPLIED: added "fit_max_tokens": true to ~/Strata/strata-coder-iq1_m.json, verified by json.loads that the file still parses, the ONLY added key is fit_max_tokens, and args and --max-context 262144 are unchanged. Per serve/runconfig.py and docs/DETAILS.md lines 816-819 the engine reads the config when it starts, so the key takes effect at the NEXT server start, not the next request — re-probed after the edit and the running server still 400s, recorded rather than reported fixed. The restart is the user's to run (the server is a foreground process on their terminal, pts/1; run-coder-iq1_m.sh restarts it) and costs a full model reload plus a re-prefill of any live session, so it was not started from here. PLAN.md §9.5 records the fit guard (docs(plan):). RUN STATE UNCHANGED AND RE-VERIFIED: PR #31 is MERGED at 79ed193 (gh pr view confirms state MERGED, mergedAt 2026-10-08T22:47:53Z), feature/programmer-player-sdl is gone locally and remotely, develop is clean and == origin/develop, no PR is open. Nothing is executable: A-024 hosting-gated, A-023 Unity-gated, A-025 store-gated. Status set to blocked with that reason.
 - last completed artifact: A-026 Non-Unity player package (SDL2 windowed client) — merged via PR #31 into develop at 79ed193, branch deleted locally and remotely; prior: A-022 via PR #30 at 318dc02, A-021 via PR #24 at 8f52d25, toolchain/docs step via PR #29 at fca996f
 - current artifact: none (A-026 done; the run is at a gate)
 - next ready artifact: none executable: A-024 stays dependency-ready but hosting-gated (never done without a host), A-023/A-025 stay gated on Unity toolchain / store consoles.
