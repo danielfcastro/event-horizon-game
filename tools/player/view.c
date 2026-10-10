@@ -54,18 +54,23 @@ static uint32_t fnv32(const unsigned char *p, size_t n)
 /* ---- framebuffer: one drawing path feeds BOTH the window and the PPM ------ */
 static int VW = 960, VH = 540;
 
-/* §5.3 camera constants. The event horizon is held at HORIZON_PCT percent of
- * the viewport short edge so it is always on screen, and the scale never drops
- * below MIN_PPU px/WU so bodies stay readable at the end of a long run. The
- * upper bound is the tier's pixelsPerUnit carried in the payload, so a device
- * tier still decides sharpness; the camera only ever zooms out as the hole
- * grows. Render-only: none of this reaches SimCore. */
-#define HORIZON_PCT 62
+/* §5.3 camera constants. Both are dimensionless: the world-fitting phase and the
+ * containment phase take their pixel and world numbers from the ACTIVE window
+ * (VW, VH) and from the payload's boundsW/boundsH, so nothing here is tied to
+ * one resolution, one aspect ratio, or one level. CONTAIN_PCT is the fraction of
+ * the short edge the horizon may occupy before the smooth zoom-out takes over;
+ * MIN_PPU keeps bodies at a few pixels at the end of a long run. The upper bound
+ * is the tier's pixelsPerUnit carried in the payload, so a sharper device only
+ * gets a sharper picture, never a different framing. Render-only: none of this
+ * reaches SimCore, so no golden replay can change because of it. */
+#define CONTAIN_PCT 90
 #define MIN_PPU 2
 
-/* render-only diagnostic: the camera scale actually used for the last frame,
- * so the dump proof can report what was drawn rather than re-deriving it. */
+/* render-only diagnostics: the camera scale actually used for the last frame,
+ * and which phase chose it, so the dump proof reports what was drawn rather
+ * than re-deriving it. */
 static int64_t g_ppuUsed = 0;
+static int g_phase = 0;
 static uint32_t *fb = NULL;
 
 static inline uint32_t pack_px(uint32_t r, uint32_t g, uint32_t b)
@@ -144,6 +149,7 @@ typedef struct
 {
     int64_t step;
     int64_t holeX, holeY, holeRadius, holeEventRadius, holeMass;
+    int64_t boundsW, boundsH; /* §5.3 phase-1 camera; level constants */
     int count;
     int64_t *bx, *by, *br;
     unsigned char *kind;
@@ -224,6 +230,10 @@ static int read_payload(const char *path, Payload *out)
     at += 8;
     out->holeMass = be_i64(raw + at);
     at += 8;
+    out->boundsW = be_i64(raw + at); /* §5.3 phase-1 camera: world bounds */
+    at += 8;
+    out->boundsH = be_i64(raw + at);
+    at += 8;
     int count = (int)((raw[at] << 8) | raw[at + 1]);
     at += 2;
     if (count < 0 || count > 300)
@@ -265,22 +275,40 @@ static int draw(const Payload *p)
     int cx = VW / 2;
     int cy = VH / 2;
 
-    /* §5.3 camera: the visible hole is the event horizon, and the zoom keeps
-     * it on screen. ppu_eff = clamp(HORIZON_PCT percent of the viewport short
-     * edge divided by the horizon diameter in WU, MIN_PPU, the tier's pixelsPerUnit
-     * from the payload). The scale is chosen in double because it is render-only:
-     * it never reaches SimCore, so it cannot change what the simulation did;
-     * the fixed-point wu_to_px below still does the actual mapping. */
+    /* §5.3 hybrid camera, one expression, two phases:
+     *   ppuWorld   = shortEdge / boundsH                     phase 1, a fixed
+     *     world-fitting view, so the horizon visibly grows against a stationary
+     *     world frame;
+     *   ppuContain = CONTAIN_PCT percent of shortEdge / (2 * eventRadiusWU)     phase 2,
+     *     once the horizon would clip, ppu decreases continuously to keep it
+     *     inside the frame and show more field.
+     * min() selects the phase and both terms are continuous in eventRadius, so
+     * the camera never snaps. The result is clamped to [MIN_PPU, the tier's
+     * pixelsPerUnit from the payload]. The scale is chosen in double because it
+     * is render-only: it never reaches SimCore, so it cannot change what the
+     * simulation did; the fixed-point wu_to_px below still does the mapping. */
     double evWu = (double)p->holeEventRadius / 4294967296.0;
+    double boundsHWu = (double)p->boundsH / 4294967296.0;
     long long tierPpu = (long long)(p->ppu >> 32);
     if (tierPpu < MIN_PPU)
     {
         tierPpu = MIN_PPU;
     }
-    long shortEdge = (VH < VW) ? (long)VH : (long)VW;
-    double want = (evWu > 0.0)
-                      ? ((double)shortEdge * (double)HORIZON_PCT / 100.0) / (2.0 * evWu)
-                      : (double)tierPpu;
+    double shortEdge = (VH < VW) ? (double)VH : (double)VW;
+    double ppuWorld = (boundsHWu > 0.0) ? shortEdge / boundsHWu : (double)tierPpu;
+    double ppuContain = (evWu > 0.0) ? (shortEdge * (double)CONTAIN_PCT / 100.0) / (2.0 * evWu)
+                                     : (double)tierPpu;
+    double want;
+    if (ppuWorld <= ppuContain)
+    {
+        want = ppuWorld;
+        g_phase = 1; /* fixed world-fitting view: growth is visible */
+    }
+    else
+    {
+        want = ppuContain;
+        g_phase = 2; /* smooth containment: the camera only ever zooms out */
+    }
     if (want < (double)MIN_PPU)
     {
         want = (double)MIN_PPU;
@@ -504,9 +532,10 @@ int main(int argc, char **argv)
             }
         }
         fprintf(stderr,
-            "view: ppm=%s size=%dx%d step=%lld eventRadiusPx=%lld ppuUsed=%lld "
-            "bodies=%d nonbg=%ld\n",
-            ppmPath, VW, VH, (long long)p.step,
+            "view: ppm=%s size=%dx%d step=%lld phase=%d boundsWU=%lldx%lld "
+            "eventRadiusPx=%lld ppuUsed=%lld bodies=%d nonbg=%ld\n",
+            ppmPath, VW, VH, (long long)p.step, g_phase,
+            (long long)(p.boundsW >> 32), (long long)(p.boundsH >> 32),
             (long long)wu_to_px(p.holeEventRadius, g_ppuUsed),
             (long long)(g_ppuUsed >> 32), p.count, nonbg);
         return 0;
