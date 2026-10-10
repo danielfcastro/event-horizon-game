@@ -111,5 +111,44 @@ namespace EH
         {
             return 0; // 0 = unknown (honest stub, identity — no default tier)
         }
+
+        // ---- A-023 player-package platform slots (A-015..A-017 surfaces) --------
+        // Unity-API-free by design: the Unity wiring lives in GameLoop.cs (the
+        // excluded shell); these hooks keep the headless build honest and let the
+        // values stay owned by A-015 (store), A-016 (monetization/IAP), A-017
+        // (privacy/analytics). Monetization never blocks core-game completion
+        // (PLAN hard rule): every slot below is inert when unset.
+
+        /// <summary>
+        /// SG-7 (A-020 §8): first-party crash reporter feeding A-016's crash
+        /// event. The Unity shell installs the handler at boot; the off-state
+        /// completion test belongs to the SHIPPED build and is recorded NOT
+        /// EXECUTABLE until one exists (PLAN.md §4 A-023).
+        /// </summary>
+        public static bool crashReporterInstalled;
+
+        public static void setCrashReporter(bool installed)
+        {
+            crashReporterInstalled = installed;
+        }
+
+        /// <summary>
+        /// Unity Ads / IAP request slot (A-016 owns placement and values).
+        /// Inert when unset; a missing ad never fails a run.
+        /// </summary>
+        public static void requestAdSlot(string slotId)
+        {
+            // no-op slot: A-016 fills the monetization surface; the core game
+            // completes with this never called (PLAN hard rule).
+        }
+
+        /// <summary>
+        /// Analytics event slot (A-017's event list; privacy text is A-017/A-024).
+        /// Inert when unset.
+        /// </summary>
+        public static void logAnalyticsEvent(string eventId)
+        {
+            // no-op slot.
+        }
     }
 }

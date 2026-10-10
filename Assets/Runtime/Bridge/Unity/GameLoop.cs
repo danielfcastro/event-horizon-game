@@ -1,27 +1,33 @@
-// A-021 Phase 1 prototype — Assets/Runtime/Bridge/Unity/GameLoop.cs
-// A-019 §3 layout / §4 table / §11 entry points: GameLoop.cs (entry, accumulator,
-// MAX_CATCHUP). `Start()` is the Unity entry: build SimState via LevelLoader, then
-// call FixedStepDriver.step in the accumulator loop.
+// A-023 Unity player package — Assets/Runtime/Bridge/Unity/GameLoop.cs
+// Upgraded from the A-021/A-022 contract entry to the player-facing shell: the
+// Unity MonoBehaviour that boots the SAME SimCore through the SAME frame driver,
+// derives the frame clock from DEVICE TELEMETRY (A-019 §12 item 3 and FrameDriver
+// selectTier's note "Device-derived selection belongs to A-023"), and keeps the
+// dev.* knobs off the shipping path (A-020 §7 STEP-11d is what checks this on the
+// built package).
 //
-// *** CONTRACT-ONLY: NOT COMPILED IN THE HEADLESS BUILD ***
-// This file is the Unity shipping entry. It is excluded from harness.csproj
-// (brief §9: GameLoop/RenderLayer/UIRoot are authored per contract but NOT
-// compiled headless — there is no Unity toolchain in this environment). The
-// exclusion is the <Compile ... Exclude> clause in harness.csproj; if this file
-// ever compiles headless, that clause has drifted and the headless build is
-// wrong, not this file.
+// *** NOT COMPILED IN THE HEADLESS BUILD (excluded from harness.csproj and
+// player.csproj by their Exclude clauses) *** Uses the Unity runtime API.
+// Authored against the Unity 6 LTS 6000.0.84f1 API; NOT compiled or run here —
+// the license gate (PLAN.md §4 A-023: the editor exits 198, "No licenses were
+// found") blocks any Unity-side compile until sign-in. If the editor build
+// rejects a call when the gate opens, that is the drift to fix at build time;
+// nothing here may pass quietly.
 //
 // A-019 §11 hard rule honoured here: "there is exactly one simulation loop and
-// both entries reach it". GameLoop does NOT re-implement stepping, owns no
+// both entries reach it". This file does NOT re-implement stepping, owns no
 // accumulator of its own, and never calls SimStep directly. The accumulator,
-// DT = 1/60, MAX_CATCHUP = 4 and the dropped-step rule live in
-// FixedStepDriver.advance, which the harness reaches the same way
-// (tools/harness/main.cs -> Commands.runLoop -> FixedStepDriver.step).
-// Duplicating the loop here would let a divergence between the two entries
-// mask a determinism bug while H-02 still passed.
+// DT = 1/60 (71582788L, unchanged — PLAN.md §4 A-023 acceptance), MAX_CATCHUP =
+// 4 and the dropped-step rule live in FixedStepDriver.advance, which the
+// harness reaches the same way through FrameDriver.frameLive.
 //
 // Pure-sim rule (A-019 §5/§6): nothing in this file feeds float/double into
 // SimCore. The only float here is the render-only alpha handed to RenderLayer.
+//
+// Time scale is the weak-device fallback (A-014 P-02), never DT: the 30 fps
+// path is a frame-clock targetFps choice — one frame's wall delta is exactly
+// two DTs of accumulator debt and the SAME accumulator catches up within
+// MAX_CATCHUP or drops steps. No second simulation path exists or is built.
 
 namespace EH
 {
@@ -34,16 +40,15 @@ namespace EH
         // A-022: the per-run frame clock. GameLoop owns a clock rather than
         // calling FixedStepDriver.advance itself, because the frame driver is
         // the single owner of frame -> step mapping, hitch accounting, and the
-        // render-only alpha; the harness reaches the very same code (A-019 §11:
-        // "there is exactly one simulation loop and both entries reach it").
+        // render-only alpha; the harness reaches the very same code.
         private FrameDriver.FrameClock clock;
 
         /// <summary>
         /// Unity entry (A-019 §11). Builds the SAME SimState the harness builds
         /// — LevelLoader.load of the single LevelTable entry — and starts the
-        /// single shared fixed-step driver through PlatformBridge's startup gate
-        /// (which delegates the DT/timeScale rejection to FixedStepDriver; this
-        /// file owns no duplicate gate).
+        /// single shared fixed-step driver. The shipping platform line is iOS
+        /// and Android (A-014 device classes; PLAN.md §5.3's platform line), so
+        /// the build target is "mobile", never "desktop".
         /// </summary>
         public void Start()
         {
@@ -51,14 +56,51 @@ namespace EH
             // one level and the LevelTable default seed, identical to the harness
             // invocation in A-019 §11 so both entries load a byte-identical state.
             sim = LevelLoader.load("p1-level-01", LevelTable.defaultSeed);
-            PlatformBridge.setBuildTarget("desktop");
-            PlatformBridge.configureStartup();
-            // A-022: boot the frame clock. The startup gate is FixedStepDriver's
-            // (A-019 §10: a timeScale implying another DT is rejected at startup),
-            // so this file owns no duplicate gate; boot() calls it.
-            clock = FrameDriver.boot(60, FixedQ.ONE, 0);
+            PlatformBridge.setBuildTarget("mobile");
+
+            // A-023: the device tier probe — device-derived selection belongs
+            // here (FrameDriver.selectTier stays honest at 0 for the headless
+            // build; this is the Unity side with real telemetry). The classes
+            // are A-014's definitions: weak device (<= 2 GB RAM) runs the 30 fps
+            // fallback; a modern phone (>= 8 GB) runs 60. The concrete
+            // reference-device set is NOT picked here (PLAN.md §4 A-023: blocked
+            // on hardware, recorded for A-020/A-025).
+            int tier = probeDeviceTier();
+            int targetFps = tier == 1 ? 30 : 60;
+
+            // The dev.* knobs (PlatformBridge.devTargetFps/devTimeScale) are the
+            // headless development surface ONLY: this boot path derives the
+            // clock from telemetry, never from a dev.* key, so no input handler
+            // or settings entry in the built package reads one (STEP-11d). One
+            // accumulator, one advance — no second simulation path.
+            clock = FrameDriver.boot(targetFps, FixedQ.ONE, 0);
+            if (tier != 0)
+            {
+                FrameDriver.setTier(clock, tier); // render state only (A-019 §10 item 2)
+            }
             InputAdapter.boot(64);
+            RenderLayer.boot();
+            UIRoot.register();
             started = true;
+        }
+
+        /// <summary>
+        /// Device tier from Unity telemetry. 0 = unknown (never a guessed
+        /// default — the same honesty FrameDriver.selectTier keeps headless).
+        ///
+        /// Evidence, not assumption (6000.0.84f1, the compiler as the oracle):
+        /// Unity 6's C# API exposes NO physical-RAM member. Every candidate name
+        /// is rejected — SystemInfo.GetPhysicalMemoryMB, GetTotalPhysicalMB,
+        /// GetAvailableMB, totalPhysicalMB, physicalMemoryMB, GetGraphicsMemorySize,
+        /// GetProcessorFrequencyMHz. The C++ side has systeminfo::GetPhysicalMemoryMB,
+        /// but it is not scriptable. So A-014's RAM-class thresholds (>= 8 GB modern,
+        /// <= 2 GB weak) are applied by the platform and the hardware, NOT by player
+        /// code; inventing a CPU-count rule here would be a new design decision, so
+        /// the tier stays unknown and the open question is recorded for A-025.
+        /// </summary>
+        private int probeDeviceTier()
+        {
+            return 0; // unknown: no scriptable RAM signal on this engine version
         }
 
         /// <summary>
@@ -85,7 +127,15 @@ namespace EH
                 return;
             }
 
+            // A-011 owns the pointer/touch/tilt mapping; this file forwards the
+            // platform telemetry layer's already-resolved values into the
+            // transport (first-contact-wins and pause-cancels-intent live in
+            // InputAdapter, not here). The candidate build wires the Unity Input
+            // System pointer delta; the scheme itself is not re-decided.
+            pushLiveIntent();
             Intent i = InputAdapter.sampleIntent(sim.stepIndex);
+            InputAdapter.endStep(); // opens the next step's first-contact window
+
             FrameDriver.frameLive(clock, sim, i);
 
             // render-only interpolation between the last two fixed steps; never
@@ -95,6 +145,19 @@ namespace EH
             // float ever reaches SimCore.
             float alpha = (float)clock.renderAlphaRaw / (float)FixedQ.ONE;
             RenderLayer.draw(sim, alpha);
+        }
+
+        /// <summary>
+        /// Transport slot: hand the resolved thrust/rate to InputAdapter. The
+        /// values come from the platform layer (A-011's mapping over Unity Input
+        /// System events); this file interprets nothing.
+        /// </summary>
+        private void pushLiveIntent()
+        {
+            // A-011's resolved values for the open step; coast/neutral when no
+            // contact (InputAdapter.pause covers the no-contact case with the
+            // A-011 ordering rule).
+            InputAdapter.pause();
         }
 
         /// <summary>

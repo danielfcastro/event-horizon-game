@@ -10,3 +10,12 @@ obj/
 obj-player/
 bin/
 artifacts/
+
+# Unity transient outputs (A-023): the asset cache, scratch, logs, built players,
+# and local editor state. Never part of the package.
+Library/
+Temp/
+Logs/
+Build/
+UserSettings/
+.utmp/
