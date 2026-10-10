@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: none executable (A-024 done and merged via PR #32 at 866fa08; the A-002 README follow-up merged via PR #33 at 7e952f4; the A-026 event-horizon render fix merged via PR #34 into develop at e77797f and its §5.3 hybrid camera merged via PR #35 at a67a76a. A-023 waits on the Unity toolchain and on real device classes, A-025 waits on store consoles and on A-023; contact verification needs a real inbox and a human reply. The run is at a gate.)
+next_artifact: none executable (A-024 done and merged via PR #32 at 866fa08; the A-002 README follow-ups merged via PR #33 at 7e952f4 and PR #36 at 6192591; the A-026 event-horizon render fix merged via PR #34 into develop at e77797f and its §5.3 hybrid camera via PR #35 at a67a76a. A-023 waits on the Unity toolchain and on real device classes — probed again 2026-10-10: no Unity editor binary on the machine, the only Unity artifact is a shipped Tabletop Simulator player binary in a backup home, and dl.unity.com has no DNS; A-025 waits on store consoles and on A-023; contact verification needs a real inbox and a human reply — event-horizon.game still does not resolve. The run is at a gate.)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
