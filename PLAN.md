@@ -87,6 +87,7 @@ feature/programmer-harness-exitcode
 feature/programmer-frame-driver
 feature/programmer-player-package
 feature/programmer-player-sdl
+feature/programmer-player-telemetry
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
@@ -769,6 +770,39 @@ a design decision updates `PLAN.md` first):**
   project files that ARE part of the package — `Assets/**/*.meta`, the scene,
   `ProjectSettings/*.asset` — are committed, because the repo root is the Unity
   project root and those files define the player package.
+- **The Unity Cloud project the user already owns is evidence, not a target to
+  link.** Probed 2026-10-10 with the signed-in CLI: the account's organization is
+  `Daniel-Ferreira-Castro` (id `cb8ff321-791a-49e4-0000-0f4004b0e24a`,
+  genesisId `16767631024714`, type INDIVIDUAL, role owner) and it holds exactly
+  one Unity Cloud project, `event-horizon` (id `0abf302a-45ff-4283-bbfa-
+  1de9aaa12684`, created 2026-10-10T15:21:12Z by the user), with
+  `coppa: compliant`, `kidsStoreCompliance: false`,
+  `projectVisibilityOption: unrestricted`, and Unity's own customer-data
+  collection set to `recommended`. The organization grants no better entitlement:
+  `license list` shows only Unity Personal and Asset Store, so the build above
+  already ran under the strongest license this account has.
+- **Compliance cross-check against the documents (it agrees, and the agreement is
+  recorded rather than assumed).** `kidsStoreCompliance: false` matches A-015 §4.1,
+  which chooses iOS Everyone / Play IE — not a kids product — so no store-side
+  contradiction exists. `coppa: compliant` is consistent with A-017 §2's collection
+  rules (no name, handle, avatar, email, contact, precise location, screenshot, or
+  player-entered text). Nothing here re-decides a rating or a policy; the platform
+  record simply does not contradict the approved documents.
+- **The player package is NOT linked to that cloud project, and that is the
+  correct state.** `ProjectSettings/ProjectSettings.asset` carries
+  `cloudProjectId:` empty and `cloudEnabled: 0`, and A-020 §8 chooses a
+  first-party-only crash reporter posting to A-016's own endpoint ("no third-party
+  crash SDK, no consent screen"), while A-017 §2 states its 8-event table is the
+  COMPLETE inventory. Linking Unity's cloud services would add a collector outside
+  that inventory. So the cloud project stays a submission-side resource for A-025,
+  not an engine-side dependency of A-023.
+- **Defect found and fixed in the generated project settings: Unity's own
+  telemetry must be off.** The generated `ProjectSettings/ProjectSettings.asset`
+  shipped `submitAnalytics: 1` — the engine's default-on analytics submission —
+  which would emit data outside A-017 §2's inventory and break the rule that the
+  table is complete. It is set to `0`. `enableCrashReportAPI: 0` already agrees
+  with A-020 §8's first-party choice and is left off. The shipped player's only
+  collector is therefore the first-party endpoint A-016 owns.
 
 **Status:**
 
