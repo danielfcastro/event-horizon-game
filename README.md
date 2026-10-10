@@ -148,12 +148,33 @@ gcc tools/player/view.c -o obj-player/view \
 $D exec obj-player/player.dll --replay --level p1-level-01 --seed 0x1F4A \
     --digest @replays/p1-level-01.digest.bin
 # expect: mode=replay frames=2828 steps=2828 goalStep=2828 goalReached=True droppedSteps=0 result=goal
+
+# The headless proof that the renderer actually draws: dump ONE frame's payload
+# at a step, then render that payload to a PPM. No window, no display needed.
+$D exec obj-player/player.dll --replay --level p1-level-01 --seed 0x1F4A \
+    --digest @replays/p1-level-01.digest.bin --dump-step 1200 --dump-file /tmp/f-1200.bin
+obj-player/view --frame /tmp/f-1200.bin --ppm /tmp/f-1200.ppm --once
+# expect: view: ppm=/tmp/f-1200.ppm size=960x540 step=1200 phase=1 boundsWU=128x96
+#         eventRadiusPx=218 ppuUsed=5 bodies=15 nonbg=152359
 ```
 
+The `phase` and `ppuUsed` fields are the §5.3 hybrid camera reporting what it
+actually did, not what it intends: while the growing horizon fits, the camera is
+pinned to the world (`phase=1`, `ppuUsed=5` fixed), so the disc visibly expands —
+314 px at step 1, 436 px at step 1200. Once it would clip, the camera hands over
+to a smooth zoom-out (`phase=2`, `ppuUsed` 4 then 3) and the horizon is held at
+484 px, inside the frame. `boundsWU` is read from the payload, so the same binary
+is correct for a level with different bounds and a window with different size.
+
 The window itself needs a desktop (`DISPLAY` set, SDL2 installed). What a headless
-environment can honestly claim is that the window process creates a window and draws
-a frame into it; it cannot observe the screen, so a clean exit here is not evidence
-that a picture was seen.
+environment can prove is more than a clean exit, and the proof above is why: a
+dumped payload rendered to a PPM is a real picture, and it can be converted and
+looked at. That path found a defect that arithmetic could not — the renderer drew
+the collision core, so the hole was the same 32 px at every step while its mass
+went 100 -> 567 — and it is the path that confirms the two-phase camera now. What
+stays unprovable here is the **live** window on a desktop: no headless run can
+observe the screen, so that one claim is recorded as not-executable until a human
+looks at it.
 
 ## How to contribute
 
