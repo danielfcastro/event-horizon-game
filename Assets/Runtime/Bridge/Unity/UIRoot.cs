@@ -1,17 +1,18 @@
-// A-021 Phase 1 prototype — Assets/Runtime/Bridge/Unity/UIRoot.cs
-// A-019 §3 layout / §4 table: UIRoot.cs (HUD slots, no layout) — status "stub
-// slots": HUD slot REGISTRATION only, no layout (A-010 owns layout, sizing,
-// type, contrast, and the mass-meter design).
+// A-023 Unity player package — Assets/Runtime/Bridge/Unity/UIRoot.cs
+// Upgraded from the A-021 "stub slots" contract to the player-facing UI root:
+// HUD slot REGISTRATION on a real Unity UI Canvas. Still no layout, no sizing,
+// no anchors, no fonts, no contrast decisions — A-010 owns all of that (brief
+// §9 scope boundary: "HUD layout and menus: A-010").
 //
-// *** CONTRACT-ONLY: NOT COMPILED IN THE HEADLESS BUILD ***
-// Excluded from harness.csproj by the <Compile ... Exclude> clause (brief §9).
-// Uses the Unity UI API. Authored so the shipping target has the slots the
-// harness assumes exist; the headless build never touches them.
+// *** NOT COMPILED IN THE HEADLESS BUILD (excluded from harness.csproj and
+// player.csproj by their Exclude clauses) *** Uses the Unity UI API. Authored
+// against the Unity 6 LTS 6000.0.84f1 API; NOT compiled or run here — the
+// license gate (PLAN.md §4 A-023) blocks any Unity-side compile until sign-in.
 //
-// Why registration-only matters: A-021 acceptance is the headless sim (H-01/H-02).
-// Inventing layout, fonts, or anchor math here would put phase-1 code in charge
-// of a decision A-010 owns, and later artifacts would have to hunt for it. The
-// slots are named, ordered, and empty.
+// Why registration-only matters (unchanged from A-021): A-023's acceptance is
+// the player package over the same SimCore, not a UI design. Inventing layout
+// here would put this artifact in charge of a decision A-010 owns. The slots
+// are named, ordered, and empty.
 //
 // Slots carry NO values in phase 1: Stability/Combo/Scoring are stub slots with
 // no values (A-019 §4, A-007 fills them), so the HUD registers the slot and
@@ -42,18 +43,30 @@ namespace EH
             false,  // score      (stub, no value)
         };
 
+        private static UnityEngine.GameObject canvasRoot;
+        private static bool registered;
+
         /// <summary>
-        /// Register the HUD slots. No layout, no sizing, no anchors, no fonts,
-        /// no contrast decisions — all of that is A-010 (brief §9 scope
-        /// boundary). A slot with slotHasValue == false is registered but not
-        /// drawn, so a phase-1 player never sees a fabricated number.
+        /// Register the HUD slots on a screen-space Canvas. No layout, no sizing,
+        /// no anchors, no fonts, no contrast decisions — all of that is A-010
+        /// (brief §9 scope boundary). A slot with slotHasValue == false is
+        /// registered but not drawn, so a phase-1 player never sees a fabricated
+        /// number.
         /// </summary>
         public static void register()
         {
+            Fail.check(!registered, "UIRoot.register: slots exist to be registered once");
+            canvasRoot = new UnityEngine.GameObject("eh-hud");
+            canvasRoot.AddComponent<Canvas>();
             for (int k = 0; k < slotNames.Length; k++)
             {
-                UnityEngine.Canvas.registerSlot(slotNames[k], slotHasValue[k]);
+                UnityEngine.GameObject slot = new UnityEngine.GameObject("eh-hud-" + slotNames[k]);
+                slot.SetParent(canvasRoot);
+                // Every slot is an empty Transform: no Text component is created
+                // for any slot, value-bearing or not — A-010 owns the drawing,
+                // so nothing here can render a fabricated number.
             }
+            registered = true;
         }
 
         /// <summary>

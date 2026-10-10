@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Assets/**/*.cs"
-             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs" />
+             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs;Assets/Editor/BuildPlayerPackage.cs" />
     <Compile Include="tools/harness/*.cs"
              Exclude="tools/harness/main.cs" />
     <Compile Include="tools/player/SimHost.cs" />

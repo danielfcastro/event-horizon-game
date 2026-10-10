@@ -29,8 +29,11 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
+    <!-- A-023: Assets/Editor/BuildPlayerPackage.cs is the Unity Editor build
+         script (UnityEditor API); it joins the excluded set so the headless
+         targets keep compiling exactly the API-free sim surface. -->
     <Compile Include="Assets/**/*.cs"
-             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs" />
+             Exclude="Assets/Runtime/Bridge/Unity/GameLoop.cs;Assets/Runtime/Bridge/Unity/RenderLayer.cs;Assets/Runtime/Bridge/Unity/UIRoot.cs;Assets/Editor/BuildPlayerPackage.cs" />
     <Compile Include="tools/harness/*.cs" />
   </ItemGroup>
 </Project>
