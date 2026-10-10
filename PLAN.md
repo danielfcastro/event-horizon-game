@@ -783,6 +783,32 @@ a design decision updates `PLAN.md` first):**
   (A-007's `a`, A-009's starting mass), not a renderer decision, and is left
   open rather than invented.
 
+**Extension 2 (2026-10-10), recorded before the code — resolves the residual
+above without touching A-007 or A-009:**
+
+- **The residual is a camera decision, not a balance decision, once the camera is
+  allowed to be two-phase.** The hybrid rule in §5.3 keeps a fixed world-fitting
+  view while the horizon fits (so growth is visible against a stationary world),
+  and only hands over to the smooth zoom-out when the horizon would clip. Both
+  phases come from the same `min` of two derived values, so the transition is
+  continuous and the camera never snaps. A-007's constants and A-009's starting
+  mass stay exactly as they are; every golden replay is untouched.
+- **The payload must carry `boundsW` and `boundsH`.** The world-fitting phase
+  needs the world size, and the renderer must not read the level table: the
+  camera would otherwise be wrong for any level whose bounds differ. The
+  canonical snapshot already carries both fields (`SimState` bounds), so this
+  protocol addition invents no state and the payload-vs-snapshot criterion stays
+  checkable. As in the first extension, the documented layout in `SimHost.cs`
+  and the parser in `view.c` move together in one change.
+- **Nothing in the renderer is hardcoded to one window or one world.** `shortEdge`
+  comes from the active window dimensions and `boundsH` from the payload, so the
+  same code serves the 960x540 dev window, a phone, a tablet, or a desktop
+  window; `CONTAIN_PCT` and `MIN_PPU` are the only constants, and both are
+  dimensionless.
+- **Platform scope is not expanded here.** The rule tolerates desktop windows,
+  but this plan's platform line is iOS and Android, so desktop/Steam stays an
+  open question for A-023 and A-025 rather than becoming a shipping target.
+
 **Status:**
 
 - done (merged into develop via PR #31 at 79ed193; branch `feature/programmer-player-sdl` deleted locally and remotely; commits d8bdd34 docs(briefs):, c161717 code(player):, d1e98ee chore(repo):). Verified post-merge on develop from a clean obj: harness build 0 Warning(s) 0 Error(s), fork guard silent (forkExpected 0x99dd49de20c48bc4 unchanged), H-01 digest=6d25ff0add639448 steps=2828 droppedSteps=0 result=goal exit 0, fresh sim BYTE-IDENTICAL to the golden, H-02 PASS snapshotsCompared=6, player build 0/0 and replay goalStep=2828 droppedSteps=0 exit 0. Full checklist evidence and the three defects found by running and fixed (wu_to_px Q64.64 shift, --live flag, the documented gcc link command needing -lm) are recorded in PROGRESS.md 2026-10-08 entries. The visual desktop confirmation of the window is recorded as not-executable in this environment — never claimed green.)
@@ -839,22 +865,51 @@ camera follows black hole
 zoom = f(event horizon radius, mass)
 ```
 
-`f` is made concrete here (decided 2026-10-10, because A-026 shipped a fixed
-`pixelsPerUnit` and the visible hole never grew):
+`f` is made concrete here (decided 2026-10-10 as a **hybrid camera**: the earlier
+constant-fraction rule — `pixelsPerUnit = clamp(0.62 * shortEdge / (2 * eventRadius),
+MIN_PPU, MAX_PPU)` — is superseded by the two-phase rule below. It kept the
+horizon at a fixed fraction of the frame, which pins its on-screen size and makes
+growth invisible; the hybrid keeps growth visible while the horizon still fits.)
 
 ```text
-pixelsPerUnit = clamp(0.62 * viewportShortEdgePx / (2 * eventRadiusWU),
-                      MIN_PPU, MAX_PPU)
-MIN_PPU = 2      MAX_PPU = 32
+shortEdgePx = min(windowWidthPx, windowHeightPx)   # the ACTIVE window, never a constant
+boundsW, boundsH                                   # world bounds, from the frame payload
+eventRadiusWU                                      # the horizon, from the frame payload
+
+ppuWorld   = shortEdgePx / boundsH                                # phase 1: fixed view
+ppuContain = CONTAIN_PCT / 100 * shortEdgePx / (2 * eventRadiusWU) # phase 2: contain it
+
+pixelsPerUnit = clamp(min(ppuWorld, ppuContain), MIN_PPU, tierPPU)
+CONTAIN_PCT = 90      MIN_PPU = 2
 ```
 
-The event horizon diameter is held at 62% of the viewport short edge, so it is
-always on screen and the camera only ever zooms out as mass grows. `MAX_PPU`
-keeps the opening view equal to the client's original fixed scale; `MIN_PPU`
-keeps bodies at a few pixels so the field stays readable at the end of a run.
-The value is continuous in `eventRadius`, so the zoom is smooth, not stepped.
-`pixelsPerUnit` stays render-only: it is chosen by the renderer and never
-reaches `SimCore`.
+Two phases, one expression. `min` selects between them, and the transition is
+where the horizon would first exceed `CONTAIN_PCT` percent of the short edge:
+
+- **Phase 1 — fixed world-fitting view.** While the growing horizon fits, the
+  camera is pinned to the world (`ppuWorld`), so the horizon visibly expands
+  against a stationary world frame. This is the growth cue the design asks for.
+- **Phase 2 — smooth containment.** Once the horizon would clip, `ppuContain`
+  takes over and decreases continuously as `eventRadius` grows: the camera only
+  ever zooms out, the horizon stays inside the frame, and more field is shown.
+
+Nothing is hardcoded to one resolution or one world: `shortEdgePx` comes from the
+active window and `boundsH` from the payload, so the same rule serves phones,
+tablets, and desktop windows, and a level with different bounds needs no camera
+change. `tierPPU` (the device tier's `pixelsPerUnit`) remains the upper bound, so
+a sharper device only gets a sharper picture, never a different framing; `MIN_PPU`
+keeps bodies at a few pixels so the field stays readable at the end of a long run.
+`pixelsPerUnit` stays render-only: it is chosen by the renderer and never reaches
+`SimCore`, so A-007's and A-009's numbers and every golden replay are untouched
+by this decision.
+
+Device viewport presets (YesViz-style specs) are baseline guidelines for the
+device classes named in A-014 and built by A-023; the rule above is derived from
+whatever window is actually open, so a preset only supplies `windowWidthPx` and
+`windowHeightPx`. Whether desktop/Steam is in scope at all is NOT decided here:
+this plan's platform line is iOS and Android, so the desktop form factors this
+rule now tolerates are recorded as an open question for A-023 and A-025, not an
+expansion of the shipping platform list.
 
 ### 5.4 Black hole stats
 
