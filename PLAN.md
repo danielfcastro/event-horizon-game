@@ -803,6 +803,17 @@ a design decision updates `PLAN.md` first):**
   table is complete. It is set to `0`. `enableCrashReportAPI: 0` already agrees
   with A-020 §8's first-party choice and is left off. The shipped player's only
   collector is therefore the first-party endpoint A-016 owns.
+- **Defect found in the recipe itself: `-executeCommand` is not a Unity flag and
+  fails silently.** `tools/player-package/build.sh` called
+  `Unity -batchmode -quit -executeCommand BuildPlayerPackage.BuildAll`; the editor
+  ignores an unknown flag, exits 0, and writes nothing — a false green that the
+  earlier "NOT EXECUTABLE" wording had papered over. The verified forms are
+  `-executeMethod BuildPlayerPackage.BuildAll` (the editor builds and the APK
+  mtime moves) and `unity build --target Android --execute-method
+  BuildPlayerPackage.BuildAll` (the Unity CLI, which also reports
+  `editorErrors: []`). The recipe is corrected to the editor form and its success
+  line is only printed after the package exists on disk, because a build with no
+  package is not a success.
 
 **Status:**
 
