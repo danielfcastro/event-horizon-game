@@ -90,6 +90,7 @@ feature/programmer-player-sdl
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
+release/0.26
 ```
 
 ### 1.4 Commit prefixes
@@ -527,6 +528,20 @@ that makes the black hole of A-005 §5.1 visible and steerable without Unity.
 **Status:**
 
 - done
+- executed a second time 2026-10-10 as the documentation milestone `release/0.26`
+  (STEP-02, STEP-16, STEP-17, STEP-18). The version follows §2: `0.<artifact-id>`
+  through the highest artifact merged, which is A-026, so the milestone is `0.26`;
+  `0.x` numbers never appear in a store field, a policy footer, or a build label.
+  Honest step states on this branch: STEP-01 green (A-015, A-016, A-017 are done);
+  STEP-09 green with evidence — the policy page is published and `POLICY_URL` is
+  recorded in A-024, re-verified as GET 200 with zero redirects and served text
+  equal to the page source; STEP-03..STEP-08, STEP-10..STEP-15 remain NOT
+  EXECUTABLE (no Unity player package, no named device classes, no store consoles,
+  no built package to exclude a harness from, no zero-purchase run on a build) and
+  are never reported green; STEP-13 ship notes are intentionally absent because
+  they require screenshots and gate evidence that do not exist yet. STEP-16 merged
+  into protected `main` under coordinator approval, STEP-17 merged the release back
+  into `develop`, STEP-18 deleted the branch locally and remotely.
 
 ### A-021 Phase 1 prototype code
 
