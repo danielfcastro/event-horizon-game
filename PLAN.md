@@ -121,6 +121,7 @@ docs(prototype): ...
 code(prototype): ...
 docs(briefs): ...
 code(player): ...
+code(player-package): ...
 chore(repo): ...
 ```
 
@@ -231,7 +232,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 | A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
-| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | ready | Gate CLOSED 2026-10-10 by installing, not by claiming: `unityhub` 3.21.0-1 (AUR, ships the Hub app and `UnityLicensingClient_V1`, no editor), then `unityhub --headless install --version 6000.0.84f1` exit 0 "installed successfully", then `install-modules --version 6000.0.84f1 -m ios android --cm` exit 0 with iOSSupport, AndroidPlayer, OpenJDK, Android NDK, CMake and the Android SDK tool sets all "installed successfully". Verified on disk: `editors -i` reports the editor at `/home/dfcastro/Unity/Hub/Editor/6000.0.84f1/Editor/Unity`, the ELF binary prints `6000.0.84f1`, `Editor/Data/PlaybackEngines/iOSSupport` and `Editor/Data/PlaybackEngines/AndroidPlayer` exist, `modules.json` lists 26 installed module entries, 15 GB on disk. The earlier "no connection" probe used the wrong host: `dl.unity.com` has no DNS while `download.unity3d.com` and `public-cdn.cloud.unity3d.com` resolve. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
+| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | doing | Gate CLOSED 2026-10-10 by installing, not by claiming: `unityhub` 3.21.0-1 (AUR, ships the Hub app and `UnityLicensingClient_V1`, no editor), then `unityhub --headless install --version 6000.0.84f1` exit 0 "installed successfully", then `install-modules --version 6000.0.84f1 -m ios android --cm` exit 0 with iOSSupport, AndroidPlayer, OpenJDK, Android NDK, CMake and the Android SDK tool sets all "installed successfully". Verified on disk: `editors -i` reports the editor at `/home/dfcastro/Unity/Hub/Editor/6000.0.84f1/Editor/Unity`, the ELF binary prints `6000.0.84f1`, `Editor/Data/PlaybackEngines/iOSSupport` and `Editor/Data/PlaybackEngines/AndroidPlayer` exist, `modules.json` lists 26 installed module entries, 15 GB on disk. The earlier "no connection" probe used the wrong host: `dl.unity.com` has no DNS while `download.unity3d.com` and `public-cdn.cloud.unity3d.com` resolve. SECOND GATE FOUND BY PROBING 2026-10-10 (a license, not the toolchain): the editor opens a project directory (creates `Logs/`, `Temp/UnityLockfile`, `UserSettings/`) but exits 198, and the shipped `UnityLicensingClient_V1` (`Unity.Licensing.Client --showAllEntitlements`) prints "No licenses were found" — the Hub headless CLI has no login command, so the player build is blocked until the user signs in or supplies a license token; the build and the two ship-build exclusion steps against a built package are recorded NOT EXECUTABLE, never green. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | done | Host gate closed 2026-10-09: the segment pre-named in A-020 §6 is squatted by an unrelated GitHub org (probed), so the canonical POLICY_URL is `https://danielfcastro.github.io/privacy-policy/`. Merged via PR #32 into develop at 866fa08. Evidence in docs/policy-hosting.md §5: GET 200 with zero redirects; served text equals the page source verbatim after documented host rendering (the default theme emits an h1 "privacy-policy" heading, recorded not removed); no placeholder tokens; live page carries policy text version 1.1 and the effective date. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 | A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. Extended 2026-10-10 (PR #34, merged into develop at e77797f): the merged client drew the collision core, so the hole never visibly grew — found by looking at the frames. The extension puts `holeEventRadius` in the payload in both halves and draws the horizon at the §5.3 zoom; verified by running and by looking (`eventRadiusPx=167`, `ppuUsed` 5 -> 3 -> 2, embedded snapshot still byte-identical to the golden at step 1800, harness regression green). The residual — a constant-fraction horizon pins the on-screen hole at 334 px, so §5.3's "starts small" needs A-007/A-009 numbers — is recorded in §4 as an open question, not decided here. Extended a second time 2026-10-10 (PR #35, merged into develop at a67a76a): the §5.3 hybrid camera — `min(ppuWorld, ppuContain)` gives a fixed world-fitting view while the horizon fits (growth visible) and a smooth zoom-out once it would clip (contained); `boundsW`/`boundsH` joined the payload in both halves. Verified on the merged tree: the dump proof reports `phase=1 boundsWU=128x96 eventRadiusPx=157 ppuUsed=5` at step 1, `phase=1 eventRadiusPx=218` at 1200, `phase=2 eventRadiusPx=242 ppuUsed=4` at 1800, `phase=2 eventRadiusPx=242 ppuUsed=3` at 2827; harness regression green with the fork guard unchanged and the embedded snapshot at 1800 still byte-identical to the golden. A-007's and A-009's numbers and every golden replay are untouched by this decision. |
@@ -697,13 +698,45 @@ a design decision updates `PLAN.md` first):**
   are what make a player package for those classes. `install-modules` is the
   documented way to add them.
 
+**Design decisions this artifact records at the draft (2026-10-10, before the code):**
+
+- **The license gate is separate from the toolchain gate and is still open.** The
+  editor and the `ios android` modules are on disk and run, but `Unity -batchmode
+  -quit -projectPath <empty project>` exits 198 and the shipped licensing client
+  reports "No licenses were found"; the Hub headless CLI exposes no login command.
+  The player build, and with it the two ship-build exclusion steps against a built
+  package, are NOT EXECUTABLE until the user signs in or supplies a license token.
+  The package is drafted as the candidate; no gate it cannot run is reported green.
+- **A-019 §12 item 3 answered (dev.* gating without a second simulation path).**
+  The `dev.targetFps`/`dev.timeScale` knobs stay in `PlatformBridge` as the headless
+  development surface; the shipping boot path derives the frame clock's targetFps
+  from the device tier probe (Unity telemetry in the player shell), never from a
+  `dev.*` key, and no input handler or settings entry reads one — one accumulator,
+  one `FixedStepDriver.advance`, no second path. STEP-11d of A-020 §7 is what
+  checks this on the built package.
+- **A-014 Q3 (reference-device set) is blocked on hardware, not decided here.** The
+  classes are named (modern phone: mid-range Android 2023–2025 ≥8 GB plus one
+  current-gen iOS; weak device: oldest still-shippable Android ≤2 GB), but the
+  concrete reference-device pick needs real devices and store consoles; recorded as
+  an open question for A-020/A-025, never claimed.
+- **Version string:** the candidate carries no store version; `1.0.0` is not used
+  (A-014's release gate and A-015's SG gates are not green), and no `0.x` number
+  appears in any store field, policy footer, or build label. The `ProjectVersion.txt`
+  pin carries the Unity toolchain version (`6000.0.84f1`), which is a toolchain
+  fact, not a game version.
+- **SG-7 (A-020 §8):** the first-party crash reporter is a `PlatformBridge` hook
+  feeding A-016's crash event; the off-state completion test belongs to the shipped
+  build and is recorded NOT EXECUTABLE until one exists.
+
 **Status:**
 
-- ready (environment gate closed 2026-10-10 by installing and verifying, not by
-  claiming: Unity 6 LTS `6000.0.84f1` on disk and running, with iOS and Android
-  build support and their child modules; evidence in §2's A-023 row and in
-  `PROGRESS.md`. The version choice and the module requirement are recorded above,
-  so a later session does not re-pick them.)
+- doing (on `feature/programmer-player-package` from develop; the package is drafted
+  as the candidate build — render layer implementing the §5.3 hybrid camera rule,
+  player shell, UI slots, platform slots, build recipe, and the two ship-build
+  exclusion checks as an executable script. The license gate above keeps the actual
+  player build and the exclusion checks NOT EXECUTABLE until sign-in; the headless
+  regression (harness, player, goldens, fork guard) is re-run and must stay green
+  because the package moved no hashed file.)
 
 ### A-024 docs/policy-hosting.md
 
