@@ -79,14 +79,14 @@ namespace EH
             for (int body = 0; body < SimState.BODY_CAPACITY; body++)
             {
                 bodyObjects[body] = new UnityEngine.GameObject("eh-render-" + body);
-                bodySprites[body] = bodyObjects[body].AddComponent<SpriteRenderer>();
+                bodySprites[body] = bodyObjects[body].AddComponent<UnityEngine.SpriteRenderer>();
             }
             horizonObject = new UnityEngine.GameObject("eh-horizon");
-            horizonSprite = horizonObject.AddComponent<SpriteRenderer>();
+            horizonSprite = horizonObject.AddComponent<UnityEngine.SpriteRenderer>();
             // The engine's built-in default square stands in until A-006's art is
             // bundled; the placeholder is named, not hidden (A-006/A-010 own the
             // visuals — brief §9 scope boundary).
-            defaultSprite = Resources.GetBuiltinResource<UnityEngine.Sprite>("Default-Sprite.png");
+            defaultSprite = UnityEngine.Resources.GetBuiltinResource<UnityEngine.Sprite>("Default-Sprite.png");
             visibilityLayer = new int[SimState.BODY_CAPACITY];
             booted = true;
         }
@@ -106,8 +106,15 @@ namespace EH
 
             // ---- the §5.3 rule, one expression, two phases ----------------------
             // shortEdgePx from the ACTIVE window, never a constant (PLAN.md §5.3).
-            int windowW = UnityEngine.Display.Primary.virtualWidth;
-            int windowH = UnityEngine.Display.Primary.virtualHeight;
+            // Unity's game-window size in pixels. Evidence from THIS editor
+            // (6000.0.84f1, the compiler as the oracle): Screen.currentResolution
+            // and Screen.resolutions are real properties; every Get* method form
+            // (GetResolution(), GetResolutions(), GetMainWindowDisplayInfo()) is
+            // rejected. The §5.3 rule reads the short edge of the live window,
+            // exactly as A-026's view.c reads the SDL window — never a constant.
+            var windowPx = UnityEngine.Screen.currentResolution;
+            int windowW = windowPx.width;
+            int windowH = windowPx.height;
             double shortEdge = windowW < windowH ? (double)windowW : (double)windowH;
 
             // bounds and horizon in WU as a double: Q32.32 / 2^32. This is the SAME
@@ -154,11 +161,14 @@ namespace EH
             // height, so worldHeight = windowHeightPx / ppu.
             UnityEngine.Camera camera = UnityEngine.Camera.main;
             camera.orthographic = true;
-            camera.orthographicSize = (windowH / ppu) * 0.5;
-            double holeXWu = (double)s.holeX >> 32;
-            double holeYWu = (double)s.holeY >> 32;
-            camera.GetComponent<UnityEngine.Transform>().worldPosition =
-                new UnityEngine.Vector3(holeXWu, holeYWu, 0.0);
+            camera.orthographicSize = (float)((windowH / ppu) * 0.5);
+            // Q32.32 -> world units as a double, then float only at the Unity API
+            // boundary. The same read A-026's view.c makes; truncating with >> 32
+            // would let the two implementations of the §5.3 rule disagree.
+            double holeXWu = (double)s.holeX / 4294967296.0;
+            double holeYWu = (double)s.holeY / 4294967296.0;
+            camera.GetComponent<UnityEngine.Transform>().position =
+                new UnityEngine.Vector3((float)holeXWu, (float)holeYWu, 0.0f);
 
             // ---- horizon ring: the VISIBLE hole is the event horizon (A-026's
             // render fix established this: drawing holeRadius, the constant
@@ -166,9 +176,9 @@ namespace EH
             horizonObject.SetActive(true);
             horizonSprite.sprite = defaultSprite;
             UnityEngine.Transform horizonT = horizonObject.GetComponent<UnityEngine.Transform>();
-            horizonT.worldPosition = new UnityEngine.Vector3(holeXWu, holeYWu, 0.0);
+            horizonT.position = new UnityEngine.Vector3((float)holeXWu, (float)holeYWu, 0.0f);
             double dWu = 2.0 * evWu;
-            horizonT.localScale = new UnityEngine.Vector3(dWu, dWu, 1.0);
+            horizonT.localScale = new UnityEngine.Vector3((float)dWu, (float)dWu, 1.0f);
 
             // ---- bodies: ascending index, culled against the active window ------
             double halfWWu = (windowW / ppu) * 0.5;
@@ -181,9 +191,9 @@ namespace EH
                     bodyObjects[body].SetActive(false); // inactive records are never drawn as ghosts
                     continue;
                 }
-                double dxWu = ((double)s.bodyX[body] >> 32) - holeXWu;
-                double dyWu = ((double)s.bodyY[body] >> 32) - holeYWu;
-                double rWu = (double)s.bodyRadius[body] >> 32;
+                double dxWu = ((double)s.bodyX[body] / 4294967296.0) - holeXWu;
+                double dyWu = ((double)s.bodyY[body] / 4294967296.0) - holeYWu;
+                double rWu = (double)s.bodyRadius[body] / 4294967296.0;
                 if (dxWu > halfWWu + rWu || dxWu < -(halfWWu + rWu) ||
                     dyWu > halfHWu + rWu || dyWu < -(halfHWu + rWu))
                 {
@@ -201,8 +211,8 @@ namespace EH
                 bodyObjects[body].SetActive(true);
                 bodySprites[body].sprite = defaultSprite;
                 UnityEngine.Transform t = bodyObjects[body].GetComponent<UnityEngine.Transform>();
-                t.worldPosition = new UnityEngine.Vector3(holeXWu + dxWu, holeYWu + dyWu, 0.0);
-                t.localScale = new UnityEngine.Vector3(2.0 * rWu, 2.0 * rWu, 1.0);
+                t.position = new UnityEngine.Vector3((float)(holeXWu + dxWu), (float)(holeYWu + dyWu), 0.0f);
+                t.localScale = new UnityEngine.Vector3((float)(2.0 * rWu), (float)(2.0 * rWu), 1.0f);
             }
 
             // hazard pool: empty on p1-level-01 (A-009); the slot is documented,

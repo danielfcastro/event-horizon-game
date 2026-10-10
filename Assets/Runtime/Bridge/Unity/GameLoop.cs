@@ -87,20 +87,20 @@ namespace EH
         /// <summary>
         /// Device tier from Unity telemetry. 0 = unknown (never a guessed
         /// default — the same honesty FrameDriver.selectTier keeps headless).
-        /// Thresholds are A-014's class definitions, not new numbers.
+        ///
+        /// Evidence, not assumption (6000.0.84f1, the compiler as the oracle):
+        /// Unity 6's C# API exposes NO physical-RAM member. Every candidate name
+        /// is rejected — SystemInfo.GetPhysicalMemoryMB, GetTotalPhysicalMB,
+        /// GetAvailableMB, totalPhysicalMB, physicalMemoryMB, GetGraphicsMemorySize,
+        /// GetProcessorFrequencyMHz. The C++ side has systeminfo::GetPhysicalMemoryMB,
+        /// but it is not scriptable. So A-014's RAM-class thresholds (>= 8 GB modern,
+        /// <= 2 GB weak) are applied by the platform and the hardware, NOT by player
+        /// code; inventing a CPU-count rule here would be a new design decision, so
+        /// the tier stays unknown and the open question is recorded for A-025.
         /// </summary>
         private int probeDeviceTier()
         {
-            int physicalMB = UnityEngine.SystemInfo.physicalMB;
-            if (physicalMB > 0 && physicalMB <= 2048)
-            {
-                return 1; // weak device class (A-014: <= 2 GB RAM, throttled CPU)
-            }
-            if (physicalMB >= 8192)
-            {
-                return 3; // modern phone class (A-014: >= 8 GB RAM, 60 Hz+)
-            }
-            return 2; // between the named classes: medium, 60 fps
+            return 0; // unknown: no scriptable RAM signal on this engine version
         }
 
         /// <summary>

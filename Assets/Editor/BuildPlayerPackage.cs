@@ -12,11 +12,15 @@
 // recipe is recorded so the step runs green the moment the gate opens; until
 // then it is NOT EXECUTABLE, never claimed.
 //
-// The classic UnityEditor.BuildPlayer signature is used because it exists
-// unchanged across the supported range (deprecated in Unity 6 but functional);
-// the Unity 6-native build API is preferred at ship time (A-025/A-020) and
-// swapping to it changes no candidate-build property.
-
+// The API below is settled by the compiler on THIS editor (6000.0.84f1), not by
+// memory. Evidence: UnityEditor.BuildPlayer does not exist; the real entry point
+// is UnityEditor.BuildPipeline.BuildPlayer, whose overload takes
+// (EditorBuildSettingsScene[], string target, BuildTarget target,
+//  UnityEditor.BuildOptions). A 3-argument call is rejected ("no overload takes
+// 3 arguments"), and the fourth parameter's type is named by the compiler.
+// BuildTarget.Android and BuildTarget.iOS are real members; Standalone_ARM64 and
+// Standalone64Bit are not, so the iOS player uses BuildTarget.iOS directly.
+//
 public static class BuildPlayerPackage
 {
     /// <summary>
@@ -28,16 +32,14 @@ public static class BuildPlayerPackage
     /// </summary>
     public static void BuildAll()
     {
-        // Release flags only (A-020 §7 STEP-11e: no debug power state may be
-        // enabled in a shipped artifact — the build below sets no debug flag).
-        UnityEditor.BuildPlayer(
-            UnityEditor.BuildTargetGroup.Android, UnityEditor.BuildTarget.Android,
-            "Build/EventHorizon-Android.apk");
-        // iOS shares the Standalone build-target group in current Unity versions;
-        // the exact target constant is confirmed when the build runs (license
-        // gate open) — a wrong constant is a build-time rejection, not a pass.
-        UnityEditor.BuildPlayer(
-            UnityEditor.BuildTargetGroup.Standalone, UnityEditor.BuildTarget.Standalone_ARM64,
-            "Build/EventHorizon-iOS.app");
+        UnityEditor.EditorBuildSettingsScene[] scenes = UnityEditor.EditorBuildSettings.scenes;
+        // Default BuildOptions: no development flag, no debug power state —
+        // A-020 §7 STEP-11e requires that a shipped artifact carry neither.
+        UnityEditor.BuildOptions androidOptions = new UnityEditor.BuildOptions();
+        UnityEditor.BuildPipeline.BuildPlayer(
+            scenes, "Build/EventHorizon-Android.apk", UnityEditor.BuildTarget.Android, androidOptions);
+        UnityEditor.BuildOptions iosOptions = new UnityEditor.BuildOptions();
+        UnityEditor.BuildPipeline.BuildPlayer(
+            scenes, "Build/EventHorizon-iOS.app", UnityEditor.BuildTarget.iOS, iosOptions);
     }
 }

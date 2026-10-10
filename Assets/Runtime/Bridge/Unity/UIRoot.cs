@@ -57,11 +57,13 @@ namespace EH
         {
             Fail.check(!registered, "UIRoot.register: slots exist to be registered once");
             canvasRoot = new UnityEngine.GameObject("eh-hud");
-            canvasRoot.AddComponent<Canvas>();
+            canvasRoot.AddComponent<UnityEngine.Canvas>();
             for (int k = 0; k < slotNames.Length; k++)
             {
                 UnityEngine.GameObject slot = new UnityEngine.GameObject("eh-hud-" + slotNames[k]);
-                slot.SetParent(canvasRoot);
+                // Parenting is a Transform operation (GameObject has no SetParent,
+                // and SetParent takes a Transform, not a GameObject).
+                slot.GetComponent<UnityEngine.Transform>().SetParent(canvasRoot.GetComponent<UnityEngine.Transform>());
                 // Every slot is an empty Transform: no Text component is created
                 // for any slot, value-bearing or not — A-010 owns the drawing,
                 // so nothing here can render a fabricated number.
