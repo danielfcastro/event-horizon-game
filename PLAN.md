@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: A-023 Unity player package (ready — the Unity gate was closed 2026-10-10 by installing Unity 6 LTS 6000.0.84f1 with iOS and Android build support; see §2's A-023 row for the evidence). A-025 stays gated on store consoles and on A-023; contact verification needs a real inbox — event-horizon.game still does not resolve; the live SDL window still needs a human at a desktop.
+next_artifact: none executable (A-023 Unity player package is done — merged via PR #38 into develop; the Unity toolchain gate and the Unity license gate were both closed 2026-10-10, the candidate build is real — Build/EventHorizon-Android.apk 12,431,883 bytes and Build/EventHorizon-iOS.app — and A-019 §12's ship-build exclusion steps STEP-11a..11e run green against it. A-025 stays gated on store consoles and on real device classes; contact verification needs a real inbox — event-horizon.game still does not resolve; the live SDL window still needs a human at a desktop. The run is at a gate.)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -232,7 +232,7 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 | A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
-| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | doing | Gate CLOSED 2026-10-10 by installing, not by claiming: `unityhub` 3.21.0-1 (AUR, ships the Hub app and `UnityLicensingClient_V1`, no editor), then `unityhub --headless install --version 6000.0.84f1` exit 0 "installed successfully", then `install-modules --version 6000.0.84f1 -m ios android --cm` exit 0 with iOSSupport, AndroidPlayer, OpenJDK, Android NDK, CMake and the Android SDK tool sets all "installed successfully". Verified on disk: `editors -i` reports the editor at `/home/dfcastro/Unity/Hub/Editor/6000.0.84f1/Editor/Unity`, the ELF binary prints `6000.0.84f1`, `Editor/Data/PlaybackEngines/iOSSupport` and `Editor/Data/PlaybackEngines/AndroidPlayer` exist, `modules.json` lists 26 installed module entries, 15 GB on disk. The earlier "no connection" probe used the wrong host: `dl.unity.com` has no DNS while `download.unity3d.com` and `public-cdn.cloud.unity3d.com` resolve. SECOND GATE FOUND BY PROBING 2026-10-10 (a license, not the toolchain): the editor opens a project directory (creates `Logs/`, `Temp/UnityLockfile`, `UserSettings/`) but exits 198, and the shipped `UnityLicensingClient_V1` (`Unity.Licensing.Client --showAllEntitlements`) prints "No licenses were found" — the Hub headless CLI has no login command, so the player build is blocked until the user signs in or supplies a license token; the build and the two ship-build exclusion steps against a built package are recorded NOT EXECUTABLE, never green. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
+| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | done | Gate CLOSED 2026-10-10 by installing, not by claiming: `unityhub` 3.21.0-1 (AUR, ships the Hub app and `UnityLicensingClient_V1`, no editor), then `unityhub --headless install --version 6000.0.84f1` exit 0 "installed successfully", then `install-modules --version 6000.0.84f1 -m ios android --cm` exit 0 with iOSSupport, AndroidPlayer, OpenJDK, Android NDK, CMake and the Android SDK tool sets all "installed successfully". Verified on disk: `editors -i` reports the editor at `/home/dfcastro/Unity/Hub/Editor/6000.0.84f1/Editor/Unity`, the ELF binary prints `6000.0.84f1`, `Editor/Data/PlaybackEngines/iOSSupport` and `Editor/Data/PlaybackEngines/AndroidPlayer` exist, `modules.json` lists 26 installed module entries, 15 GB on disk. The earlier "no connection" probe used the wrong host: `dl.unity.com` has no DNS while `download.unity3d.com` and `public-cdn.cloud.unity3d.com` resolve. SECOND GATE FOUND BY PROBING 2026-10-10 (a license, not the toolchain): the editor opens a project directory (creates `Logs/`, `Temp/UnityLockfile`, `UserSettings/`) but exits 198, and the shipped `UnityLicensingClient_V1` (`Unity.Licensing.Client --showAllEntitlements`) prints "No licenses were found" — the Hub headless CLI has no login command, so the player build is blocked until the user signs in or supplies a license token; the build and the two ship-build exclusion steps against a built package are recorded NOT EXECUTABLE, never green. SECOND GATE CLOSED AND BUILT 2026-10-10: `unity auth login` (Unity CLI 1.0.0-beta.13) → `loggedIn: true`, then `license activate --personal --accept-eula` → `active: true` with Unity Personal and Asset Store; the recipe exits 0 with `editorErrors: []` and writes `Build/EventHorizon-Android.apk` (12,431,883 bytes) and `Build/EventHorizon-iOS.app`; STEP-11a..11e of A-019 §12 run GREEN against that package (zero harness/replay/`dev.*` hits in the APK listing), STEP-11d's device re-run stays NOT EXECUTABLE (hardware); P-01/P-02/P-04/P-05 stay hardware-gated and are never reported green. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | done | Host gate closed 2026-10-09: the segment pre-named in A-020 §6 is squatted by an unrelated GitHub org (probed), so the canonical POLICY_URL is `https://danielfcastro.github.io/privacy-policy/`. Merged via PR #32 into develop at 866fa08. Evidence in docs/policy-hosting.md §5: GET 200 with zero redirects; served text equals the page source verbatim after documented host rendering (the default theme emits an h1 "privacy-policy" heading, recorded not removed); no placeholder tokens; live page carries policy text version 1.1 and the effective date. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 | A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. Extended 2026-10-10 (PR #34, merged into develop at e77797f): the merged client drew the collision core, so the hole never visibly grew — found by looking at the frames. The extension puts `holeEventRadius` in the payload in both halves and draws the horizon at the §5.3 zoom; verified by running and by looking (`eventRadiusPx=167`, `ppuUsed` 5 -> 3 -> 2, embedded snapshot still byte-identical to the golden at step 1800, harness regression green). The residual — a constant-fraction horizon pins the on-screen hole at 334 px, so §5.3's "starts small" needs A-007/A-009 numbers — is recorded in §4 as an open question, not decided here. Extended a second time 2026-10-10 (PR #35, merged into develop at a67a76a): the §5.3 hybrid camera — `min(ppuWorld, ppuContain)` gives a fixed world-fitting view while the horizon fits (growth visible) and a smooth zoom-out once it would clip (contained); `boundsW`/`boundsH` joined the payload in both halves. Verified on the merged tree: the dump proof reports `phase=1 boundsWU=128x96 eventRadiusPx=157 ppuUsed=5` at step 1, `phase=1 eventRadiusPx=218` at 1200, `phase=2 eventRadiusPx=242 ppuUsed=4` at 1800, `phase=2 eventRadiusPx=242 ppuUsed=3` at 2827; harness regression green with the fork guard unchanged and the embedded snapshot at 1800 still byte-identical to the golden. A-007's and A-009's numbers and every golden replay are untouched by this decision. |
@@ -728,15 +728,67 @@ a design decision updates `PLAN.md` first):**
   feeding A-016's crash event; the off-state completion test belongs to the shipped
   build and is recorded NOT EXECUTABLE until one exists.
 
+- **Unity 6 API facts are settled by the compiler, not by memory.** The first
+  draft of the package was written against an assumed API surface and the editor
+  rejected it (exit 198 → then real compile errors once the license gate opened).
+  The names below are the ones the compiler on `6000.0.84f1` accepts; every
+  rejected candidate is recorded so a later session does not re-guess:
+  `UnityEditor.BuildPlayer` does not exist — the entry point is
+  `UnityEditor.BuildPipeline.BuildPlayer(EditorBuildSettingsScene[], string,
+  BuildTarget, UnityEditor.BuildOptions)` (a 3-argument call is rejected, and the
+  fourth parameter's type is named by the compiler); `BuildTarget.Android` and
+  `BuildTarget.iOS` are real, `Standalone_ARM64` and `Standalone64Bit` are not;
+  `UnityEngine.Screen.currentResolution` is a real property returning `Resolution`
+  with `width`/`height`, while `Screen.GetResolution()`, `Screen.GetResolutions()`,
+  `Screen.GetCurrentResolution()` and `Screen.GetMainWindowDisplayInfo()` are all
+  rejected. Evidence came from a probe file placed under `Assets/Runtime/Bridge/Unity`
+  because that directory IS compiled by the player build — `Assets/Editor` is not,
+  which is why an earlier probe there produced no evidence at all. The probe carries
+  a validation line (`UnityEditor.ThisSymbolDoesNotExistAtAll`) that MUST appear in
+  the error list; when it does not, the probe is not evidence.
+- **A-014's RAM-class thresholds are not scriptable on this engine.** Every
+  candidate member is rejected by the compiler (`SystemInfo.GetPhysicalMemoryMB`,
+  `GetTotalPhysicalMB`, `GetAvailableMB`, `totalPhysicalMB`, `physicalMemoryMB`,
+  `GetGraphicsMemorySize`, `GetProcessorFrequencyMHz`). The C++ side has
+  `systeminfo::GetPhysicalMemoryMB`, but it is not exposed to C#. So the player
+  does NOT invent a CPU-count rule: `probeDeviceTier()` returns 0 (unknown), the
+  same honesty `FrameDriver.selectTier` keeps headless, and the RAM-based class
+  detection stays a platform/hardware concern. Recorded as an open question for
+  A-025 rather than answered with a new number.
+- **A build with zero registered scenes is a vacuous success.** The first real
+  build printed `success: true` and wrote nothing: `ProjectSettings/EditorBuildSettings.asset`
+  had `m_Scenes: []` and the scene sat at the repo root, outside the Unity project
+  layout. The scene was moved to `Assets/EventHorizon.unity`, imported (GUID
+  `1aec44971683e0ae9afc3a59e2fcd1e7`), and registered in the build settings; only
+  then does the recipe produce `Build/EventHorizon-Android.apk` (12,431,883 bytes)
+  and `Build/EventHorizon-iOS.app`. The rule this artifact records: a player build
+  is green only with a package on disk, never with an empty scene list.
+- **Unity's transient outputs are never part of the package.** `.gitignore` gains
+  `Library/`, `Temp/`, `Logs/`, `Build/`, `UserSettings/`, `.utmp/` (asset cache,
+  scratch, build logs, built players, local editor state, Unity's C++ scratch). The
+  project files that ARE part of the package — `Assets/**/*.meta`, the scene,
+  `ProjectSettings/*.asset` — are committed, because the repo root is the Unity
+  project root and those files define the player package.
+
 **Status:**
 
-- doing (on `feature/programmer-player-package` from develop; the package is drafted
-  as the candidate build — render layer implementing the §5.3 hybrid camera rule,
-  player shell, UI slots, platform slots, build recipe, and the two ship-build
-  exclusion checks as an executable script. The license gate above keeps the actual
-  player build and the exclusion checks NOT EXECUTABLE until sign-in; the headless
-  regression (harness, player, goldens, fork guard) is re-run and must stay green
-  because the package moved no hashed file.)
+- done (merged into develop via PR #38 on `feature/programmer-player-package`;
+  the license gate closed 2026-10-10 by `unity auth login` (Unity CLI 1.0.0-beta.13,
+  `loggedIn: true`, account `dfcastro@gmail.com`) plus `license activate --personal
+  --accept-eula` → `active: true`, products Unity Personal and Asset Store). The
+  candidate build is REAL: `unity build --target Android --execute-method
+  BuildPlayerPackage.BuildAll` exits 0 with `editorErrors: []` and writes
+  `Build/EventHorizon-Android.apk` and `Build/EventHorizon-iOS.app`. The two
+  ship-build exclusion steps of A-019 §12 run GREEN against that package:
+  STEP-11a/11b/11c/11d/11e PASS, with zero harness/replay/`dev.*` hits in the APK
+  listing; STEP-11d's device no-softening re-run stays NOT EXECUTABLE (hardware).
+  The headless surface is unchanged and re-verified from a clean `obj/`: harness
+  0/0, fork guard silent, H-01 `digest=6d25ff0add639448 steps=2828 droppedSteps=0
+  result=goal`, fresh sim byte-identical to the golden, H-02 `PASS snapshotsCompared=6`,
+  player 0/0, replay `goalStep=2828 droppedSteps=0`, the §5.3 render proof still
+  reports `phase=1 boundsWU=128x96 eventRadiusPx=218 ppuUsed=5` at step 1200 with
+  a byte-identical PPM. P-01/P-02/P-04/P-05 remain hardware-gated and are never
+  reported green.)
 
 ### A-024 docs/policy-hosting.md
 
