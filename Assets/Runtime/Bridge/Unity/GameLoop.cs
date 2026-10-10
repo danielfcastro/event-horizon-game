@@ -31,6 +31,12 @@ namespace EH
     {
         private SimState sim;
         private bool started;
+        // A-022: the per-run frame clock. GameLoop owns a clock rather than
+        // calling FixedStepDriver.advance itself, because the frame driver is
+        // the single owner of frame -> step mapping, hitch accounting, and the
+        // render-only alpha; the harness reaches the very same code (A-019 §11:
+        // "there is exactly one simulation loop and both entries reach it").
+        private FrameDriver.FrameClock clock;
 
         /// <summary>
         /// Unity entry (A-019 §11). Builds the SAME SimState the harness builds
@@ -47,6 +53,10 @@ namespace EH
             sim = LevelLoader.load("p1-level-01", LevelTable.defaultSeed);
             PlatformBridge.setBuildTarget("desktop");
             PlatformBridge.configureStartup();
+            // A-022: boot the frame clock. The startup gate is FixedStepDriver's
+            // (A-019 §10: a timeScale implying another DT is rejected at startup),
+            // so this file owns no duplicate gate; boot() calls it.
+            clock = FrameDriver.boot(60, FixedQ.ONE, 0);
             InputAdapter.boot(64);
             started = true;
         }
@@ -55,10 +65,18 @@ namespace EH
         /// One Unity frame. The intent is sampled ONCE per step boundary through
         /// InputAdapter (transport only — it holds no input scheme of its own,
         /// A-019 §4), then the whole frame budget goes to the ONE driver via
-        /// PlatformBridge.advanceOneFrame, which is a straight call to
-        /// FixedStepDriver.advance(s, frameWallDelta(), i). advance() runs at
-        /// most MAX_CATCHUP steps and drops further debt into s.droppedSteps;
-        /// GameLoop never interpolates, cushions, or softens.
+        /// FrameDriver.frameLive, which is the same frame body the harness runs
+        /// (target-fps wall budget, hitch debt, then FixedStepDriver.advance).
+        /// advance() runs at most MAX_CATCHUP steps and drops further debt into
+        /// s.droppedSteps; GameLoop never interpolates, cushions, or softens, and
+        /// owns no accumulator of its own.
+        ///
+        /// A-022 boundary: frameLive is the LIVE path, so one already-resolved
+        /// intent covers the whole frame. At 30 fps a frame delivers two steps
+        /// and both share it; the per-frame to per-step mapping for live input is
+        /// A-011's decision, not this file's. The deterministic path (re-simulable
+        /// playback, H-01/H-02/H-06/H-07/H-09) uses FrameDriver.frame with per-step
+        /// intents from the EIDIG1 channel.
         /// </summary>
         public void Update()
         {
@@ -68,12 +86,14 @@ namespace EH
             }
 
             Intent i = InputAdapter.sampleIntent(sim.stepIndex);
-            PlatformBridge.advanceOneFrame(sim, i);
+            FrameDriver.frameLive(clock, sim, i);
 
             // render-only interpolation between the last two fixed steps; never
             // fed back into the sim (A-019 §4 RenderLayer row: alpha is render
-            // only). accumulator/DT in [0,1).
-            float alpha = (float)sim.accumulator / (float)FixedStepDriver.DT;
+            // only). The frame driver already computed accumulator/DT as Q32.32
+            // raw; the float conversion happens here, on the render side, so no
+            // float ever reaches SimCore.
+            float alpha = (float)clock.renderAlphaRaw / (float)FixedQ.ONE;
             RenderLayer.draw(sim, alpha);
         }
 

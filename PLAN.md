@@ -1,6 +1,6 @@
 ---
 status: draft
-next_artifact: none (all 21 artifacts done; ship executes docs/ship.md STEP-01..STEP-18)
+next_artifact: none executable (A-024 done and merged via PR #32 at 866fa08; the A-002 README follow-ups merged via PR #33 at 7e952f4 and PR #36 at 6192591; the A-026 event-horizon render fix merged via PR #34 into develop at e77797f and its §5.3 hybrid camera via PR #35 at a67a76a. A-023 waits on the Unity toolchain and on real device classes — probed again 2026-10-10: no Unity editor binary on the machine, the only Unity artifact is a shipped Tabletop Simulator player binary in a backup home, and dl.unity.com has no DNS; A-025 waits on store consoles and on A-023; contact verification needs a real inbox and a human reply — event-horizon.game still does not resolve. The run is at a gate.)
 owner: coordinator
 project: Event Horizon
 platform: iOS, Android
@@ -83,7 +83,14 @@ feature/architect-prototype-scaffold
 feature/release-ship
 feature/programmer-prototype
 feature/programmer-harness-warning
+feature/programmer-harness-exitcode
+feature/programmer-frame-driver
+feature/programmer-player-package
+feature/programmer-player-sdl
+feature/release-policy-hosting
+feature/release-submission
 release/0.20
+release/0.26
 ```
 
 ### 1.4 Commit prefixes
@@ -112,6 +119,8 @@ docs(prototype-scaffold): ...
 docs(ship): ...
 docs(prototype): ...
 code(prototype): ...
+docs(briefs): ...
+code(player): ...
 chore(repo): ...
 ```
 
@@ -221,6 +230,11 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
 | A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
+| A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
+| A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | proposed | Environment gate: requires the Unity toolchain, which is not present in this environment, so this artifact stays blocked until it is. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. |
+| A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | done | Host gate closed 2026-10-09: the segment pre-named in A-020 §6 is squatted by an unrelated GitHub org (probed), so the canonical POLICY_URL is `https://danielfcastro.github.io/privacy-policy/`. Merged via PR #32 into develop at 866fa08. Evidence in docs/policy-hosting.md §5: GET 200 with zero redirects; served text equals the page source verbatim after documented host rendering (the default theme emits an h1 "privacy-policy" heading, recorded not removed); no placeholder tokens; live page carries policy text version 1.1 and the effective date. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
+| A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
+| A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. Extended 2026-10-10 (PR #34, merged into develop at e77797f): the merged client drew the collision core, so the hole never visibly grew — found by looking at the frames. The extension puts `holeEventRadius` in the payload in both halves and draws the horizon at the §5.3 zoom; verified by running and by looking (`eventRadiusPx=167`, `ppuUsed` 5 -> 3 -> 2, embedded snapshot still byte-identical to the golden at step 1800, harness regression green). The residual — a constant-fraction horizon pins the on-screen hole at 334 px, so §5.3's "starts small" needs A-007/A-009 numbers — is recorded in §4 as an open question, not decided here. Extended a second time 2026-10-10 (PR #35, merged into develop at a67a76a): the §5.3 hybrid camera — `min(ppuWorld, ppuContain)` gives a fixed world-fitting view while the horizon fits (growth visible) and a smooth zoom-out once it would clip (contained); `boundsW`/`boundsH` joined the payload in both halves. Verified on the merged tree: the dump proof reports `phase=1 boundsWU=128x96 eventRadiusPx=157 ppuUsed=5` at step 1, `phase=1 eventRadiusPx=218` at 1200, `phase=2 eventRadiusPx=242 ppuUsed=4` at 1800, `phase=2 eventRadiusPx=242 ppuUsed=3` at 2827; harness regression green with the fork guard unchanged and the embedded snapshot at 1800 still byte-identical to the golden. A-007's and A-009's numbers and every golden replay are untouched by this decision. |
 
 ## 3. Dependency graph
 
@@ -264,6 +278,23 @@ A-001 PLAN.md
 A-019 prototype-scaffold.md depends on A-005 and A-013.
 A-020 ship.md depends on A-015, A-016, A-017.
 A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
+
+Post-plan artifacts (registered 2026-10-07 so the rows of A-020 §4 stop being unreachable):
+A-022 phase 2 frame driver depends on A-005, A-019, A-021.
+A-023 Unity player package depends on A-005, A-022.
+A-024 policy-hosting.md depends on A-017, A-020.
+A-025 submission.md and ship notes depend on A-020, A-023, A-024.
+A-026 non-Unity player package depends on A-005, A-019, A-021, A-022.
+
+A-023 and A-025 additionally carry an environment gate (Unity toolchain, store consoles):
+they are not startable in an environment that lacks the tool, and they are never
+reported as done without the evidence their acceptance criteria name.
+
+A-026 exists precisely because that gate leaves the repo with nothing a human can
+see: A-023 is the Unity player package and this environment has no Unity toolchain,
+so before A-026 the only runnable artifact was a text harness. A-026 is not a
+second simulation. It is a renderer over the SAME SimState, and it is the artifact
+that makes the black hole of A-005 §5.1 visible and steerable without Unity.
 ```
 
 ## 4. Artifact contracts
@@ -291,7 +322,12 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 
 **Status:**
 
-- done
+- done (extended 2026-10-07 on `feature/coordinator-readme`: a "Build and run the prototype" section was added, because after A-021 merged there was no documented way for a human to build or run anything. Two stale claims were corrected in the same pass: "20 artifacts, A-001 through A-020" -> 21 artifacts through A-021, and "not the game code" -> the repo now also carries the phase-1 headless prototype (`Assets/`, `tools/harness/`, `replays/`, `harness.csproj`). The run guide documents only commands verified in this session, the A-019 §9 exit-code contract (0 pass / 1 fail / 2 harness error), and the toolchain gotchas (`dotnet run` masks the app exit code when piped; the native launcher `./obj/harness` fails with exit 131; use `dotnet exec obj/harness.dll`).)
+- extended again 2026-10-07 on the same branch: a "Getting `dotnet` on PATH (EndeavourOS / Arch)" subsection was added, because the user asked for toolchain steps on EndeavourOS and the repo documented none. The machine was confirmed EndeavourOS (`/etc/os-release` `ID=endeavouros`, `ID_LIKE=arch`, pacman present). Verified by running: `dotnet` on PATH from a fresh shell gives `dotnet --version` 8.0.425, `dotnet build harness.csproj -o obj` prints Build succeeded., and H-01/H-02 run byte-identical to the blessed golden. The artifact count claim was corrected again in this pass, 21 -> 25, because registering A-022..A-025 invalidated it. Two routes are documented with their honest state: the .NET 8 SDK tarball (RID `linux-x64`, 8.0.425) is the verified-working one whose download step is NOT executed because the official page resolves the file with JavaScript and no stable curl URL could be verified; the native Arch route (extra ships `dotnet-sdk-8.0` 8.0.31.sdk131-1 plus runtime/host/source-built-artifacts/targeting-pack) is NOT verified here because installing needs sudo and this session cannot supply a password, and a hand-assembled equivalent of those packages failed at build with NU1101 (no `Microsoft.NETCore.App.Host.arch-x64` pack), while Arch's runtime was verified to run the harness byte-identically.)
+
+- extended a third time 2026-10-09 on `feature/coordinator-readme`: the "headless" claims were corrected, because A-022 (frame driver, H-06..H-09) and A-026 (SDL2 windowed client, `tools/player/`, `player.csproj`) are merged and those sentences are now false — line 5 still said "no render layer running" and line 42 still said "no window, no player input, and no rendering". The artifact count claim was corrected again, 25 -> 26, because A-026 is registered in PLAN.md §2. A "Run the windowed client" subsection documents the player build and replay commands, each one run in this session after the A-024 merge: `dotnet build player.csproj -o obj-player` prints `Build succeeded. 0 Warning(s) 0 Error(s)`, `gcc tools/player/view.c -o obj-player/view -I/usr/include/SDL2 -D_GNU_SOURCE=1 -D_REENTRANT -lm -lSDL2` links, and `dotnet exec obj-player/player.dll --replay --level p1-level-01 --seed 0x1F4A --digest @replays/p1-level-01.digest.bin` prints `mode=replay frames=2828 steps=2828 goalStep=2828 goalReached=True droppedSteps=0 result=goal exit=0`. The bare `gcc ... -lSDL2` form from the A-026 brief does NOT link (undefined sqrt/sin/cos) and is documented with the full flags instead. What stays true and is left alone: there is still no app package, no store submission, and no Unity player build — A-023 remains gated. Merged via PR #33 into develop at 7e952f4, branch deleted locally and remotely; post-merge sweep on merged develop green (harness 0/0, fork guard silent, H-01 digest=6d25ff0add639448 steps=2828, sim byte-identical to the golden, H-02 PASS, player goalStep=2828 droppedSteps=0) and the stale-phrase grep is empty.)
+
+- extended a fourth time 2026-10-10 on `feature/coordinator-readme`: the "Run the windowed client" guide is incomplete and understated now that PR #34 and #35 are merged. Incomplete: it documents the build and the replay but not the dump+PPM proof (`--dump-step/--dump-file` then `view --frame … --ppm … --once`), which is the only headless path that produces an actual picture, and its expected-output note still describes the old diagnostic line while the merged renderer prints `phase= boundsWU= eventRadiusPx= ppuUsed=`. Understated: the paragraph claiming a headless environment "cannot observe the screen, so a clean exit here is not evidence that a picture was seen" was the honest ceiling before; it is not now, because the PPM frames were rendered and then actually VIEWED — that is exactly the sequence that found the frozen-hole defect and that confirms the two-phase camera. The claim is replaced with what the repo can prove and what it still cannot (the live window on a desktop still needs a human, so that one claim stays recorded as not-executable). No sim command changes: the guide's harness and replay expectations are still exactly what the merged tree prints.)
 
 ### A-003 AGENTS.md
 
@@ -492,6 +528,20 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 **Status:**
 
 - done
+- executed a second time 2026-10-10 as the documentation milestone `release/0.26`
+  (STEP-02, STEP-16, STEP-17, STEP-18). The version follows §2: `0.<artifact-id>`
+  through the highest artifact merged, which is A-026, so the milestone is `0.26`;
+  `0.x` numbers never appear in a store field, a policy footer, or a build label.
+  Honest step states on this branch: STEP-01 green (A-015, A-016, A-017 are done);
+  STEP-09 green with evidence — the policy page is published and `POLICY_URL` is
+  recorded in A-024, re-verified as GET 200 with zero redirects and served text
+  equal to the page source; STEP-03..STEP-08, STEP-10..STEP-15 remain NOT
+  EXECUTABLE (no Unity player package, no named device classes, no store consoles,
+  no built package to exclude a harness from, no zero-purchase run on a build) and
+  are never reported green; STEP-13 ship notes are intentionally absent because
+  they require screenshots and gate evidence that do not exist yet. STEP-16 merged
+  into protected `main` under coordinator approval, STEP-17 merged the release back
+  into `develop`, STEP-18 deleted the branch locally and remotely.
 
 ### A-021 Phase 1 prototype code
 
@@ -504,6 +554,284 @@ A-021 Phase 1 prototype code depends on A-005, A-013, A-019.
 **Status:**
 
 - done (merged into develop via PR #24 at 8f52d25; commit 2770f53 code(prototype):)
+
+### A-022 Phase 2 frame driver and render state
+
+**Purpose:**
+
+- Turn the phase-1 stubs H-06..H-09 into real commands: hitch detection, fps accounting, pointer mapping, quality-tier probe.
+- Own the weak-device switch and the quality-tier probe of A-019 §10 without touching `DT`.
+- Consumed by A-023, which renders through the same frame driver.
+
+**Design decisions this artifact owns (recorded before the code, per the rule that
+a design decision updates `PLAN.md` first):**
+
+- **Per-step intent entry point in `FixedStepDriver`.** A-019 §4 requires input
+  sampled once per step, and A-019 §10 says a 30 fps target runs two sim steps
+  per rendered frame through the same accumulator. The phase-1 `advance(s, wall, i)`
+  carries ONE `Intent` for the whole frame, so at 30 fps the second step would
+  silently reuse the first step's intent, and H-07 could never show the 30 fps
+  trajectory equal to the 60 fps one. A-022 adds `advanceDigest(s, wall, digest)`
+  beside it: exactly one `InputDigest.decode` per delivered step (`InputDigest`
+  already lives in `SimCore`, so this adds no Bridge dependency to the sim),
+  sharing ONE accumulator/catch-up/dropped-step implementation with `advance`
+  through a single private `deliver` — no duplicated budget logic. `advance`
+  keeps its meaning (one intent for the whole frame: the live-device entry, where
+  the per-frame to per-step mapping at 30 fps is A-011's decision, not this
+  artifact's) and its comment states that boundary. `FixedStepDriver.cs` is a
+  hashed `SimCore` file, so `forkExpected` is re-blessed and both goldens re-verified;
+  the goldens step through `FixedStepDriver.step`, which is unchanged, so they
+  must stay byte-identical.
+- **The frame clock is per-run state, not globals.** H-06/H-07/H-09 compare two
+  or three frame-driven runs at once, so `FrameDriver` owns a `FrameClock` object
+  (frame index, hitch schedule, tier) handed to `frame(clock, state, digest)`;
+  static globals would let one run's clock corrupt another's comparison.
+- **H-06's precise assertion.** A-019 §9 words the hitch test as "changes
+  `droppedSteps` and nothing else". A hitch smaller than the catch-up budget
+  does NOT change `droppedSteps` — A-019 §10 already says `droppedSteps` "only
+  grows through the `MAX_CATCHUP = 4` rule". The honest assertion implemented
+  here is stronger and stated precisely: the hitch changes frame accounting
+  (`framesToGoal`) and, when it exceeds the catch-up budget, `droppedSteps`,
+  and nothing else — the goal step index and every observable snapshot are
+  byte-identical. Both a within-budget (42 ms) and an over-budget (100 ms)
+  schedule are run so the drop path is proven live, not dead code.
+- **The snapshot's trailing seal moves with `droppedSteps`.** A-019 §11's
+  `EHSNAP1` trailer is an FNV-1a seal over the snapshot bytes, so it changes
+  whenever `droppedSteps` does. The H-06 comparison therefore excludes exactly
+  those two adjacent trailing fields and nothing else, and verifies the window
+  really is those two fields (16 bytes, adjacent) by asking `Counters.fieldName`
+  rather than recomputing snapshot offsets — duplicated layout arithmetic is the
+  drift that would let a real difference hide inside a wrong window. Comparing
+  every other byte is strictly stronger than comparing the seal.
+- **Two latent contract drifts found by running the phase-2 commands, both in
+  hashed `SimCore` files, both fixed here rather than papered over.**
+  (1) `SpawnDirector.apply` documents itself as "called by `SimStep` before
+  `AttractionSystem`", but phase-1 `SimStep.run` never called it — `runLoop` did
+  — so any other entry point (the frame driver) would run a level with no
+  spawns. It moved into `SimStep.run` as step 0), before `PlayerController`,
+  preserving exactly the order the goldens were produced with, and was removed
+  from `runLoop`. (2) `InputDigest.encode` initialised its write cursor at 0, so
+  `writeUvarint` overwrote the magic and version bytes; nothing in phase 1 ever
+  called `encode` (the harness reads a committed `EIDIG1` fixture, it never
+  writes one), so the bug was latent, and H-08's round-trip is the first caller
+  — `decode`'s `BAD_MAGIC` rejection is what surfaced it. The committed golden
+  fixture shows the intended layout (magic, ver u16, uvarint step count), so the
+  cursor starts at 8. Both files are hashed, so `forkExpected` is re-blessed
+  twice: `0xb6b01e1cff3f7710` -> `0x00200c7f119c888d` (frame-driver edits to
+  `FixedStepDriver`/`SimStep`) -> `0x99dd49de20c48bc4` (the `encode` fix), with
+  both goldens re-verified byte-identical at every step.
+- **`fileRecord` gains an explicit `hardwareOnly` parameter.** A-019 §9 says
+  H-07's thermal half keeps a hardware-only component "visibly split rather than
+  silently skipped", but phase-1 `fileRecord` hardcoded `hardwareOnly: false`,
+  so the record could not say it. It became `writeRecord(result, hardwareOnly)`
+  with `fileRecord(result)` delegating `false`; a mutable global would let the
+  flag leak into the next command's record.
+- **H-08's fixture is committed, not generated at run time.** `replays/h-08-
+  pointer.txt` is a checked-in `ehpointer1` telemetry script so the test is
+  reproducible from the repo; its values are already-resolved intents, because
+  `InputAdapter` is transport only and pointer-position -> intent resolution is
+  A-011's scheme, out of this artifact's scope.
+
+**Status:**
+
+- doing (2026-10-07, on `feature/programmer-frame-driver` from `develop`)
+- done (2026-10-07, same branch; acceptance criteria verified before the pull
+  request, merge into `develop` completes it per the established pattern)
+
+**Acceptance evidence (2026-10-07, headless build `dotnet build harness.csproj -o obj`):**
+
+- Build: `Build succeeded. 0 Warning(s) 0 Error(s)`.
+- `DT` unchanged: `public static readonly long DT = 71582788L` (Q32.32 raw 1/60),
+  and `configureStartup` rejects `--time-scale 2.0` with a named reason and exit 2,
+  so no fps or time-scale setting can move `DT`.
+- FIXED-FORK: re-blessed to `0x99dd49de20c48bc4` over the same 19 hashed files;
+  `replays/p1-level-01.json` regenerated by `sim --out` is byte-identical to the
+  committed golden, and H-02 replays it with `PASS snapshotsCompared=6`.
+- H-06 `hitch --at 120,341,902 --ms 42` exit 0: goal step 2828 identical,
+  2828 frames unhitched vs 2821 hitched, `droppedSteps=0` within budget, and the
+  forced 100 ms schedule gives `droppedSteps=3` with `maxStepsPerFrame=4`, so the
+  drop path is live; 5639 snapshot comparisons byte-identical outside the
+  `droppedSteps` + seal window.
+- H-07 `fps --target 30` exit 0: `goalStep=2828 goalStepAtTarget=2828`,
+  `stepsPerFrame=2`, `framesToGoal=1414`, `droppedSteps=0`, record carries
+  `hardwareOnly: true`.
+- H-08 `pointer --script @replays/h-08-pointer.txt` exit 0: 10 directives, 2 dup
+  steps discarded first-contact-wins, digest round-tripped through
+  `InputDigest.decode` every 100 steps, two runs of 9300 steps byte-identical
+  (`snapshotsCompared=17`).
+- H-09 `tier --probe` exit 0: three tiers, `goalSteps=2828,2828,2828`,
+  `renderPixelsPerUnit` distinct per tier, 2828 snapshots byte-identical across
+  tiers for the same `(seed, inputDigest)`; `deviceTier=unknown` stated honestly
+  rather than a guessed default.
+
+### A-023 Unity player package
+
+**Purpose:**
+
+- The player-facing build for the device classes named in A-014.
+- Render layer, UI root, input adapter, platform bridge over the same `SimCore`.
+- The candidate ship build whose version string is governed by A-020 §2.
+
+**Status:**
+
+- proposed (carries an environment gate: no Unity toolchain in this environment)
+
+### A-024 docs/policy-hosting.md
+
+**Purpose:**
+
+- Publish the policy page and record the single `POLICY_URL` (A-020 STEP-10, PR-2/PR-3).
+- Name the host, the policy text version published, and every place the URL is reused.
+
+**Design decisions this artifact owns (recorded before the artifact):**
+
+- **Host segment (probed 2026-10-09, not assumed).** A-020 §6 pre-names
+  `POLICY_URL = https://event-horizon-game.github.io/privacy-policy/` and its
+  own rule fixes the org/user segment at the moment of publishing. That
+  segment is not ours: `api.github.com/orgs/Event-Horizon-Game` returns an
+  organization created 2024-07-26 holding zero repositories, and `gh api
+  user/orgs` returns no organization for the authenticated account
+  `danielfcastro`. GitHub names are unique and case-insensitive, so no
+  casing of that segment is available to us and the pre-named URL can never
+  be published. A-020 §6 therefore resolves to the writable host: user
+  segment `danielfcastro`, repository `privacy-policy`, GitHub Pages over
+  HTTPS, giving the canonical recorded value
+  `POLICY_URL = https://danielfcastro.github.io/privacy-policy/`. The
+  pre-named string in A-020 §6 and in the page-source header is corrected to
+  this value in the same branch, so no consumer re-derives a URL that
+  cannot exist.
+- **The gate is closed, not claimed.** A-024 is done only with the live URL
+  fetched and its served body compared against the page source; a repo
+  created and a build scheduled are not evidence that a page was published.
+
+**Status:**
+
+- done (merged via PR #32 into develop at 866fa08, branch deleted locally and
+  remotely; the hosting gate was closed by probing the segment, not by declaring
+  it, and the live page was fetched and diffed against the page source by the
+  coordinator rather than trusting the author's report)
+
+### A-025 docs/submission.md and docs/ship-notes/<version>.md
+
+**Purpose:**
+
+- Execute A-020 §4.1 submission mechanics against the real consoles.
+- File the ship notes of A-020 §9, one line of gate evidence per row of A-020 §4.
+
+**Status:**
+
+- proposed (carries an environment gate: no store consoles and no A-023 ship build in this environment)
+
+### A-026 Non-Unity player package (SDL2 windowed client)
+
+**Purpose:**
+
+- Put the black hole of A-005 §5.1 on a screen and let a person steer it, in an
+  environment that cannot run A-023 because it has no Unity toolchain.
+- Keep the rule that made A-021..A-022 worth having: one simulation, proven
+  deterministic. A-026 adds a renderer, never a second simulation.
+
+**Design decisions this artifact owns (recorded before the code):**
+
+- **Two processes, one simulation.** The C# side owns the sim and the frame
+  clock; the C side owns the window and the keyboard. This shape is forced, not
+  chosen: this .NET 8 toolchain cannot call a C library from C#. Probed, not
+  assumed — `#pragma DLI_Import` is rejected as `CS1633 Unrecognized #pragma
+  directive` and `extern "C"` parses as a storage modifier (`CS1003 'alias'
+  expected`), so dynamic-library linking into SDL2 is unavailable. The compiler
+  is the oracle here, as everywhere in this repo.
+- **The renderer reads `SimState`, it never writes to it.** This is the contract
+  `RenderLayer.cs` was written and excluded for, made real and compiled. The
+  sim side reaches the run through `FrameDriver.frameLive(clock, state, intent)`,
+  the documented live-device entry, so the exactly-one-loop rule of A-019 §11
+  still holds and no stepping code is duplicated.
+- **Live input uses the same quantization as the replay channel.** A key selects
+  one of the 16 direction codes of `InputDigest.ANGLE_X/ANGLE_Y` (16 = coast),
+  and the `Intent` is built from that table, so a keyboard run and a recorded
+  run of the same key sequence agree. Pointer-position -> intent resolution
+  stays A-011's and out of scope.
+- **Exchange is by file, atomically, never by pipe.** The sim writes the newest
+  frame payload to a temp file and renames it into place; the renderer reads
+  whatever complete payload is newest. A pipe would block the sim whenever the
+  renderer has not consumed a frame, which is a stall that looks like a bug in
+  the sim. The renderer writes the newest key state the same way; the sim reads
+  it once per frame, which is exactly the sampling granularity A-019 §4 already
+  defines.
+- **The payload is the observable state, not a render product.** Step index,
+  hole position/radius/mass, active bodies, `pixelsPerUnit`, result flag. That
+  is what makes the acceptance criterion checkable: a payload dumped at step N
+  must agree with the harness snapshot emitted at step N.
+- **`pixelsPerUnit` stays render-only.** The camera follows the hole and the
+  WU -> px mapping happens in the renderer, per A-019 §6. `DT` is untouched.
+
+**Extension (2026-10-10), recorded before the code, after looking at the frames:**
+
+- **Defect found by sight, not by arithmetic.** `view.c` drew
+  `wu_to_px(p.holeRadius, p.ppu)` — the collision radius, which is constant at
+  1.0 WU — so the rendered hole was the same 32 px disc at step 1 and at step
+  1800 while `holeMass` went 100 -> 567. The earlier proof passed because it
+  counted non-background pixels of a constant disc. PLAN.md §5.3 says to keep the
+  event horizon visible and to zoom as the hole grows; the client did neither.
+- **The payload must carry `holeEventRadius`.** This is a protocol change: the
+  documented layout in `SimHost.cs` and the parser in `view.c` move together, in
+  one change, so the two halves cannot drift. The golden snapshot already carries
+  the field (`Snapshot.cs:196`, "seventh hole i64 = eventRadius", A-019 §7), so
+  the payload-vs-snapshot acceptance criterion stays checkable and no new state
+  is invented.
+- **The visible hole is the event horizon.** `RenderLayer` draws
+  `holeEventRadius` at the §5.3 zoom; `holeRadius` (the collision core) is not
+  drawn as the hole. This is what §5.4 means by "Event Horizon Radius | Visual
+  gravitational boundary".
+- **Outcome (2026-10-10), frames looked at rather than counted.** Before: the
+  drawn disc was `holeRadius` = 1.0 WU, 32 px at every step. After: the renderer
+  draws `holeEventRadius` at the §5.3 zoom, and the dump proof reports
+  `eventRadiusPx=167` with `ppuUsed` 5 -> 3 -> 2 at steps 1 -> 1800 -> 2827, so
+  the horizon is held at 62% of the short edge and the camera only ever zooms
+  out. The protocol moved in both halves together and the embedded snapshot at
+  step 1800 is still BYTE-IDENTICAL to the golden snapshot at 1800 (17291 bytes
+  found intact inside the payload), so the observable-state criterion survived.
+- **Residual, recorded as an open question, not fixed here.** A constant
+  fraction of the frame makes the on-screen hole the same 334 px across the whole
+  run; the growth cue becomes the field shrinking around it. §5.3's "the black
+  hole starts small" cannot be met with A-007's constants (baseRadius 8.0, a =
+  2.0) at A-009's starting mass 100, because the horizon is already 28 WU in a
+  128x96 world — wider than the default 30 WU opening view. Making the hole
+  visibly grow inside a fixed world view is a balance and level decision
+  (A-007's `a`, A-009's starting mass), not a renderer decision, and is left
+  open rather than invented.
+
+**Extension 2 (2026-10-10), recorded before the code — resolves the residual
+above without touching A-007 or A-009:**
+
+- **The residual is a camera decision, not a balance decision, once the camera is
+  allowed to be two-phase.** The hybrid rule in §5.3 keeps a fixed world-fitting
+  view while the horizon fits (so growth is visible against a stationary world),
+  and only hands over to the smooth zoom-out when the horizon would clip. Both
+  phases come from the same `min` of two derived values, so the transition is
+  continuous and the camera never snaps. A-007's constants and A-009's starting
+  mass stay exactly as they are; every golden replay is untouched.
+- **The payload must carry `boundsW` and `boundsH`.** The world-fitting phase
+  needs the world size, and the renderer must not read the level table: the
+  camera would otherwise be wrong for any level whose bounds differ. These are
+  level constants, not simulation state — the canonical snapshot does NOT carry
+  them (`tools/harness/Snapshot.cs` has no bounds field; `SimState.boundsW/
+  boundsH` are booted from `LevelTable.cs`), so the payload gains a level-header
+  pair and the embedded snapshot bytes are untouched, which is what keeps the
+  payload-vs-snapshot criterion checkable. As in the first extension, the
+  documented layout in `SimHost.cs` and the parser in `view.c` move together in
+  one change.
+- **Nothing in the renderer is hardcoded to one window or one world.** `shortEdge`
+  comes from the active window dimensions and `boundsH` from the payload, so the
+  same code serves the 960x540 dev window, a phone, a tablet, or a desktop
+  window; `CONTAIN_PCT` and `MIN_PPU` are the only constants, and both are
+  dimensionless.
+- **Platform scope is not expanded here.** The rule tolerates desktop windows,
+  but this plan's platform line is iOS and Android, so desktop/Steam stays an
+  open question for A-023 and A-025 rather than becoming a shipping target.
+
+**Status:**
+
+- done (merged into develop via PR #31 at 79ed193; branch `feature/programmer-player-sdl` deleted locally and remotely; commits d8bdd34 docs(briefs):, c161717 code(player):, d1e98ee chore(repo):). Verified post-merge on develop from a clean obj: harness build 0 Warning(s) 0 Error(s), fork guard silent (forkExpected 0x99dd49de20c48bc4 unchanged), H-01 digest=6d25ff0add639448 steps=2828 droppedSteps=0 result=goal exit 0, fresh sim BYTE-IDENTICAL to the golden, H-02 PASS snapshotsCompared=6, player build 0/0 and replay goalStep=2828 droppedSteps=0 exit 0. Full checklist evidence and the three defects found by running and fixed (wu_to_px Q64.64 shift, --live flag, the documented gcc link command needing -lm) are recorded in PROGRESS.md 2026-10-08 entries. The visual desktop confirmation of the window is recorded as not-executable in this environment — never claimed green.)
 
 ## 5. Core game design plan
 
@@ -556,6 +884,52 @@ As the black hole grows:
 camera follows black hole
 zoom = f(event horizon radius, mass)
 ```
+
+`f` is made concrete here (decided 2026-10-10 as a **hybrid camera**: the earlier
+constant-fraction rule — `pixelsPerUnit = clamp(0.62 * shortEdge / (2 * eventRadius),
+MIN_PPU, MAX_PPU)` — is superseded by the two-phase rule below. It kept the
+horizon at a fixed fraction of the frame, which pins its on-screen size and makes
+growth invisible; the hybrid keeps growth visible while the horizon still fits.)
+
+```text
+shortEdgePx = min(windowWidthPx, windowHeightPx)   # the ACTIVE window, never a constant
+boundsW, boundsH                                   # world bounds, from the frame payload
+eventRadiusWU                                      # the horizon, from the frame payload
+
+ppuWorld   = shortEdgePx / boundsH                                # phase 1: fixed view
+ppuContain = CONTAIN_PCT / 100 * shortEdgePx / (2 * eventRadiusWU) # phase 2: contain it
+
+pixelsPerUnit = clamp(min(ppuWorld, ppuContain), MIN_PPU, tierPPU)
+CONTAIN_PCT = 90      MIN_PPU = 2
+```
+
+Two phases, one expression. `min` selects between them, and the transition is
+where the horizon would first exceed `CONTAIN_PCT` percent of the short edge:
+
+- **Phase 1 — fixed world-fitting view.** While the growing horizon fits, the
+  camera is pinned to the world (`ppuWorld`), so the horizon visibly expands
+  against a stationary world frame. This is the growth cue the design asks for.
+- **Phase 2 — smooth containment.** Once the horizon would clip, `ppuContain`
+  takes over and decreases continuously as `eventRadius` grows: the camera only
+  ever zooms out, the horizon stays inside the frame, and more field is shown.
+
+Nothing is hardcoded to one resolution or one world: `shortEdgePx` comes from the
+active window and `boundsH` from the payload, so the same rule serves phones,
+tablets, and desktop windows, and a level with different bounds needs no camera
+change. `tierPPU` (the device tier's `pixelsPerUnit`) remains the upper bound, so
+a sharper device only gets a sharper picture, never a different framing; `MIN_PPU`
+keeps bodies at a few pixels so the field stays readable at the end of a long run.
+`pixelsPerUnit` stays render-only: it is chosen by the renderer and never reaches
+`SimCore`, so A-007's and A-009's numbers and every golden replay are untouched
+by this decision.
+
+Device viewport presets (YesViz-style specs) are baseline guidelines for the
+device classes named in A-014 and built by A-023; the rule above is derived from
+whatever window is actually open, so a preset only supplies `windowWidthPx` and
+`windowHeightPx`. Whether desktop/Steam is in scope at all is NOT decided here:
+this plan's platform line is iOS and Android, so the desktop form factors this
+rule now tolerates are recorded as an open question for A-023 and A-025, not an
+expansion of the shipping platform list.
 
 ### 5.4 Black hole stats
 
@@ -955,6 +1329,8 @@ Store:
 
 ## 6. First next actions for agents
 
+As of 2026-10-09 every artifact `A-001`..`A-022`, `A-024` and `A-026` is done, so the list below is **historical**. `A-026` merged via PR #31 at 79ed193; `A-024` merged via PR #32 at 866fa08, its hosting gate closed by publishing the policy page at a real HTTPS URL and fetching it back. No further artifact is executable in this environment: `A-023` waits on the Unity toolchain and on real iOS/Android device classes, `A-025` waits on store consoles and on `A-023`, and contact verification needs a real inbox with a human reply within 7 days. The run is at a gate, not finished.
+
 The next artifacts to develop should be:
 
 ```text
@@ -1014,7 +1390,24 @@ event-horizon-game/
 │   ├── privacy-policy.md
 │   ├── agent-rules.md
 │   ├── prototype-scaffold.md
-│   └── ship.md
+│   ├── ship.md
+│   ├── policy-hosting.md
+│   ├── submission.md
+│   ├── ship-notes/
+│   │   └── <version>.md
+│   ├── briefs/
+│   │   └── <artifact-id>.md
+│   └── policy-page/
+│       └── <policy-text-version>.md
+├── Assets/
+│   └── Runtime/
+│       ├── Fixed/
+│       ├── SimCore/
+│       └── Bridge/Unity/
+├── tools/
+│   └── harness/
+├── replays/
+├── harness.csproj
 ```
 
 ## 8. Important design rule
@@ -1103,7 +1496,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Creates code scaffolding, prototypes, and implementation notes.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point). Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
+      "system": "You are the programmer for the Event Horizon game repo. You own A-021 Phase 1 prototype code (Assets/ + tools/harness/, depends on A-005 docs/architecture.md, A-013 docs/test-plan.md, and A-019 docs/prototype-scaffold.md as its entry point), A-022 Phase 2 frame driver and render state (depends on A-005, A-019, A-021), and A-023 Unity player package (depends on A-005, A-022). You also own A-026 Non-Unity player package, an SDL2 windowed client that renders the SAME SimState without Unity (depends on A-005, A-019, A-021, A-022), because A-023's Unity gate otherwise leaves the repo with nothing a human can see. Start only after A-005 docs/architecture.md and A-013 docs/test-plan.md are done, and follow A-019 docs/prototype-scaffold.md as the entry point. A-023 carries an environment gate: it is not startable without the Unity toolchain, and it is never reported done without the evidence its acceptance criteria name. Read PLAN.md, PROGRESS.md, and the approved upstream documents A-005 docs/architecture.md, A-006 docs/design.md, A-007 docs/balance.md, A-008 docs/content.md, A-009 docs/levels.md, A-010 docs/ui.md, A-011 docs/input.md, and A-012 docs/accessibility.md before writing code. Never write code that contradicts those documents. Create code scaffolding, prototypes, and implementation notes on git-flow feature branches created from develop, and open a pull request; never push directly to main."
     },
     "qa": {
       "description": "Defines tests, QA checklist, performance checks, and regression risks.",
@@ -1115,7 +1508,7 @@ Each agent definition names the artifacts it owns, the upstream documents it mus
       "description": "Handles store compliance, privacy, analytics, monetization, submission.",
       "mode": "all",
       "options": { "max_tokens": 16000 },
-      "system": "You are the release agent for the Event Horizon game repo. You own A-015 docs/store.md (depends on A-014 docs/qa.md), A-016 docs/monetization.md (depends on A-015), A-017 docs/privacy-policy.md (depends on A-015), and A-020 docs/ship.md (depends on A-015, A-016, A-017). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Read PLAN.md first and keep store listings, monetization, privacy policy, and shipping steps compliant with it and with platform rules. Monetization must not block core game completion. Use git-flow release/* and hotfix/* branches for shipping work; never push directly to main without coordinator approval."
+      "system": "You are the release agent for the Event Horizon game repo. You own A-015 docs/store.md (depends on A-014 docs/qa.md), A-016 docs/monetization.md (depends on A-015), A-017 docs/privacy-policy.md (depends on A-015), A-020 docs/ship.md (depends on A-015, A-016, A-017), A-024 docs/policy-hosting.md (depends on A-017, A-020), and A-025 docs/submission.md plus docs/ship-notes/<version>.md (depends on A-020, A-023, A-024). Before writing, read PLAN.md, PROGRESS.md, and the approved upstream documents named above. Read PLAN.md first and keep store listings, monetization, privacy policy, hosting, and shipping steps compliant with it and with platform rules. Monetization must not block core game completion. A-024 and A-025 carry environment gates (a host for the policy page, store consoles): they are never reported done without the evidence their acceptance criteria name. Use git-flow release/* and hotfix/* branches for shipping work; never push directly to main without coordinator approval."
     }
   }
 }
@@ -1196,10 +1589,10 @@ truncated" when the prompt plus the model's output budget pass the context
 window. Two controls prevent this:
 
 - Every project agent in the configuration of section 9.2 sets
-  `"options": { "max_tokens": 16000 }`. With a 131027-token context this caps
-  any single request at prompt + 16000 output tokens, leaving headroom for the
-  largest expected prompt. Never raise this value above a quarter of the
-  context window.
+  `"options": { "max_tokens": 16000 }`. With the 262144-token context window
+  of the bullet below, this caps any single request at prompt + 16000 output
+  tokens, leaving headroom for the largest expected prompt. Never raise this
+  value above a quarter of the context window (65536 tokens at 262144).
 - Role agents work from the context briefs of section 9.4 and never read
   `PLAN.md` or approved upstream artifacts in full, so a role-agent prompt
   stays far below the context limit. The coordinator regenerates briefs
@@ -1233,12 +1626,44 @@ window. Two controls prevent this:
   control.
 - Context-watch plugin: `opencode.json` carries a `plugins` entry for
   `opencode-context-watch` (npm package; OpenCode 2.x only, silent
-  no-op on 1.x) with `warnPercent: 0.7`, `warnTokens: 90000`,
-  `verbose: true`. It watches each session's context usage and injects
-  a synthetic warning into every above-threshold request so agents
-  wrap up or compact before the window fills. It adds no tool and
-  never compacts; compaction remains OpenCode's job.
+  no-op on 1.x) with `warnPercent: 0.95`, `warnTokens: 249037`,
+  `verbose: true`. Verified against the plugin source: the percent band
+  is relative to the window the plugin reads from the model's declared
+  `limit.context`, so it follows the window automatically; `warnTokens`
+  is an absolute band (OR semantics) and must be kept equal to
+  `warnPercent` of the window (0.95 × 262144 = 249037). It watches
+  each session's context usage and injects a synthetic warning into
+  every above-threshold request so agents wrap up or compact before
+  the window fills. It adds no tool and never compacts; compaction
+  remains OpenCode's job.
+- Context budget (changed 2026-10-08): the project model declares
+  `limit.context: 262144` (halved from 524288) and `limit.output: 64000`
+  (halved with the window, keeping the same share of it). Derived
+  controls scale with it: `compaction.buffer` 16000 (the same ~6%
+  headroom, so automatic compaction starts at the same fraction of the
+  window), `compaction.keep.tokens` 8000 (absolute, unchanged), and the
+  plugin's `warnTokens` band at 95% of the window. Agent `max_tokens`
+  (16000; programmer 24000) stay far below a quarter of the window
+  (65536), and a role-agent baseline prompt near 100,000 tokens plus
+  its budget still fits (124,000 < 262,144). The google model keeps
+  its own real 1048576-token limit; it is not part of this budget.
+  If the window changes again, update every one of these numbers in
+  the same commit.
+- Fit guard (changed 2026-10-09): the agent-level `max_tokens` of section
+  9.2 bounds the requests an agent starts, not every request a session
+  makes. A coordinator request at prompt 199,774 asked for 62,407 output
+  tokens - the provider's `limit.output` 64000, not any agent's 16000 or
+  24000 - and the serve engine refused it with a 400 ("prompt + max
+  tokens exceeds the context; requests are never truncated", #545). The
+  durable control is `"fit_max_tokens": true` in the model's run
+  config `~/Strata/strata-coder-iq1_m.json`, which shortens such a
+  `max_tokens` to the room left instead of refusing. A prompt that
+  leaves no room at all is still refused. The serve engine reads that
+  file when it starts, so the key takes effect at the next start of the
+  server, not on the next request; the file lives outside the repo and
+  is never committed.
 
 If a coordinator session itself grows too large, OpenCode compacts it
-automatically into a summary; the `max_tokens` cap guarantees that even an
-uncompacted request never exceeds the context.
+automatically into a summary; the `max_tokens` cap bounds an agent-initiated
+request and `fit_max_tokens` bounds the others, so an uncompacted request
+never exceeds the context in either case.

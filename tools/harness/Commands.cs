@@ -65,19 +65,19 @@ namespace EH
             {
                 testId = "H-07";
                 commandName = "fps";
-                return notAvailable(cmd);
+                return FrameCommands.fps(argv, 1);
             }
             if (cmd == "pointer")
             {
                 testId = "H-08";
                 commandName = "pointer";
-                return notAvailable(cmd);
+                return FrameCommands.pointer(argv, 1);
             }
             if (cmd == "tier")
             {
                 testId = "H-09";
                 commandName = "tier";
-                return notAvailable(cmd);
+                return FrameCommands.tier(argv, 1);
             }
             usage();
             return 2;
@@ -201,7 +201,6 @@ namespace EH
         public static int runLoop(SimState s, byte[] dg, long interval,
                                   long[] steps, byte[][] blobs, out int snapCount)
         {
-            long target = LevelTable.targetMass;
             long maxSteps = LevelTable.timerSeconds * 60L;
             int n = 0;
             n = addSnap(steps, blobs, n, 0L, emitSnapshot(s));
@@ -210,13 +209,15 @@ namespace EH
             {
                 Intent i = InputAdapter.sampleFromDigest(dg, s.stepIndex);
                 s.intent = i;
-                SpawnDirector.apply(s);
+                // A-022: SpawnDirector.apply moved into SimStep.run (the per-step
+                // body), so the step-driven loop and the frame driver get spawns
+                // exactly once and cannot drift apart.
                 FixedStepDriver.step(s, s.stepIndex, i);
                 if (s.stepIndex % interval == 0L)
                 {
                     n = addSnap(steps, blobs, n, s.stepIndex, emitSnapshot(s));
                 }
-                if ((s.holeMass >> 32) >= target)
+                if (FrameDriver.goal(s))
                 {
                     completed = true;
                     break;
@@ -647,6 +648,18 @@ namespace EH
         // ---- manifest filing (A-019 §11) -------------------------------------
         public static void fileRecord(string result)
         {
+            writeRecord(result, false);
+        }
+
+        /// <summary>
+        /// A-022: A-019 §9 says the weak-device test P-10 keeps a hardware-only
+        /// component and "its record carries `hardware-only: true`, visibly split
+        /// rather than silently skipped". The flag is a parameter, not a mutable
+        /// global, so a caller cannot forget to reset it and leak the flag into
+        /// the next command's record.
+        /// </summary>
+        public static void writeRecord(string result, bool hardwareOnly)
+        {
             string d8 = hexU64(InputDigest.fnv1a(digest, digest.Length)).Substring(0, 8);
             string runId = testId + "-" + seedHex + "-" + d8;
             string dir = "artifacts/harness/" + runId;
@@ -656,7 +669,7 @@ namespace EH
                 "\", \"seed\": \"0x" + seedHex + "\", \"digest\": \"" +
                 Counters.hexEncode(digest, 0, digest.Length) +
                 "\", \"result\": \"" + result + "\", \"owner\": \"programmer\", " +
-                "\"hardwareOnly\": false }\n";
+                "\"hardwareOnly\": " + (hardwareOnly ? "true" : "false") + " }\n";
             System.IO.File.WriteAllText(dir + "/" + testId + ".json", rec);
             string man = "{ \"format\": \"ehmanifest1\", \"runId\": \"" + runId +
                 "\", \"records\": [\"" + testId + ".json\"] }\n";
@@ -670,7 +683,10 @@ namespace EH
                 "       harness snap --seed <hex> --digest @file --level <id> --step <N>\n" +
                 "       harness diff <blobA> <blobB>\n" +
                 "       harness counters --seed <hex> --digest @file --level <id>\n" +
-                "       harness hitch|fps|pointer|tier (phase 2)\n");
+                "       harness hitch --at <f,f,..> --ms <n> [--seed <hex> --digest @file --level <id>]\n" +
+                "       harness fps --target <60|30> [--time-scale <d.d>] [--seed <hex> --digest @file --level <id>]\n" +
+                "       harness pointer --script @file [--seed <hex> --level <id>]\n" +
+                "       harness tier --probe [--seed <hex> --digest @file --level <id>]\n");
         }
     }
 }

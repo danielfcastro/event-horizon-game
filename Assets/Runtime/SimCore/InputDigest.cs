@@ -157,7 +157,14 @@ namespace EH
             // worst case: header 6+2+10, per distinct run 3+10, trailer 8
             int cap = 6 + 2 + 10 + n * 13 + 8;
             byte[] buf = new byte[cap];
-            int[] at = new int[] { 0 };
+            // A-022 latent-bug fix: the cursor must start AFTER the 6 magic bytes
+            // and the 2 version bytes. It started at 0, so writeUvarint overwrote
+            // the magic and the version. Nothing in phase 1 ever called encode()
+            // (the harness reads a committed EIDIG1 fixture, it never writes one),
+            // so the bug was latent; H-08 is the first caller and decode's BAD_MAGIC
+            // rejection is what surfaced it. The committed golden fixture shows the
+            // intended layout: magic, ver u16, then the uvarint step count.
+            int[] at = new int[] { 8 };
 
             buf[0] = (byte)'E';
             buf[1] = (byte)'I';
