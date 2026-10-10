@@ -795,11 +795,14 @@ above without touching A-007 or A-009:**
   mass stay exactly as they are; every golden replay is untouched.
 - **The payload must carry `boundsW` and `boundsH`.** The world-fitting phase
   needs the world size, and the renderer must not read the level table: the
-  camera would otherwise be wrong for any level whose bounds differ. The
-  canonical snapshot already carries both fields (`SimState` bounds), so this
-  protocol addition invents no state and the payload-vs-snapshot criterion stays
-  checkable. As in the first extension, the documented layout in `SimHost.cs`
-  and the parser in `view.c` move together in one change.
+  camera would otherwise be wrong for any level whose bounds differ. These are
+  level constants, not simulation state — the canonical snapshot does NOT carry
+  them (`tools/harness/Snapshot.cs` has no bounds field; `SimState.boundsW/
+  boundsH` are booted from `LevelTable.cs`), so the payload gains a level-header
+  pair and the embedded snapshot bytes are untouched, which is what keeps the
+  payload-vs-snapshot criterion checkable. As in the first extension, the
+  documented layout in `SimHost.cs` and the parser in `view.c` move together in
+  one change.
 - **Nothing in the renderer is hardcoded to one window or one world.** `shortEdge`
   comes from the active window dimensions and `boundsH` from the payload, so the
   same code serves the 960x540 dev window, a phone, a tablet, or a desktop
