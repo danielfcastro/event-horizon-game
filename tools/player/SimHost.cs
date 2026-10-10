@@ -41,8 +41,15 @@
 //                             of the protocol move together: view.c parses this
 //                             same offset.
 //   50  holeMass        i64   Q32.32
-//   58  bodyCount       u16   active bodies (bodyFlags bit0)
-//   60  bodyCount x ( i64 x, i64 y, i64 radius, u8 kind ) = 25 bytes each
+//   58  boundsW         i64   Q32.32  ADDED 2026-10-10: world bounds, level
+//   66  boundsH         i64           constants, not simulation state (the
+//                             canonical snapshot does NOT carry them; they are
+//                             booted from LevelTable.cs into SimState). The
+//                             §5.3 phase-1 camera needs them so the world-fitting
+//                             view is correct for any level, without the renderer
+//                             reading the level table. Both halves move together.
+//   74  bodyCount       u16   active bodies (bodyFlags bit0)
+//   76  bodyCount x ( i64 x, i64 y, i64 radius, u8 kind ) = 25 bytes each
 //       pixelsPerUnit   u64   Q32.32, render-only
 //       resultFlag      u8    0 running, 1 goal, 2 timeout
 //       snapshotLen     u32   0 for live frames; a dump frame carries the
@@ -393,6 +400,8 @@ namespace EH
                 putI64(s.holeRadius);
                 putI64(s.holeEventRadius); // the visible hole: §5.3 (view.c parses this offset)
                 putI64(s.holeMass);
+                putI64(s.boundsW); // §5.3 phase-1 camera needs the world size; view.c parses this
+                putI64(s.boundsH);
                 int active = 0;
                 for (int b = 0; b < SimState.BODY_CAPACITY; b++)
                 {
