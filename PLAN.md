@@ -672,6 +672,31 @@ a design decision updates `PLAN.md` first):**
 - Render layer, UI root, input adapter, platform bridge over the same `SimCore`.
 - The candidate ship build whose version string is governed by A-020 §2.
 
+**Design decisions this artifact owns (recorded before the toolchain is installed):**
+
+- **The Unity gate is closed by installing, not by claiming.** Probed 2026-10-10:
+  `unityhub` 3.21.0-1 is installed (the user ran `yay -S unityhub`; the AUR package
+  ships the Hub app and the `UnityLicensingClient_V1`, not an editor),
+  `unityhub --headless editors -r` lists promoted releases, `editors -i` lists
+  none, the install path resolves to `/home/dfcastro/Unity/Hub/Editor`, and 452 GB
+  is free there. `public-cdn.cloud.unity3d.com` and `download.unity3d.com` resolve;
+  only `dl.unity.com` has no DNS, which is why the earlier probe said "no
+  connection" — the host was wrong, not the network. A-023 stays `proposed` until
+  an editor and the build modules are actually on disk and run.
+- **Version choice: Unity 6 LTS `6000.0.84f1`.** The promoted list offers
+  `7000.0.0a8` (alpha), `6000.7.0b4` (beta), `6000.6.5f1`, `6000.3.26f1` and
+  `6000.0.84f1`. A shipping mobile target sits on the long-term-support release,
+  so the toolchain cannot drift mid-project and no beta or alpha is used; the
+  point releases `6000.3.26f1` and `6000.6.5f1` are rejected for the same reason
+  (their successors change the project format, and A-023's whole point is one
+  candidate ship build). The choice is recorded here so a later session does not
+  re-pick it silently.
+- **Build modules `ios android` with their child modules.** A-014 names iOS and
+  Android device classes, so the editor alone is not enough: iOS Build Support and
+  Android Build Support (plus the Android SDK/NDK tools and OpenJDK as children)
+  are what make a player package for those classes. `install-modules` is the
+  documented way to add them.
+
 **Status:**
 
 - proposed (carries an environment gate: no Unity toolchain in this environment)
