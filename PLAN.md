@@ -89,6 +89,7 @@ feature/programmer-player-package
 feature/programmer-player-sdl
 feature/programmer-player-telemetry
 feature/programmer-player-render
+feature/programmer-player-scene-binding
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
@@ -876,8 +877,7 @@ a design decision updates `PLAN.md` first):**
   `editorErrors: []`). The recipe is corrected to the editor form and its success
   line is only printed after the package exists on disk, because a build with no
   package is not a success.
-- **Defect found by RUNNING the package on a real device: it rendered nothing.**
-  The 2026-10-11 S24 FE run (model `SM-S721B`, Android 16 / API 36) launched
+- **Defect found by RUNNING the package on a real device: it rendered nothing.**  The 2026-10-11 S24 FE run (model `SM-S721B`, Android 16 / API 36) launched
   the player and the display showed an empty field. The engine's own log says
   why: `Could not produce class with ID 115.` repeated once per drawn object,
   with Unity's advice "Try disabling 'Strip Engine Code' in Player Settings".
@@ -903,6 +903,15 @@ a design decision updates `PLAN.md` first):**
   with engine-code stripping off. A smaller ship build would keep stripping and
   declare the camera and sprite components in the scene instead; that is an
   A-025/A-020 build-size question, not a change to the §5.3 rule.
+- **Second defect from the same run: the scene's script reference never bound.**
+  With stripping off the log changed to `The referenced script on this
+  Behaviour (Game Object '') is missing!` - the MonoBehaviour in
+  `Assets/EventHorizon.unity` pointed at `m_Script: {fileID: 11400000, ...}`,
+  and `11400000` is not the fileID a script asset uses; the fileID for a script
+  reference is `2347882466`. The GUID was right (`GameLoop.cs.meta`), so the
+  loop simply never ran. Correcting the fileID removes the message: the next
+  boot logs `Starting Game Loop` with no missing-script line and no
+  `HasWindow/HasFocus` complaint. The scene is now a real, bound entry point.
 - **The engine reports what the C# API cannot.** The same boot log prints
   `SystemInfo CPU = ARM64 FP ASIMD AES, Cores = 10, Memory = 7224mb` and
   `Device Model 'samsung SM-S721B', OS 'Android OS 16 (API 36)'`. A-014's RAM
