@@ -132,6 +132,13 @@ namespace EH
             // transport (first-contact-wins and pause-cancels-intent live in
             // InputAdapter, not here). The candidate build wires the Unity Input
             // System pointer delta; the scheme itself is not re-decided.
+            // A-023 extension: the measurement surface opens the frame (P-01/P-05
+            // QA instrument — samples the real-time clock at the frame boundary,
+            // feeds the previous frame's delta into the fixed histogram, snapshots
+            // the allocation counter; it may log, it may not gate, and it writes
+            // nothing the player can perceive except log lines).
+            RenderLayer.perfBeginFrame();
+
             pushLiveIntent();
             Intent i = InputAdapter.sampleIntent(sim.stepIndex);
             InputAdapter.endStep(); // opens the next step's first-contact window
