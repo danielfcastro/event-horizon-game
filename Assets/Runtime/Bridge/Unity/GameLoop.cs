@@ -33,7 +33,12 @@ namespace EH
 {
     // Unity MonoBehaviour lifecycle methods are instance members, so this is the
     // one non-static class in Bridge/Unity; the sim side never instantiates it.
-    public class GameLoop
+    // Defect found by RUNNING on a real device 2026-10-11: without the
+    // UnityEngine.MonoBehaviour base, Unity never calls Start()/Update() - the
+    // player booted, the engine ran an empty scene loop, and our code never
+    // executed (zero EH-BOOT markers in the device log). The base is what makes
+    // the scene's component reference a live lifecycle owner.
+    public class GameLoop : UnityEngine.MonoBehaviour
     {
         private SimState sim;
         private bool started;
