@@ -948,7 +948,18 @@ a design decision updates `PLAN.md` first):**
   OS-side (`dumpsys meminfo`, already the P-04 source); the frame clock must come
   from a scriptable real-time source or from `logcat` wall-clock timestamps around
   `Debug.Log` markers, and the method used is recorded in the result row. No gate
-  is greened without a measurement.
+  is greened without a measurement. Merged 2026-10-11 via PR #44 into develop at
+  242530c, branch `feature/programmer-player-instrumentation` deleted locally and
+  remotely; verified by running on the branch tree (identical to post-merge
+  develop): both builds 0/0, fork guard silent, H-01 `digest=6d25ff0add639448
+  steps=2828 droppedSteps=0 result=goal`, sim byte-identical to the golden
+  (138,865 B), H-02 `PASS snapshotsCompared=6`, player replay `goalStep=2828
+  droppedSteps=0`, exclusions STEP-11a..11e PASS, APK 21,272,395 B on disk. The
+  clock settled by the compiler: `UnityEngine.Time.realtimeSinceStartup` (the
+  lowercase-t spelling; `realtimeDeltaTIme` rejected, and the validation line
+  `thisNameDoesNotExistAtAll` appeared in the error list, so the evidence is
+  real). The device capture for P-01/P-05 awaits reconnection of the S24 FE;
+  no row is claimed green.
 
 **Status:**
 
