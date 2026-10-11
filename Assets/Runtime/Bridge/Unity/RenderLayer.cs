@@ -438,6 +438,9 @@ namespace EH
                 perfFirstSample = now;
                 perfNextSummary = now + perfWarmupS + perfSummaryS;
                 perfSnapshotAllocs(true); // boot's allocations land in the warm-up max
+                // A-023 extension: the first-frame marker — proves Update() runs
+                // at all, which until now nothing in the log showed.
+                UnityEngine.Debug.Log("EH-FRAME first frame seen by the measurement surface");
                 return;
             }
             long deltaUs = (long)((now - perfClockPrev) * 1000000.0 + 0.5);
