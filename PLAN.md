@@ -92,6 +92,7 @@ feature/programmer-player-render
 feature/programmer-player-scene-binding
 feature/programmer-player-palette
 feature/programmer-player-instrumentation
+feature/programmer-player-splash
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
@@ -948,7 +949,23 @@ a design decision updates `PLAN.md` first):**
   OS-side (`dumpsys meminfo`, already the P-04 source); the frame clock must come
   from a scriptable real-time source or from `logcat` wall-clock timestamps around
   `Debug.Log` markers, and the method used is recorded in the result row. No gate
-  is greened without a measurement. Merged 2026-10-11 via PR #44 into develop at
+  is greened without a measurement.
+- **Fifth extension: the GameActivity tap-to-start gate blocks every run.**
+  Found by RUNNING on the device 2026-10-11: the app launches, logs "Starting
+  Game Loop", and UnityMain sleeps — the engine never enters its frame loop.
+  The log shows `Activity pause timeout for ActivityRecord{...}`: Unity 6
+  GameActivity v4.4.2 holds the splash (`m_ShowUnitySplashScreen: 1`) until a
+  REAL first touch arrives, and the window is then hidden by WindowManager
+  ("Setting visibility of Window ... false"), so taps on a dozed/locked screen
+  never reach it; synthetic `cmd input` taps do not resume the paused activity
+  either. The user's run showed exactly this: the Unity logo, "not responding",
+  and no game. The fix is a build setting, not a design change:
+  `m_ShowUnitySplashScreen: 0` in `ProjectSettings/ProjectSettings.asset` —
+  the game starts on launch with no tap gate. The honest cost is recorded:
+  the Unity splash branding is gone from the shipped player, which is a
+  store/branding consideration for A-025/A-020, not a change to any game rule.
+  The display wake path for scripted runs is `cmd display power-reset 0`
+  (verified OFF → ON); `cmd input touchscreen tap` does not wake the display. Merged 2026-10-11 via PR #44 into develop at
   242530c, branch `feature/programmer-player-instrumentation` deleted locally and
   remotely; verified by running on the branch tree (identical to post-merge
   develop): both builds 0/0, fork guard silent, H-01 `digest=6d25ff0add639448

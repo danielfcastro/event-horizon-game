@@ -67,6 +67,10 @@ namespace EH
             // on hardware, recorded for A-020/A-025).
             int tier = probeDeviceTier();
             int targetFps = tier == 1 ? 30 : 60;
+            // A-023 extension (device capture): an observable boot marker — the
+            // engine's "Starting Game Loop" line is GameActivity's own message,
+            // NOT ours, so until now nothing in the log proved OUR Start() ran.
+            UnityEngine.Debug.Log("EH-BOOT level=p1-level-01 targetFps=" + targetFps + " tier=" + tier);
 
             // The dev.* knobs (PlatformBridge.devTargetFps/devTimeScale) are the
             // headless development surface ONLY: this boot path derives the
