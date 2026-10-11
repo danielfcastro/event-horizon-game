@@ -90,6 +90,7 @@ feature/programmer-player-sdl
 feature/programmer-player-telemetry
 feature/programmer-player-render
 feature/programmer-player-scene-binding
+feature/programmer-player-palette
 feature/release-policy-hosting
 feature/release-submission
 release/0.20
@@ -912,6 +913,17 @@ a design decision updates `PLAN.md` first):**
   loop simply never ran. Correcting the fileID removes the message: the next
   boot logs `Starting Game Loop` with no missing-script line and no
   `HasWindow/HasFocus` complaint. The scene is now a real, bound entry point.
+- **Third defect from the same run: the picture had no contrast.** With the loop
+  bound, the frame was still a flat field. A-026's client draws the horizon as a
+  true black disc with a bright accretion RIM (`pack_px(140, 236, 255)`) and
+  colours bodies by tier; the Unity half had neither, so a black disc on a
+  near-black field reads as blank. The layer now mirrors that palette exactly -
+  the same table, the same rim colour, the same absorbable brightening - rather
+  than inventing a visual: the rim is a second disc drawn behind the black one
+  (2 px inset, matching view.c's `ring(hr)` over `disc(hr)`), and body colours
+  come from `(bodyFlags >> 2) & 3` with the absorbable bump, which is the same
+  `kind` byte A-026's client reads. Colour is a render property only: the sim
+  never sees it and the digest never changes.
 - **The engine reports what the C# API cannot.** The same boot log prints
   `SystemInfo CPU = ARM64 FP ASIMD AES, Cores = 10, Memory = 7224mb` and
   `Device Model 'samsung SM-S721B', OS 'Android OS 16 (API 36)'`. A-014's RAM
