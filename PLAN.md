@@ -977,6 +977,33 @@ a design decision updates `PLAN.md` first):**
   `thisNameDoesNotExistAtAll` appeared in the error list, so the evidence is
   real). The device capture for P-01/P-05 awaits reconnection of the S24 FE;
   no row is claimed green.
+- **Sixth extension: the player ran an empty scene — two defects, found by
+  RUNNING on the device 2026-10-11.** (a) `GameLoop` was `public class GameLoop`
+  without `: UnityEngine.MonoBehaviour`, so Unity never called `Start()`/`Update()`;
+  the player presented an empty black field at ~21% CPU with zero `EH-BOOT`. Fixed
+  by adding the MonoBehaviour base (commit `code(player-package): A-023 defect fix`,
+  develop). (b) The hand-written `Assets/EventHorizon.unity` YAML was invalid for
+  the Unity 6 importer — missing `m_IsActive`, `serializedVersion`, the `- component:`
+  list form, `m_EditorClassIdentifier`, and a joined `&1OcclusionCullingSettings`
+  header — so the importer dropped the GameObject and its component: `TypesInScenes.xml`
+  listed zero `GameLoop`. The earlier "missing-script line disappeared" observation
+  was NOT proof of a working binding: a dropped component produces no message either.
+  Fixed by rewriting the scene in the exact format taken from a real Unity 6 scene
+  (`OutdoorsScene.unity`), with the standard `m_Script: {fileID: 11500000, guid:
+  …, type: 3}` form. Evidence the fix landed: `TypesInScenes.xml` went 0 → 1 `GameLoop`,
+  and on the device `EH-BOOT level=p1-level-01 targetFps=60 tier=0` and `EH-FRAME`
+  appeared. The device capture then ran: P-01 p95 = 34.4–34.6 ms against the ≤16.6 ms
+  bound — FAIL, the game targets 60 but presents at the 30 FPS vsync quarter step of
+  the 120 Hz panel; P-05 `allocs_per_frame_max = 0` — PASS. Rows recorded in
+  `docs/qa-results/2026-10-11-p01-p05-modern-phone.md`. The P-01 cause (vsync policy
+  vs render cost) is open; the gate stays red until a follow-up fixes it.
+  **Still open, found by LOOKING 2026-10-11:** with the display ON and the app
+  presenting frames (fresh `EH-PERF` lines seconds apart), `screencap` reads pure
+  black `(0,0,0)` over all 2,527,200 pixels — not even the camera field
+  `pack_px(8,10,18)` is presented, so the runtime-created camera (`boot()` creates
+  it, `draw()` frames it every frame) is not presenting to the GameActivity surface.
+  The visual proof of the §5.3 render on a real device remains open; recorded,
+  not papered over.
 
 **Status:**
 
