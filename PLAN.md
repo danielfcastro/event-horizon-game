@@ -465,6 +465,38 @@ that makes the black hole of A-005 §5.1 visible and steerable without Unity.
 
 - done
 
+**Evidence:**
+
+- 2026-10-11 the device-class rows (P-01 frame time, P-02 startup, P-04 RSS,
+  P-05 allocations) are still open, and the reason is narrower than "no
+  device": three separate blockers, each verified.
+  - The player has no measurement surface. `PlatformBridge.frameWallDelta()`
+    returns the *expected* Q32.32 delta, which is a constant, and
+    `probeDeviceTier()` returns 0 (unknown) because Unity 6 exposes no
+    scriptable memory member - every `SystemInfo` candidate was rejected by
+    the compiler. A-014's own "needs, not design" item 3 ("frame-time and
+    RSS counters, per-frame allocation counters") is the extension that
+    closes it; it belongs to the player package, not to QA.
+  - An emulator is not one of the named classes. A-014 §5 names hardware
+    classes ("modern phone", "older phone", "low-end device") and states
+    that a device class with no recorded row counts as a fail, so a
+    generic VM cannot stand in for a class row.
+  - The supplied image cannot be booted here. `aosp_cf_arm64_auto-img-16373615.zip`
+    is the flashable (`-img-`) variant, not the `vm_*` variant that ships a
+    launcher: its `android-info.txt` requires `vhost_user_vsock=true` and
+    `gfxstream=supported`, i.e. Google's VMM. The ARM64 kernel extracted at
+    offset 0x1000 of `boot.img` (42,031,616 bytes, `file` reports a valid
+    little-endian ARM64 Image) produced no console output in 120 s of
+    `qemu-system-aarch64 -machine virt -cpu max` on this x86_64 host,
+    where aarch64 runs under TCG. Recorded as a dead end, not as a pass.
+- What would close the rows: the connected phone is a 2024 Samsung S24 FE
+  (model `SM_S721B`, Android 16 / API 36, 8 GB), which matches the "modern
+  phone" reference class, so it is the right instrument rather a substitute.
+  P-04 RSS and P-02 startup are measurable there with system tools
+  (`dumpsys meminfo`, `gfxinfo`) once the package is installed; P-01 and
+  P-05 need the player counters first. The phone's USB session expired during
+  this run and must be reconnected.
+
 ### A-015 docs/store.md
 
 **Purpose:**
