@@ -496,6 +496,35 @@ that makes the black hole of A-005 §5.1 visible and steerable without Unity.
   (`dumpsys meminfo`, `gfxinfo`) once the package is installed; P-01 and
   P-05 need the player counters first. The phone's USB session expired during
   this run and must be reconnected.
+- 2026-10-11 the phone was reconnected and the package was RUN on it, so
+  one row is now real. Install path that works without a root shell: `adb
+  install` (streamed) registers the package, but the freshly installed app is
+  `enabled=0` and `am` cannot resolve its intent until `cmd package enable
+  <pkg>` is run; the launch itself needs the component form
+  `am start-activity com.DefaultCompany.eventhorizongame/com.unity3d.player.UnityPlayerGameActivity`
+  because `am` maps a bare argument to `pkg=` and the launcher is
+  `unity.launch-fullscreen`. The activity then starts
+  ("App launched ... state=1", SurfaceFlinger creates the surface, pid 29632).
+  - P-04 RSS, measured on the class device: twelve samples at 5 s intervals
+    over 60 s from `dumpsys meminfo com.DefaultCompany.eventhorizongame`
+    gave 230,976 KB .. 231,792 KB, spread 816 KB against A-014 §6's bound of
+    2,048 KB, so the flatness bound HOLDS. The process itself reports
+    `VmRSS 100,400 kB`, `VmHWM 158,904 kB`; the app total includes Unity's
+    shared libraries (`libunity.so` 10.7 MB, `libil2cpp.so` 8.7 MB).
+    Caveat stated rather than hidden: the display was in `DOZE_SUSPEND`, so
+    `gfxinfo` reports `Total frames rendered: 0` - this is the footprint of
+    the loaded, idle player, not of a running game.
+  - P-01 frame time is NOT measurable in that state (0 frames rendered), and
+    P-02 startup was not timed cleanly (the launch was rejected twice before
+    the intent form was corrected). Both stay open.
+  - Device identity for the row: `SM-S721B`, `ro.build.id BP4A.251205.006`,
+    API 36, `ro.hardware s5e9945`; build-hash of the installed package
+    `sha256 625bdfe26a047bb211b5b34c36aae9923fa89a618313361fa762e09286af1003`
+    (12,430,103 B).
+  - Still needed from a human: wake the display (the screen was dozed, so the
+    capture showed the always-on display, not the game). With the screen up,
+    `screencap` gives the visual proof on a real device and `gfxinfo` gives
+    real frame times for P-01.
 
 ### A-015 docs/store.md
 
