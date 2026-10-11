@@ -59,6 +59,16 @@ namespace EH
         private static UnityEngine.SpriteRenderer horizonSprite;
         private static bool booted;
 
+        // ---- the camera this layer owns ------------------------------------------
+        // The player package has no scene camera: the first real-device run (2026-10-11
+        // on the S24 FE) rendered an empty field and Unity logged "Could not produce
+        // class with ID 115" for every sprite lookup, because Camera.main was null and
+        // the engine had nothing to present. The §5.3 rule owns the camera, so this
+        // layer creates it once at boot and keeps the reference; Camera.main is never
+        // read, because a runtime-created camera carries no MainCamera tag.
+        private static UnityEngine.GameObject cameraObject;
+        private static UnityEngine.Camera camera;
+
         // ---- visibilityLayer output (A-005 data flow: "a hook, not a sim write") --
         // Bodies culled from the draw set but within one screen radius of the
         // active window's edge, as ascending body indices. A-010 (UI) consumes
@@ -83,10 +93,28 @@ namespace EH
             }
             horizonObject = new UnityEngine.GameObject("eh-horizon");
             horizonSprite = horizonObject.AddComponent<UnityEngine.SpriteRenderer>();
-            // The engine's built-in default square stands in until A-006's art is
-            // bundled; the placeholder is named, not hidden (A-006/A-010 own the
-            // visuals — brief §9 scope boundary).
-            defaultSprite = UnityEngine.Resources.GetBuiltinResource<UnityEngine.Sprite>("Default-Sprite.png");
+            // The engine's built-in shapes stand in until A-006's art is bundled;
+            // the placeholder is named, not hidden (A-006/A-010 own the visuals).
+            // The real-device run showed "Could not produce class with ID 115" for
+            // every lookup: "Default-Sprite.png" is not a resource on Unity 6, so
+            // GetBuiltinResource returned null and nothing drew. The built-in 2D
+            // circle is the shape both halves already draw (A-026's view.c fills a
+            // disc), so it is the matching placeholder, not a new visual.
+            defaultSprite = UnityEngine.Resources.GetBuiltinResource<UnityEngine.Sprite>("Default-Circle.png");
+            // The camera the §5.3 rule drives. Created here, once, so the class is
+            // present in the build and the framing has an owner.
+            cameraObject = new UnityEngine.GameObject("eh-camera");
+            camera = cameraObject.AddComponent<UnityEngine.Camera>();
+            // Sprites live at z = 0 and the camera is placed at z = 0 by draw(),
+            // so the orthographic depth range must straddle zero; the defaults
+            // (near 0) clip the very plane everything is drawn on.
+            camera.nearClipPlane = -1000.0f;
+            camera.farClipPlane = 1000.0f;
+            // Field colour matches A-026's client (pack_px(8, 10, 18)); one palette
+            // for both halves of the same §5.3 rule, never a second invention.
+            // The compiler is the API oracle here: Camera.clearColor is rejected on
+            // 6000.0.84f1; Camera.backgroundColor is the property that exists.
+            camera.backgroundColor = new UnityEngine.Color(8.0f / 255.0f, 10.0f / 255.0f, 18.0f / 255.0f, 1.0f);
             visibilityLayer = new int[SimState.BODY_CAPACITY];
             booted = true;
         }
@@ -157,9 +185,10 @@ namespace EH
             double ppu = want; // px per WU, render-only
 
             // ---- camera: orthographic, centred on the hole ---------------------
-            // Unity 2D units are world units; orthographicSize is half the world
-            // height, so worldHeight = windowHeightPx / ppu.
-            UnityEngine.Camera camera = UnityEngine.Camera.main;
+            // The camera this layer created at boot; Camera.main is never read
+            // (a runtime-created camera carries no MainCamera tag, and the player
+            // package has no scene camera).
+            Fail.check(camera != null, "RenderLayer.draw: boot() must create the camera");
             camera.orthographic = true;
             camera.orthographicSize = (float)((windowH / ppu) * 0.5);
             // Q32.32 -> world units as a double, then float only at the Unity API
