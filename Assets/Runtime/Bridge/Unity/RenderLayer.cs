@@ -57,6 +57,8 @@ namespace EH
         private static UnityEngine.Sprite defaultSprite;
         private static UnityEngine.GameObject horizonObject;
         private static UnityEngine.SpriteRenderer horizonSprite;
+        private static UnityEngine.GameObject horizonRimObject;
+        private static UnityEngine.SpriteRenderer horizonRimSprite;
         private static bool booted;
 
         // ---- the camera this layer owns ------------------------------------------
@@ -93,6 +95,15 @@ namespace EH
             }
             horizonObject = new UnityEngine.GameObject("eh-horizon");
             horizonSprite = horizonObject.AddComponent<UnityEngine.SpriteRenderer>();
+            // A-026's client draws the horizon as a true black disc with a bright
+            // accretion RIM; one sprite cannot do both, so the rim is a second
+            // disc drawn behind it, exactly as view.c layers ring over disc.
+            horizonRimObject = new UnityEngine.GameObject("eh-horizon-rim");
+            horizonRimSprite = horizonRimObject.AddComponent<UnityEngine.SpriteRenderer>();
+            // A-026's palette, mirrored exactly (tools/player/view.c): the accretion
+            // rim is pack_px(140, 236, 255) and the hole itself is true black.
+            horizonRimSprite.color = new UnityEngine.Color(140.0f / 255.0f, 236.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+            horizonSprite.color = new UnityEngine.Color(0.0f, 0.0f, 0.0f, 1.0f);
             // The engine's built-in shapes stand in until A-006's art is bundled;
             // the placeholder is named, not hidden (A-006/A-010 own the visuals).
             // The real-device run showed "Could not produce class with ID 115" for
@@ -202,12 +213,21 @@ namespace EH
             // ---- horizon ring: the VISIBLE hole is the event horizon (A-026's
             // render fix established this: drawing holeRadius, the constant
             // collision core, made the hole look frozen) --------------------------
+            horizonRimObject.SetActive(true);
+            horizonRimSprite.sprite = defaultSprite;
+            UnityEngine.Transform rimT = horizonRimObject.GetComponent<UnityEngine.Transform>();
+            rimT.position = new UnityEngine.Vector3((float)holeXWu, (float)holeYWu, -1.0f);
+            double dWu = 2.0 * evWu;
+            rimT.localScale = new UnityEngine.Vector3((float)dWu, (float)dWu, 1.0f);
+            // The black disc sits 2 px inside the rim (view.c: ring at hr, inner
+            // ring at hr - 2), so the rim reads as a ring, not a filled disc.
+            double insetWu = 4.0 / ppu;
+            double coreWu = dWu > insetWu * 2.0 ? dWu - insetWu * 2.0 : dWu;
             horizonObject.SetActive(true);
             horizonSprite.sprite = defaultSprite;
             UnityEngine.Transform horizonT = horizonObject.GetComponent<UnityEngine.Transform>();
-            horizonT.position = new UnityEngine.Vector3((float)holeXWu, (float)holeYWu, 0.0f);
-            double dWu = 2.0 * evWu;
-            horizonT.localScale = new UnityEngine.Vector3((float)dWu, (float)dWu, 1.0f);
+            horizonT.position = new UnityEngine.Vector3((float)holeXWu, (float)holeYWu, -0.5f);
+            horizonT.localScale = new UnityEngine.Vector3((float)coreWu, (float)coreWu, 1.0f);
 
             // ---- bodies: ascending index, culled against the active window ------
             double halfWWu = (windowW / ppu) * 0.5;
@@ -242,10 +262,44 @@ namespace EH
                 UnityEngine.Transform t = bodyObjects[body].GetComponent<UnityEngine.Transform>();
                 t.position = new UnityEngine.Vector3((float)(holeXWu + dxWu), (float)(holeYWu + dyWu), 0.0f);
                 t.localScale = new UnityEngine.Vector3((float)(2.0 * rWu), (float)(2.0 * rWu), 1.0f);
+                // A-026's body palette, mirrored exactly: tier from the frame's
+                // kind bits ((kind >> 2) & 3), and absorbable bodies read
+                // brighter, so the two states are separable without colour alone.
+                bodySprites[body].color = bodyColor(s.bodyFlags[body]);
             }
 
             // hazard pool: empty on p1-level-01 (A-009); the slot is documented,
             // not faked — HazardSystem is a stub and there is nothing to draw.
+        }
+
+        /// <summary>
+        /// A-026's body palette (tools/player/view.c, verbatim): tier bits select
+        /// the base colour, absorbable bodies read brighter. Colour is a render
+        /// property only - the sim never sees it, and the digest never changes.
+        /// </summary>
+        private static UnityEngine.Color bodyColor(int flags)
+        {
+            float r = 84.0f, g = 200.0f, b = 255.0f; // small
+            int tier = (flags >> 2) & 3;
+            if (tier == 1)
+            {
+                r = 255.0f; g = 186.0f; b = 64.0f; // medium
+            }
+            else if (tier == 2)
+            {
+                r = 255.0f; g = 92.0f; b = 176.0f; // large
+            }
+            else if (tier == 3)
+            {
+                r = 122.0f; g = 255.0f; b = 140.0f; // hazard tier
+            }
+            if ((flags & 0x02) != 0)
+            {
+                r = r > 160.0f ? 255.0f : r + 60.0f;
+                g = g > 160.0f ? 255.0f : g + 60.0f;
+                b = b > 160.0f ? 255.0f : b + 60.0f;
+            }
+            return new UnityEngine.Color(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
         }
 
         /// <summary>
