@@ -93,6 +93,7 @@ feature/programmer-player-scene-binding
 feature/programmer-player-palette
 feature/programmer-player-instrumentation
 feature/programmer-player-camera-presentation
+feature/programmer-player-frame-pacing
 feature/programmer-player-splash
 feature/release-policy-hosting
 feature/release-submission
@@ -1030,6 +1031,28 @@ a design decision updates `PLAN.md` first):**
   one logcat read yields the whole story; no gate is greened without a
   measurement, and the visual proof stays open until a frame is actually
   looked at.
+- **Eighth extension: the P-01 frame-pacing cause, probed 2026-10-16.**
+  The device capture read p95=34.4ms (≈30 FPS) while the derived target was
+  60. Headless facts, settled not guessed: (a) nothing in the player ever set
+  the ENGINE's frame limiter — GameLoop's `targetFps` feeds only the sim-side
+  FrameDriver clock (A-019 §10), never Unity; (b) Unity 6 REMOVED
+  `Time.SetTargetFPS` — the engine's own stubs (`UnityEngine.CoreModule.xml`)
+  carry `P:UnityEngine.Application.targetFrameRate` and no SetTargetFPS member
+  at all; (c) `FrameTimingManager` (stubs: `GetVSyncsPerSecond`,
+  `IsFeatureEnabled`) exposes the engine's own view of the panel refresh rate,
+  gated by `PlayerSettings.enableFrameTimingStats`, which the project had at 0.
+  The fix and the observability: boot now sets
+  `UnityEngine.Application.targetFrameRate = targetFps` (the limiter becomes
+  ours, not the platform default) and logs `EH-PACE target=... vsyncsPerSecond=...`
+  (the Get call guarded by IsFeatureEnabled), with `enableFrameTimingStats: 1`
+  in ProjectSettings.asset. The pacing cause then becomes arithmetic on the log
+  (limiter interval = vsyncsPerSecond / target), never speculation: on the
+  S24 FE's 120Hz panel, target 60 must give interval 2; an interval of 4
+  means the engine's view of the panel or the target is not what the log
+  claims. The compiler accepted all three names (build Result: Success);
+  exclusions STEP-11a..11e still PASS on the new package (21,273,946 B).
+  P-01 stays NOT greened: the bound is re-measured on the device, and the
+  device is still the blocker (not USB-connected).
 
 **Status:**
 
