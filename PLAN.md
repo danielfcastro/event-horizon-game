@@ -1011,16 +1011,25 @@ a design decision updates `PLAN.md` first):**
   probe doubles as a fix: the runtime camera's `clearFlags` default is Skybox,
   and the hand-written scene carries no `RenderSettings` block and no skybox
   material, so the skybox pass can clear to black and `backgroundColor` is
-  never used. The layer now sets `camera.clearFlags = Color` and
-  `camera.skyboxEnabled = false` at boot, so the field colour
-  `pack_px(8, 10, 18)` is the clear. The probe is decisive either way: if the
-  screencap reads the field colour, the camera presents and the remaining
-  failure is the sprites; if it still reads pure `(0,0,0)`, the runtime
-  camera does not present at all and the next probe is a scene-authored
-  Camera. The compiler is the API oracle for `clearFlags`/`skyboxEnabled`;
-  rejected names are recorded, not guessed. No gate is greened without a
-  measurement; the visual proof stays open until a frame is actually looked
-  at.
+  never used. The layer now sets `camera.clearFlags =
+  UnityEngine.CameraClearFlags.SolidColor` at boot (settled by the engine's
+  own stubs `UnityEngine.CoreModule.xml`: the enum is
+  `UnityEngine.CameraClearFlags` with value `SolidColor`; Unity 6 has no
+  `SkyboxEnabled` property at all, and `SolidColor` alone suppresses the
+  skybox pass), so the field colour `pack_px(8, 10, 18)` IS the clear. The
+  probe is decisive either way: if the screencap reads the field colour, the
+  camera presents and the remaining failure is the sprites; if it still reads
+  pure `(0,0,0)`, the runtime camera does not present at all and the next
+  probe is a scene-authored Camera. Alongside the fix, the user directive of
+  2026-10-16 ("add more log, observability concepts and instrumentalization")
+  closes the diagnosis loop inside the game itself: `EH-CAMERA` at boot
+  reports the camera state as the engine holds it (clearFlags ordinal,
+  orthographic, near/far), and `EH-DRAW` at the EH-PERF cadence reports what
+  `draw()` actually presented (frame, camera position, ppu, horizonPx,
+  visible count, orthoSize, clearFlags read back). One build, one install,
+  one logcat read yields the whole story; no gate is greened without a
+  measurement, and the visual proof stays open until a frame is actually
+  looked at.
 
 **Status:**
 
