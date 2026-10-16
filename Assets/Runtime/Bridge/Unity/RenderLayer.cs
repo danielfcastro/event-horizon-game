@@ -124,6 +124,13 @@ namespace EH
         private static long perfWarmupAllocMax;  // warm-up max: proves the counter is wired
         private static long perfAllocMax;        // steady-state max per-frame allocations
         private static bool perfSummaryPending;  // the frame that emitted a summary allocates for its own report; excluded
+        // Observability (user directive 2026-10-16): what the last draw()
+        // actually presented, so one logcat read tells the whole story. Statics
+        // only, written in draw(), read in emitPerfSummary; never a new object.
+        private static int lastDrawFrame = -1;
+        private static int lastVisCount;
+        private static int lastHorizonPx;
+        private static double lastCamX, lastCamY, lastPPU;
 
         /// <summary>
         /// Allocate the render pool and the visibility buffer once. Called by the
@@ -191,12 +198,27 @@ namespace EH
             // (near 0) clip the very plane everything is drawn on.
             camera.nearClipPlane = -1000.0f;
             camera.farClipPlane = 1000.0f;
+            // Seventh extension probe (2026-10-16): the default clearFlags is Skybox,
+            // and the hand-written scene carries no RenderSettings block and no skybox
+            // material, so the skybox pass can clear to black and backgroundColor is
+            // never used. Force a colour clear so the field colour IS the clear.
+            // Settled by the engine's own API stubs (Data/Managed/UnityEngine/
+            // UnityEngine.CoreModule.xml): the enum is UnityEngine.CameraClearFlags
+            // with value SolidColor; Unity 6 has no SkyboxEnabled property at all,
+            // and SolidColor alone suppresses the skybox pass.
+            camera.clearFlags = UnityEngine.CameraClearFlags.SolidColor;
             // Field colour matches A-026's client (pack_px(8, 10, 18)); one palette
             // for both halves of the same §5.3 rule, never a second invention.
             // The compiler is the API oracle here: Camera.clearColor is rejected on
             // 6000.0.84f1; Camera.backgroundColor is the property that exists.
             perfCountAlloc();
             camera.backgroundColor = new UnityEngine.Color(8.0f / 255.0f, 10.0f / 255.0f, 18.0f / 255.0f, 1.0f);
+            // Observability (user directive 2026-10-16): report the camera state
+            // as the engine actually holds it, so a single logcat read can tell
+            // whether the clear fix stuck. clearFlags prints the enum ordinal.
+            UnityEngine.Debug.Log("EH-CAMERA created=1 clearFlags=" + (int)camera.clearFlags +
+                " orthographic=" + camera.orthographic +
+                " near=" + camera.nearClipPlane + " far=" + camera.farClipPlane);
             perfCountAlloc();
             visibilityLayer = new int[SimState.BODY_CAPACITY];
             // measurement surface: histogram and reused temporaries, allocated once
@@ -375,6 +397,13 @@ namespace EH
 
             // hazard pool: empty on p1-level-01 (A-009); the slot is documented,
             // not faked — HazardSystem is a stub and there is nothing to draw.
+
+            // Observability (user directive 2026-10-16): record what this draw
+            // presented; the EH-DRAW summary line reports it. No allocation.
+            lastDrawFrame = UnityEngine.Time.frameCount;
+            lastCamX = holeXWu; lastCamY = holeYWu; lastPPU = ppu;
+            lastHorizonPx = (int)(evWu * ppu + 0.5);
+            lastVisCount = visibilityCount;
         }
 
         /// <summary>
@@ -563,6 +592,15 @@ namespace EH
                 " frames=" + perfFrames +
                 " allocs_warmup_max=" + perfWarmupAllocMax +
                 " allocs_per_frame_max=" + perfAllocMax);
+            // Observability (user directive 2026-10-16): the draw side of the
+            // same cadence. If EH-DRAW reports visible>=2 and horizonPx>0 while
+            // the screen is still black, the fault is presentation, not logic.
+            UnityEngine.Debug.Log("EH-DRAW frame=" + lastDrawFrame +
+                " cam=" + lastCamX + "," + lastCamY +
+                " ppu=" + lastPPU + " horizonPx=" + lastHorizonPx +
+                " visible=" + lastVisCount +
+                " clearFlags=" + (int)camera.clearFlags +
+                " orthoSize=" + camera.orthographicSize);
         }
 
         /// <summary>
