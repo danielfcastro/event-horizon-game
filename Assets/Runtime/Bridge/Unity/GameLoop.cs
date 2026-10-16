@@ -76,6 +76,23 @@ namespace EH
             // engine's "Starting Game Loop" line is GameActivity's own message,
             // NOT ours, so until now nothing in the log proved OUR Start() ran.
             UnityEngine.Debug.Log("EH-BOOT level=p1-level-01 targetFps=" + targetFps + " tier=" + tier);
+            // P-01 pacing control (2026-10-16): the engine's own frame limiter
+            // was never set, so its default applied and the device read 30 FPS.
+            // Settled by the engine's own stubs (UnityEngine.CoreModule.xml):
+            // Unity 6 REMOVED Time.SetTargetFPS; the runtime control is
+            // UnityEngine.Application.targetFrameRate. Mirror the derived target
+            // onto the engine so the limiter is ours, not the platform default.
+            UnityEngine.Application.targetFrameRate = targetFps;
+            // Observability: report the limiter AND the engine's own view of the
+            // panel refresh rate, so the pacing cause is arithmetic on the log
+            // (interval = vsyncsPerSecond / target), never speculation. FrameTimingManager
+            // is gated by PlayerSettings.enableFrameTimingStats, now ON.
+            string pace = "EH-PACE target=" + UnityEngine.Application.targetFrameRate;
+            if (UnityEngine.FrameTimingManager.IsFeatureEnabled())
+            {
+                pace += " vsyncsPerSecond=" + UnityEngine.FrameTimingManager.GetVSyncsPerSecond();
+            }
+            UnityEngine.Debug.Log(pace);
 
             // The dev.* knobs (PlatformBridge.devTargetFps/devTimeScale) are the
             // headless development surface ONLY: this boot path derives the
