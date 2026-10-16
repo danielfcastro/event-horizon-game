@@ -92,6 +92,7 @@ feature/programmer-player-render
 feature/programmer-player-scene-binding
 feature/programmer-player-palette
 feature/programmer-player-instrumentation
+feature/programmer-player-camera-presentation
 feature/programmer-player-splash
 feature/release-policy-hosting
 feature/release-submission
@@ -1004,6 +1005,22 @@ a design decision updates `PLAN.md` first):**
   it, `draw()` frames it every frame) is not presenting to the GameActivity surface.
   The visual proof of the §5.3 render on a real device remains open; recorded,
   not papered over.
+- **Seventh extension: the camera-not-presenting defect, probed 2026-10-16.**
+  The user's real-device report ("the application since it starts shows nothing
+  at all") matches the recorded pure-black screencap. The cheapest decisive
+  probe doubles as a fix: the runtime camera's `clearFlags` default is Skybox,
+  and the hand-written scene carries no `RenderSettings` block and no skybox
+  material, so the skybox pass can clear to black and `backgroundColor` is
+  never used. The layer now sets `camera.clearFlags = Color` and
+  `camera.skyboxEnabled = false` at boot, so the field colour
+  `pack_px(8, 10, 18)` is the clear. The probe is decisive either way: if the
+  screencap reads the field colour, the camera presents and the remaining
+  failure is the sprites; if it still reads pure `(0,0,0)`, the runtime
+  camera does not present at all and the next probe is a scene-authored
+  Camera. The compiler is the API oracle for `clearFlags`/`skyboxEnabled`;
+  rejected names are recorded, not guessed. No gate is greened without a
+  measurement; the visual proof stays open until a frame is actually looked
+  at.
 
 **Status:**
 
