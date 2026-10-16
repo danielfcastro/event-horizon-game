@@ -94,6 +94,9 @@ feature/programmer-player-palette
 feature/programmer-player-instrumentation
 feature/programmer-player-camera-presentation
 feature/programmer-player-frame-pacing
+feature/programmer-player-sprite-fallback
+feature/designer-visual-language
+feature/programmer-player-visual-presentation
 feature/qa-capture-tool
 feature/programmer-player-splash
 feature/release-policy-hosting
@@ -383,7 +386,14 @@ that makes the black hole of A-005 §5.1 visible and steerable without Unity.
 
 **Status:**
 
-- done
+- done (extended 2026-10-16, user directive from a real device report: the black hole
+  must be PRESENTED as it is in the film Interstellar — a true black sphere wrapped by
+  a bright accretion disc of glowing gas with a lensing halo — and the field must read
+  as a starfield with the bodies as soft glowing stars, not flat discs. The extension
+  keeps A-006's own readability hierarchy (event horizon ring > hazard markers > bodies
+  > field texture), its no-color-only rules, and its accessibility anchors; it changes
+  no sim number and no §5.3 camera rule. docs/design.md §3.2/§3.3 extended on
+  `feature/designer-visual-language`.)
 
 ### A-007 docs/balance.md
 
@@ -1071,6 +1081,48 @@ a design decision updates `PLAN.md` first):**
   exclusions STEP-11a..11e still PASS on the new package (21,273,946 B).
   P-01 stays NOT greened: the bound is re-measured on the device, and the
   device is still the blocker (not USB-connected).
+- **Ninth extension: the sprite and camera-plane defects, MEASURED 2026-10-16.**
+  The eighth-extension capture proved the camera presents (EH-CAMERA clearFlags=2,
+  EH-DRAW horizonPx=429 visible=5) yet the display-ON screencap read the FIELD
+  colour everywhere, including inside the horizon radius: draw() requests content,
+  nothing rasterizes. Two causes, both settled by measurement, not theory: (a) the
+  built-in sprite lookup returns NULL on this package — the APK's
+  `unity_builtin_extra` archive carries no `Default-Circle` entry, and a null
+  sprite draws nothing; (b) with the camera AT z = 0 and the sprites at z <= 0 the
+  geometry is degenerate. Fix drafted: a boot-generated 16x16 circle texture
+  (names settled by the engine's own stubs: `Sprite.Create(Texture2D, Rect,
+  Vector2)`, `Texture2D.SetPixels(Color[])`), the camera stands BACK at z = -10
+  with the sprite z order body > disc > rim kept, and an `EH-SPRITE source=`
+  observability line makes the sprite source a printed fact. The capture tool
+  moved too: `/sd` is READ-ONLY on this Android 16 build (screencap must write
+  `/data/local/tmp`), and its PNG IHDR parse was off by one byte. Built:
+  `Build/EventHorizon-Android.apk` sha256 507b15ef…, 21,281,070 B at 19:12 —
+  drafted on develop UNCOMMITTED, never installed, never captured.
+- **The human visual proof, from the user 2026-10-16 (the first frame actually
+  looked at by a person):** on the phone the game shows flat coloured dots that
+  read as "stars but very poorly made", NO black hole is visible, and the run
+  reads as slow. This report is the missing visual proof the capture record kept
+  leaving open, and it names the gap honestly: the player package ships
+  placeholder primitives, not A-006's visual language — a pure-black disc on a
+  near-black (8,10,18) field with a 4 px rim does not read as a hole, and flat
+  hard-edged circles are not the design's rounded, glowing bodies.
+- **Tenth extension DIRECTIVE (design decision, user-granted 2026-10-16): the
+  black hole must be presented as it is in the film Interstellar.** The
+  presentation decision belongs to A-006 (docs/design.md §3.2/§3.3, extended
+  FIRST on `feature/designer-visual-language`); the player package then
+  IMPLEMENTS the approved language on `feature/programmer-player-visual-presentation`:
+  a true-black sphere with a bright accretion-disc glow and lensing halo, a
+  starfield field layer (visual only, decoupled from the sim — A-006 §3.3 already
+  allows it), and bodies as soft glowing stars, all generated at boot (no asset
+  files), keeping the §5.3 camera rule, the read-only contract, the boot pool, and
+  zero steady-frame allocations. The "slow" in the report is diagnosed, not
+  guessed: the current build measures 60 FPS pacing (p50=16.625 ms = the exact
+  60 Hz period, EH-PACE target=60 read back), so a perceived slowness is either
+  an OLDER APK on the phone (the pre-eighth-extension 30 FPS defect, p95=34.4 ms)
+  or the world-fitting phase-1 view making motion read small; a fresh capture on
+  the connected device settles which, and the P-01 bound ≤16.6 ms sits BELOW the
+  16.667 ms vsync period and must be re-derived by A-014/A-007, never silently
+  softened here.
 
 **Status:**
 
