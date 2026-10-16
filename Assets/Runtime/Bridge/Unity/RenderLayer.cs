@@ -186,6 +186,41 @@ namespace EH
             // circle is the shape both halves already draw (A-026's view.c fills a
             // disc), so it is the matching placeholder, not a new visual.
             defaultSprite = UnityEngine.Resources.GetBuiltinResource<UnityEngine.Sprite>("Default-Circle.png");
+            // Ninth extension (2026-10-16, measured): the built-in lookup
+            // returned NULL on this package — the APK's unity_builtin_extra
+            // archive carries no Default-Circle entry, and the display-ON
+            // screencap showed the field colour everywhere, including inside
+            // the horizon radius: a null sprite draws nothing. Fallback, all
+            // names settled by the engine's own stubs (Sprite.Create(Texture2D,
+            // Rect, Vector2), Texture2D.SetPixels(Color[])): a generated 16x16
+            // circle texture. Colour still comes from SpriteRenderer.color,
+            // which this layer already owns, so the base is solid white inside
+            // the circle and transparent outside. Boot-only allocation: it
+            // lands in the warm-up max, never in a steady frame.
+            bool spriteFromBuiltin = defaultSprite != null;
+            if (!spriteFromBuiltin)
+            {
+                UnityEngine.Texture2D tex = new UnityEngine.Texture2D(16, 16);
+                perfCountAlloc();
+                UnityEngine.Color[] px = new UnityEngine.Color[16 * 16];
+                perfCountAlloc();
+                for (int y = 0; y < 16; y = y + 1)
+                {
+                    for (int x = 0; x < 16; x = x + 1)
+                    {
+                        double dx = x - 7.5;
+                        double dy = y - 7.5;
+                        px[y * 16 + x] = (dx * dx + dy * dy <= 64.0)
+                            ? new UnityEngine.Color(1.0f, 1.0f, 1.0f, 1.0f)
+                            : new UnityEngine.Color(0.0f, 0.0f, 0.0f, 0.0f);
+                    }
+                }
+                tex.SetPixels(px);
+                defaultSprite = UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(0, 0, 16, 16), new UnityEngine.Vector2(8, 8));
+            }
+            // Observability: the sprite source is now a printed fact, not a
+            // guess — the frame's content depends on it.
+            UnityEngine.Debug.Log("EH-SPRITE source=" + (spriteFromBuiltin ? "builtin" : "generated"));
             // The camera the §5.3 rule drives. Created here, once, so the class is
             // present in the build and the framing has an owner.
             perfCountAlloc();
@@ -315,7 +350,15 @@ namespace EH
             // across frames and objects is safe.
             tmpPos.x = (float)holeXWu;
             tmpPos.y = (float)holeYWu;
-            tmpPos.z = 0.0f;
+            // Measured 2026-10-16: with the camera AT z = 0 and the sprites at
+            // z <= 0, the display-ON screencap showed the field colour inside
+            // the horizon radius — the sprites sit at/behind the camera plane,
+            // which is degenerate. The camera looks down +Z (identity rotation),
+            // so it stands BACK at z = -10: every sprite (z in [-1, 0]) is then
+            // unambiguously in front, and larger z remains nearer the camera,
+            // keeping the body > disc > rim order the palette extension relies
+            // on. The orthographic range still straddles the whole scene.
+            tmpPos.z = -10.0f;
             cameraTransform.position = tmpPos;
 
             // ---- horizon ring: the VISIBLE hole is the event horizon (A-026's
