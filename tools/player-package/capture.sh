@@ -58,8 +58,10 @@ state=$($ADB shell "dumpsys display" 2>/dev/null | grep -o 'Display State=[A-Z_]
 say "display-state: ${state:-unknown}"
 
 # 7. the screencap, decoded stdlib-only (no PIL on this host).
-$ADB screencap -p /sd/eh-cap.png >/dev/null 2>&1 && \
-  $ADB pull /sd/eh-cap.png /tmp/opencode/eh-cap.png >/dev/null 2>&1 || incon "screencap-failed"
+# /sd is READ-ONLY on this Android 16 build; /data/local/tmp is the writable
+# location (measured 2026-10-16).
+$ADB shell "screencap -p /data/local/tmp/eh-cap.png" >/dev/null 2>&1 && \
+  $ADB pull /data/local/tmp/eh-cap.png /tmp/opencode/eh-cap.png >/dev/null 2>&1 || incon "screencap-failed"
 px=$(python3 - <<'PY'
 import zlib, struct
 d = open('/tmp/opencode/eh-cap.png','rb').read()
@@ -68,7 +70,7 @@ w = h = 0; ct = 2
 while i + 8 <= len(d):
     ln = struct.unpack('>I', d[i:i+4])[0]; t = d[i+4:i+8]
     if t == b'IHDR':
-        w, h, bd, ct = struct.unpack('>IIBB', d[i+8:i+17])
+        w, h, bd, ct = struct.unpack('>IIBB', d[i+8:i+18])
     elif t == b'IDAT':
         idat += d[i+8:i+8+ln]
     i += 12 + ln
@@ -82,9 +84,12 @@ def paeth(a, b, c):
     return b if (abs(p-a) <= abs(p-b) and abs(p-a) <= abs(p-c)) else (c if abs(p-b) <= abs(p-c) else a)
 prev = bytearray(stride)
 pos = 0
-def center_rows(n):
-    return n
-out = None
+# the center is the black horizon disc (A-026 draws it), so the decisive
+# samples are FIELD points outside the horizon radius (~429 px measured):
+# they must read the camera field pack_px(8,10,18) when the camera presents.
+pts = {(h//2, w//2): 'center', (h//2+500, w//2): 'field', (h//2-500, w//2): 'field2',
+       (h//2, w//2+500): 'field3', (h//2, w//2-500): 'field4'}
+found = {}
 for y in range(h):
     f = raw[pos]; pos += 1
     line = bytearray(raw[pos:pos+stride]); pos += stride
@@ -101,12 +106,16 @@ for y in range(h):
         for x in range(stride):
             a = line[x-bpp] if x >= bpp else 0
             line[x] = (line[x] + ((a + prev[x]) >> 1)) & 255
-    if y == h // 2:
-        out = line
+    for (yy, xx), name in pts.items():
+        if yy == y:
+            p = line[xx*bpp:xx*bpp+3]
+            found[name] = (p[0], p[1], p[2])
     prev = line
-cx = w // 2
-p = out[cx*bpp:cx*bpp+3]
-print(f"{w}x{h} center-px=({p[0]},{p[1]},{p[2]})")
+print(f"{w}x{h}")
+for name in ('center', 'field', 'field2', 'field3', 'field4'):
+    if name in found:
+        r, g, b = found[name]
+        print(f"{name}-px=({r},{g},{b})")
 PY
 )
 say "screencap: ${px:-undecoded}"
@@ -119,10 +128,15 @@ say "P-01 p95_ms=${p95:-none} bound=16.6 -> $( [ -n "${p95:-}" ] && awk "BEGIN{e
 say "P-05 allocs_per_frame_max=${alloc:-none} bound=0 -> $( [ -n "${alloc:-}" ] && [ "$alloc" = 0 ] && echo PASS || echo FAIL )"
 case "$state" in
   *ON*)
-    if printf '%s' "$px" | grep -q 'center-px=(0,0,0)'; then
-      say "visual: FAIL camera-not-presenting(display ON, pure black)"
+    fields=$(printf '%s\n' "$px" | grep -o 'field[0-9]*-px=([0-9,]*)')
+    nonblack=$(printf '%s\n' "$fields" | grep -cv 'field[0-9]*-px=(0,0,0)' || true)
+    exact=$(printf '%s\n' "$fields" | grep -c 'field[0-9]*-px=(8,10,18)' || true)
+    if [ "${exact:-0}" -gt 0 ] 2>/dev/null; then
+      say "visual: PASS camera presents, field colour pack_px(8,10,18) confirmed"
+    elif [ "${nonblack:-0}" -gt 0 ] 2>/dev/null; then
+      say "visual: PRESENTING(field points non-black; exact colour differs — read the printed values)"
     else
-      say "visual: PRESENTING(pixel non-black; compare vs pack_px(8,10,18) by hand)"
+      say "visual: FAIL camera-not-presenting(display ON, all field points pure black)"
     fi ;;
   *DOZE*)
     say "visual: INCONCLUSIVE(display dimmed standby; a non-black pixel still proves presenting)" ;;
