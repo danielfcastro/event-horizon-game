@@ -94,6 +94,7 @@ feature/programmer-player-palette
 feature/programmer-player-instrumentation
 feature/programmer-player-camera-presentation
 feature/programmer-player-frame-pacing
+feature/qa-capture-tool
 feature/programmer-player-splash
 feature/release-policy-hosting
 feature/release-submission
@@ -532,6 +533,23 @@ that makes the black hole of A-005 §5.1 visible and steerable without Unity.
     capture showed the always-on display, not the game). With the screen up,
     `screencap` gives the visual proof on a real device and `gfxinfo` gives
     real frame times for P-01.
+  - 2026-10-16 capture on the same class device, recorded in
+    docs/qa-results/2026-10-16-p01-p05-modern-phone.md via the new
+    single-shot tool tools/player-package/capture.sh (the recurring
+    install/launch/logcat/screencap attempts are replaced by one
+    deterministic pipeline that prints a structured verdict). Measured
+    facts, printed by the game's own EH log: the 30 FPS defect is GONE
+    (p50=16.625 ms = the exact 60 Hz vsync period; EH-PACE target=60
+    read back); P-05 stays green (allocs_per_frame_max=0 across 1,934+
+    steady frames). BOUND ARITHMETIC FINDING: the exact 1/60 period is
+    16.667 ms, so A-014 §6's P-01 bound ≤16.6 ms is BELOW the physical
+    vsync period and a perfectly-paced 60 FPS app can never satisfy it
+    (p95=17.625 measured). The bound must be re-derived against the
+    vsync period (A-014/A-007's to re-derive, not silently softened);
+    P-01 stays FAIL under the current bound. The visual proof stays
+    open: display DOZE_SUSPEND at capture time; synthetic taps do not
+    reset the doze timer; one human action (physically wake the phone)
+    then re-run capture.sh.
 
 ### A-015 docs/store.md
 
