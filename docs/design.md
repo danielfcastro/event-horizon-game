@@ -90,12 +90,39 @@ counting bodies.
 
 | Element | Language | Rationale |
 | --- | --- | --- |
-| Black hole | Pure black disc, darkest thing on screen; faint accretion swirl at the rim (visual only) | The hole is the player; nothing may read as darker |
+| Black hole | Interstellar presentation (extension, 2026-10-16): a true-black sphere — still the darkest thing on screen — wrapped by a bright accretion disc of glowing gas at the horizon rim, plus a faint lensing halo around the sphere's edge (all visual only). The bare-disc look this row used to carry failed on device: a pure-black disc with a thin rim on the near-black field did not read as a hole; the rim-wrapped glow is what makes the void's silhouette readable, exactly as in the film | The hole is the player; nothing may read as darker. The decoration must not out-contrast the ring: the readability hierarchy of 3.1 (event horizon ring > hazard markers > large bodies > medium bodies > small bodies > field texture) must survive the extension, so the ring stays the strongest element on screen |
 | Event horizon ring | Single bright ring, constant screen-space stroke width (min 2 px), slow calm pulse at low mass | One anchor for "mine"; screen-space width keeps it visible at every zoom |
-| Absorbable bodies | Rounded/organic silhouettes; brightness below the ring, above the background | Silhouette says "food" without color reliance |
-| Hazards | Sharp/spiky silhouettes plus a marker glyph (bracket/X family), never color-only | Spec 5.2 requires hazard-vs-food readability; shape carries it for colorblind players (anchor for A-012) |
+| Absorbable bodies | Rounded/organic silhouettes; brightness below the ring, above the background; at small sizes they read as glowing points/stars with soft halos (extension, 2026-10-16 — see the bodies-as-stars note below this table) | Silhouette says "food" without color reliance; the glow is what makes small bodies read as proper stars instead of the flat discs the device report saw, without changing the silhouette |
+| Hazards | Sharp/spiky silhouettes plus a marker glyph (bracket/X family), never color-only; the same soft glow may sit *behind* the core but must not soften the spiky outline or the glyph | Spec 5.2 requires hazard-vs-food readability; shape carries it for colorblind players (anchor for A-012); the glow must never blur the shape family that carries the identity |
 | Inside vs outside | See 3.3 (answers open question 4) | The core readability decision |
-| Bodies per world | One texture atlas per world (A-005); palette per world; LOD A near = sprite + glow, B mid = sprite only, C far = 1-4 px point | A-005 LOD contract, not contradicted |
+| Bodies per world | One texture atlas per world (A-005); palette per world; LOD A near = sprite + glow, B mid = sprite only, C far = 1-4 px point | A-005 LOD contract, not contradicted — the star language below is exactly this contract's A/C glow, stated as ratios |
+
+**Bodies as stars (extension, 2026-10-16).** The device report read the bodies
+as "stars, but very poorly made" — flat discs on a near-black field. Every body
+must instead read as a proper glowing star at small sizes: a bright core with
+one or two larger, lower-alpha soft sprites behind it (the soft-alpha vocabulary
+of 3.5). This applies to the whole family list of PLAN 5.7 — absorbables (dust,
+pebbles, ice fragments, debris / rocks, metal shards, ship fragments, asteroids /
+asteroid chunks, small planets, star fragments, quantum anomalies) and hazards
+(mines, gravity anchors, magnetic fields, collapsing debris, massive objects).
+The shape language of the table above is **not replaced**: food stays rounded/
+organic, hazards stay sharp/spiky plus marker glyph, and identity is never
+color-only — the colorblind anchor for A-012 stays intact.
+
+Sizes and brightness are stated as **ratios**, never pixels or hex palettes:
+
+- Drawn size follows the body's own sim radius through the camera mapping
+  (unchanged); the design adds only the halo — a soft glow of 2-3x the drawn
+  core radius, capped at 1/8 of the horizon radius so glows never merge into a
+  field that hides the ring.
+- Core brightness: clearly above the background field at the same screen
+  position, and below the ring; the ring stays the brightest element (3.1).
+- Background stars (the field layer of 3.3) stay dimmer and smaller than even
+  the smallest body's core, so bodies never compete with background stars.
+
+The concrete palette is A-023's (it already mirrors A-026's view.c palette); the
+tier bits (kind>>2)&3 stay the identity channel — A-023 must not encode
+identity in color.
 
 ### 3.3 Event horizon rendering — answers open question 4
 
@@ -110,11 +137,31 @@ channels**, so no single channel (or color) carries it:
 3. **Motion**: bodies inside the ring already drift and rotate toward the hole
    (this is sim behavior, rendered as-is); bodies outside do not. Inside motion
    is the second-glance confirmation.
+4. **Accretion decoration** (extension, 2026-10-16): the accretion disc of
+   glowing gas wrapped at the horizon rim and the faint lensing halo around the
+   true-black sphere (3.2). This is a FOURTH, purely decorative channel: it
+   exists because the bare-disc look did not read as a hole on device, and it
+   must never carry readability by itself — with channels 1-3 unchanged,
+   removing the disc and halo must still answer "mine vs not yet mine".
 
-At a glance: ring + dark interior + drifting bodies = mine. On the smallest
-phone, channels 1 and 2 carry the reading; channel 3 confirms. Faint
-gravitational streamlines (field texture, visual only) may be added at high
-quality tier; they must never imply a sim effect that does not exist.
+At a glance: ring + dark interior + drifting bodies = mine; the disc and halo
+make the void itself legible against the field but never replace that reading.
+On the smallest phone, channels 1 and 2 carry the reading; channel 3 confirms;
+channel 4 decorates. Faint gravitational streamlines (field texture, visual
+only) may be added at high quality tier; they must never imply a sim effect
+that does not exist.
+
+**Starfield field layer (extension, 2026-10-16).** The field may read as a
+starfield: a purely visual layer of small static points, decoupled from the
+sim exactly like the interior-vacuum gradient above (A-005 allows field
+texture). It must stay the WEAKEST element of the 3.1 hierarchy — background
+stars dimmer and smaller than even the smallest body's glowing core (the
+bodies-as-stars ratios in 3.2) — so bodies never compete with background
+stars. Lensing, the accretion disc, and the starfield are visual only: they
+never imply a sim effect that does not exist, and they never change digest
+identity — digest identity is defined by sim state alone, and these layers
+never feed the sim (no-softening, A-012/A-014). The pull/absorb model stays
+PLAN 5.6's, untouched.
 
 ### 3.4 Off-screen indicators — answers open question 6
 
@@ -132,6 +179,63 @@ carried by glyph shape (chevron vs bracketed X), not color. Maximum 8
 indicators on screen, priority-sorted by threat/arrival time. Exact placement,
 size, and styling within safe areas belong to A-010; the semantics and cap are
 A-006's decision.
+
+### 3.5 Player-package presentation contract — the layers A-023 implements
+
+The Interstellar look above must be expressible on the player package as
+measured (PLAN.md §4 A-023): SpriteRenderer with boot-generated textures only
+(`Texture2D.SetPixels` + `Sprite.Create`); the built-in sprite lookup returns
+NULL on this package, so the package ships **no asset files** — every disc,
+glow, and star texture is generated at boot. The camera is runtime-created,
+orthographic, at z = -10, and z-ordered sorting is proven to work on it (body
+> disc > rim sorts correctly), so the layer list below is stated as z-order,
+not as shaders or materials:
+
+Farthest to nearest:
+
+| Layer | What it is | Contract |
+| --- | --- | --- |
+| Starfield | Boot-generated points scattered across the world bounds — as individual point sprites or as one boot-generated background texture, whichever fits the A-005 draw-call budget (section 9); A-023 chooses | Farthest z. Purely visual (3.3): never carries readability, never feeds the sim, weakest element of 3.1 |
+| Accretion glow | Soft-alpha radial-gradient sprite(s) wrapped at the horizon rim | Behind the true-black sphere; the glow reads as gas around the void, as in the film |
+| True-black sphere | The darkest thing on screen (3.2) | In front of its own glow, so the glow only ever appears as a rim-wrapped band and a halo |
+| Rim ring | The bright constant-width ring (3.2/3.3 channel 1) | In front of the sphere; the only perfect circle stays unbroken by decoration |
+| Bodies | The nearest layer (3.2 bodies-as-stars) | Drawn above the ring where they overlap; the ring stays readable because it is the only perfect circle and the brightest element (3.1), not because it is on top |
+
+Glow rule: every glow must be expressible as **layered soft-alpha sprites**.
+Additive blending is NOT guaranteed on this package, and the design must not
+depend on unproven shaders, materials, or blend modes — the programmer settles
+API names by compiling, so the design states layering and alpha only. A
+"glowing star" is a bright core sprite plus one or two larger, lower-alpha
+soft sprites behind it; that composition is the whole vocabulary, and it is
+also how the accretion disc and the lensing halo are built.
+
+### 3.6 Motion readability (device-report follow-up)
+
+The 2026-10-16 device report read the run as slow. Presentation may add
+motion cues without touching any number:
+
+- The accretion disc rotates slowly around the sphere — decoration; its speed
+  is a render constant owned by A-023, not a sim quantity.
+- Bodies inside the horizon drift toward the hole — that drift IS sim
+  behavior rendered as-is (3.3 channel 3); the design adds no motion of its
+  own to bodies.
+- The starfield is static; it must not drift, so it can never fake or dilute
+  the sense of motion.
+
+Boundaries: this does not change the PLAN 5.3 camera rule (the merged two-
+phase hybrid of A-026 stays as approved), does not change any A-007 number,
+and does not change any A-009 level number. If the run still reads slow after these cues,
+the cause is pacing or telemetry (A-007, A-014), not presentation, and this
+document must not paper over it.
+
+Reduced motion (A-012 anchor, kept honest): at reduced motion the design turns
+OFF — the accretion disc's rotation, the lensing halo's flicker/shimmer, the
+ring's slow calm pulse, the camera punch and shake, and all particle motion —
+and keeps ON — the static disc and halo shapes, the ring, the interior-vacuum
+gradient, and the bodies-as-stars glow. Body drift is rendered sim state;
+A-012 may freeze it, but then the inside/outside reading must still survive on
+channels 1 and 2, which is exactly the guarantee of 3.3 above. A-012 owns the
+option implementation; this names what must flip.
 
 ## 4. Particles and effects
 
@@ -270,3 +374,14 @@ these ranges. Combo window length itself remains A-007's.
 - **A-012 (accessibility):** implementations of reduced motion, high contrast,
   colorblind-safe palette, larger controls — must preserve the anchors of
   section 7, especially the ring-fracture stability cue.
+
+---
+
+## 11. Extension record — 2026-10-16, the Interstellar presentation
+
+| Field | Record |
+| --- | --- |
+| Asked | The user looked at the game on a phone (S24 FE) and reported: no black hole is visible; the dots read as "stars but very poorly made"; the run reads as slow. The user's design decision: the black hole must be presented as in the film Interstellar — a true-black sphere wrapped by a bright accretion disc of glowing gas, with a lensing halo — and the field must read as a starfield with the bodies as proper glowing stars, not flat discs. Recorded in PLAN.md §4 A-006 and §4 A-023 (commit 4d8c5de docs(plan):); PLAN.md wins on disagreement. The measured gap this extension must fix: a pure-black disc with a 4 px rim on the near-black field did NOT read as a hole on device. |
+| Decided here | §3.2: the black-hole row now carries the Interstellar presentation (true-black sphere + rim-wrapped accretion disc + faint lensing halo, visual only); the body rows read as glowing points/stars with soft halos while keeping the shape language (rounded/organic food, sharp/spiky + glyph hazards, never color-only) and stating sizes and brightness as ratios of the horizon radius and of the background. §3.3: the disc and halo become a fourth, purely decorative readability channel that must never carry readability by itself; the starfield becomes the weakest field layer, decoupled from the sim. §3.5: the player-package layer contract — z-order starfield farthest, accretion glow behind the true-black sphere, bright rim ring, bodies nearest; boot-generated textures only, no asset files; glow expressible only as layered soft-alpha sprites, no dependence on unproven shaders, materials, or blend modes. §3.6: motion cues (disc rotation, rendered-as-is body drift, static starfield) and the honest reduced-motion list of what turns off. |
+| Deliberately untouched | Sim numbers, the PLAN 5.3 camera rule, every A-007 balance number, every A-009 level number, golden replays, and digest identity. Lensing, the accretion disc, and the starfield are visual only and never feed the sim; the pull/absorb model stays PLAN 5.6's. The contrast hierarchy of 3.1 and the hazard shape family of 3.2 stay intact — the presentation must not hide the tension cues (PLAN section 8: not a pure power fantasy). No UI layout (A-010), no input (A-011). |
+| Deferred to A-023 | The concrete palette (A-023 already mirrors A-026's view.c palette; the field clear stays pack_px(8,10,18) unless A-023's own extension says otherwise — this document states ratios only, never hex values); the boot texture-generation recipes; Unity API names, settled by compiling; the disc rotation speed as a render constant; halo sizes within the ratios stated in 3.2. The tier bits (kind>>2)&3 stay the identity channel — A-023 must not encode identity in color. Whether the perceived slowness is an older APK or the phase-1 world-fit view is settled by a fresh device capture (A-023/A-014), not by this document. |
