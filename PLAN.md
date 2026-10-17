@@ -97,6 +97,7 @@ feature/programmer-player-frame-pacing
 feature/programmer-player-sprite-fallback
 feature/designer-visual-language
 feature/programmer-player-visual-presentation
+feature/programmer-player-visual-input
 feature/qa-capture-tool
 feature/programmer-player-splash
 feature/release-policy-hosting
@@ -1123,6 +1124,36 @@ a design decision updates `PLAN.md` first):**
   the connected device settles which, and the P-01 bound ≤16.6 ms sits BELOW the
   16.667 ms vsync period and must be re-derived by A-014/A-007, never silently
   softened here.
+- **Eleventh extension: the four defects the USER SAW on the phone, 2026-10-17
+  (second device report — "tá uma merda": everything square, slow, no Interstellar
+  hole, touching the screen does nothing, content drawn from the first third down)
+  plus the captured frame (screencap viewed: faint points render, bodies render as
+  hard-edged squares, the centre where the camera pins the hole shows no sphere,
+  no ring, no glow; the log shows EH-BOOT/EH-PACE/EH-SPRITE source=generated/EH-CAMERA/
+  EH-FRAME and then ZERO EH-PERF lines — the frame loop stopped after the first
+  frame).** Four named causes, each settled by the frame or the log, not guessed:
+  (A) SQUARE SPRITES — the generated textures lose alpha: Unity 6's two-argument
+  `Texture2D(w, h)` constructor defaults to a NO-ALPHA graphics format (the engine's
+  own stubs list the overloads: `(Int32,Int32)` and `(Int32,Int32,TextureFormat,Boolean)`),
+  so the circle mask and every soft-alpha glow rasterize as full squares — the
+  fix is the four-argument constructor with alpha=true, the TextureFormat member
+  settled by the compiler. (B) PORTRAIT LETTERBOX — the §5.3 world-fit term
+  `shortEdgePx / boundsH` fits only one axis; on a portrait window the world
+  rendered in a band (the user's "first third down" report). PLAN.md §5.3 was
+  updated FIRST to the both-axis fit `min(windowWidthPx/boundsW,
+  windowHeightPx/boundsH)`, which reduces to the approved value on the landscape
+  windows both halves were verified on — every A-026 proof number stays.
+  (C) TOUCH DOES NOTHING — GameLoop.pushLiveIntent is a `pause()` stub: the
+  candidate build NEVER read a finger; A-011's drag (docs/input.md §2: touch +
+  drag translates the hole; direction + rate intent) must be wired into
+  InputAdapter.pushIntent through the transport contract, first-contact-wins
+  untouched. (D) THE FREEZE — no EH-PERF after the first frame: the frame loop
+  stopped; the same session's process was alive-but-sleeping and an earlier
+  run left an il2cpp dropbox report; the cause is to be settled by the device
+  log of a clean run (the next capture), NOT guessed here; the prime suspects
+  are the first draw() call and the recorded GameActivity pause pattern.
+  Branch `feature/programmer-player-visual-input` (registered in §1.3); brief
+  docs/briefs/A-023-visual-input.md.
 
 **Status:**
 
@@ -1364,7 +1395,7 @@ shortEdgePx = min(windowWidthPx, windowHeightPx)   # the ACTIVE window, never a 
 boundsW, boundsH                                   # world bounds, from the frame payload
 eventRadiusWU                                      # the horizon, from the frame payload
 
-ppuWorld   = shortEdgePx / boundsH                                # phase 1: fixed view
+ppuWorld   = min(windowWidthPx / boundsW, windowHeightPx / boundsH) # world-fit, any orientation
 ppuContain = CONTAIN_PCT / 100 * shortEdgePx / (2 * eventRadiusWU) # phase 2: contain it
 
 pixelsPerUnit = clamp(min(ppuWorld, ppuContain), MIN_PPU, tierPPU)
@@ -1381,10 +1412,20 @@ where the horizon would first exceed `CONTAIN_PCT` percent of the short edge:
   takes over and decreases continuously as `eventRadius` grows: the camera only
   ever zooms out, the horizon stays inside the frame, and more field is shown.
 
-Nothing is hardcoded to one resolution or one world: `shortEdgePx` comes from the
-active window and `boundsH` from the payload, so the same rule serves phones,
-tablets, and desktop windows, and a level with different bounds needs no camera
-change. `tierPPU` (the device tier's `pixelsPerUnit`) remains the upper bound, so
+Nothing is hardcoded to one resolution or one world: the window terms come from
+the active window and the bounds from the payload, so the same rule serves
+phones (portrait AND landscape), tablets, and desktop windows, and a level with
+different bounds needs no camera change. The world-fit term is a BOTH-AXIS fit
+(clarified 2026-10-17): the earlier single-axis form `shortEdgePx / boundsH`
+letterboxed the world on portrait windows (measured on the S24 FE portrait
+screen: the world rendered only in a band and the user reported everything
+drawn "from the first third of the screen down"); for the landscape windows
+both halves were verified on — A-026's 540p client — the both-axis fit equals
+that earlier value for the p1 world (the height term binds), so every recorded
+A-026 proof number (`ppuUsed` 5 → 3 → 2, `eventRadiusPx` values) stays
+unchanged. `ppu` is pixels-per-WU vertically; the camera half sets
+`orthoSize = windowHeightPx / ppu / 2` and the width follows from the window
+aspect, so the fit and the presentation use the same two window terms. `tierPPU` (the device tier's `pixelsPerUnit`) remains the upper bound, so
 a sharper device only gets a sharper picture, never a different framing; `MIN_PPU`
 keeps bodies at a few pixels so the field stays readable at the end of a long run.
 `pixelsPerUnit` stays render-only: it is chosen by the renderer and never reaches
