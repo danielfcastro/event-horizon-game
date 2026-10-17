@@ -99,6 +99,49 @@
 //    explicit (float) arguments and (double) results — C# will not implicitly
 //    narrow the doubles this layer already keeps. The module XML stubs contain
 //    no math names at all; only the compiler decides.
+//
+// A-023 ELEVENTH EXTENSION (2026-10-17, the four defects the user SAW on the
+// S24 FE — brief docs/briefs/A-023-visual-input.md; PLAN.md updated FIRST at
+// 283af76 docs(plan):). Three fixes, one investigation; only this file and
+// GameLoop.cs move. Decisions taken, recorded per the brief:
+//  - A. SQUARE SPRITES (measured: bodies drew as hard-edged squares; the
+//    circle mask and every soft-alpha glow was ignored). CAUSE: Unity 6's
+//    two-argument new UnityEngine.Texture2D(w, h) defaults to a NO-ALPHA
+//    graphics format. FIX: every boot-generated texture (the ninth-extension
+//    fallback circle, the body glow, the accretion band, the starfield) now
+//    uses the FOUR-argument constructor (Int32,Int32,TextureFormat,Boolean)
+//    — an overload the engine's own stubs list — with alpha=true. The stubs
+//    do NOT list the TextureFormat enum members, so the compiler was the
+//    oracle (the established ApiProbe pattern: a temporary file under
+//    Assets/Runtime/Bridge/Unity with the validation line, built, read,
+//    deleted). SETTLED: UnityEngine.TextureFormat.RGBA32 — the four-argument
+//    call with it compiled with NO error while the validation line
+//    thisNameDoesNotExistAtAll appeared in the error list (CS0103), so the
+//    list was real evidence. REJECTED BY NAME: TextureFormat.RGBA and
+//    TextureFormat.RGBA16 (both CS0117: 'TextureFormat' does not contain a
+//    definition for the member; their CS1503 follow-ons show the overload
+//    resolution fell to the TextureCreationFlags form only because the
+//    member itself was missing). The EH-SPRITE line now prints the format
+//    used — a printed fact, per the observability directive.
+//  - B. PORTRAIT LETTERBOX (measured: on the portrait window the world
+//    rendered only in a band — the user's "first third of the screen down").
+//    PLAN.md §5.3 was updated FIRST to the BOTH-AXIS world-fit:
+//        ppuWorld = min(windowWidthPx / boundsW, windowHeightPx / boundsH)
+//    implemented exactly here; the rest of the rule stays byte-for-byte in
+//    behavior (ppuContain on the short edge, min of the two phases, clamp to
+//    [MIN_PPU, tierPPU], orthoSize = windowHeightPx / ppu / 2). For the
+//    landscape windows both halves were verified on, the height term binds,
+//    so this reduces to the approved shortEdge/boundsH value and A-026's
+//    recorded proof numbers (ppuUsed 5 → 3 → 2, eventRadiusPx values) are
+//    unchanged BY CONSTRUCTION — no re-derivation here.
+//  - D. THE FREEZE — INVESTIGATED, NOT PAPERED OVER (see the GameLoop
+//    comment): the log showed EH-BOOT/EH-PACE/EH-SPRITE/EH-CAMERA/EH-FRAME
+//    then ZERO EH-PERF lines; an earlier run left an il2cpp dropbox report
+//    while the user's process was alive but suspended. The cause is NOT
+//    proven; no try/catch, no softening. The A/B/C fixes touch exactly the
+//    code that runs in the FIRST draw(); the next device capture decides:
+//    EH-PERF lines appearing means the freeze was in the code being fixed,
+//    and if the code still faults, Unity's log will name the fault.
 
 namespace EH
 {
@@ -107,6 +150,17 @@ namespace EH
         // ---- §5.3 constants (dimensionless; the same two A-026's view.c carries) --
         public static int containPct = 90;   // CONTAIN_PCT — PLAN.md §5.3
         public static int minPpu = 2;        // MIN_PPU — PLAN.md §5.3
+
+        // ---- A-023 eleventh extension: the alpha-carrying texture format -------
+        // Defect A (measured): bodies drew as hard-edged squares — the two-arg
+        // new Texture2D(w, h) defaults to a NO-ALPHA format, so the circle mask
+        // and every soft-alpha glow was ignored. Every boot-generated texture
+        // uses the four-argument ctor with this format and alpha=true. The
+        // member is settled by the compiler on 6000.0.84f1 (the ApiProbe
+        // pattern, probe deleted after the build): RGBA32 compiled through the
+        // ctor with NO error while the validation line appeared in the error
+        // list; RGBA and RGBA16 were REJECTED (CS0117, no such members).
+        private static UnityEngine.TextureFormat spriteTextureFormat = UnityEngine.TextureFormat.RGBA32;
 
         // ---- the render pool (allocated once at boot, reused every frame) -----
         private static UnityEngine.GameObject[] bodyObjects;
@@ -284,7 +338,12 @@ namespace EH
             bool spriteFromBuiltin = defaultSprite != null;
             if (!spriteFromBuiltin)
             {
-                UnityEngine.Texture2D tex = new UnityEngine.Texture2D(16, 16);
+                // A-023 eleventh extension (defect A): the four-argument ctor
+                // (Int32,Int32,TextureFormat,Boolean) with the settled
+                // alpha-carrying format and alpha=true — the two-argument
+                // default carries NO alpha, which is why the generated circle
+                // masked as a hard-edged square on the device.
+                UnityEngine.Texture2D tex = new UnityEngine.Texture2D(16, 16, spriteTextureFormat, true);
                 perfCountAlloc();
                 UnityEngine.Color[] px = new UnityEngine.Color[16 * 16];
                 perfCountAlloc();
@@ -303,8 +362,13 @@ namespace EH
                 defaultSprite = UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(0, 0, 16, 16), new UnityEngine.Vector2(8, 8));
             }
             // Observability: the sprite source is now a printed fact, not a
-            // guess — the frame's content depends on it.
-            UnityEngine.Debug.Log("EH-SPRITE source=" + (spriteFromBuiltin ? "builtin" : "generated"));
+            // guess — the frame's content depends on it. A-023 eleventh
+            // extension: the format used for generated bases is printed too
+            // (a printed fact, per the observability directive) — the enum
+            // member name is not a runtime string, so the ordinal is printed;
+            // RGBA32 is the settled member (see the header record).
+            UnityEngine.Debug.Log("EH-SPRITE source=" + (spriteFromBuiltin ? "builtin" : "generated") +
+                " format=" + (int)spriteTextureFormat);
             // A-023 tenth extension: the three soft-alpha bases, all boot-generated
             // (the package ships no asset files; the built-in lookup is null here).
             // Recipes, recorded:
@@ -429,10 +493,35 @@ namespace EH
             // read A-026's view.c makes (`(double)p->holeEventRadius / 4294967296.0`);
             // truncating with >> 32 would let the two implementations of the §5.3
             // rule drift by up to one world unit (a few pixels) on the same state.
+            // A-023 eleventh extension: boundsW is read here too (it was already
+            // read below for the starfield placement) because the §5.3 world-fit
+            // term now uses BOTH window axes against BOTH world axes.
+            double boundsW = (double)(long)s.boundsW / 4294967296.0;
             double boundsH = (double)(long)s.boundsH / 4294967296.0;
             double evWu = (double)(long)s.holeEventRadius / 4294967296.0;
 
-            double ppuWorld = boundsH > 0.0 ? shortEdge / boundsH : (double)minPpu;
+            // ppuWorld = min(windowWidthPx / boundsW, windowHeightPx / boundsH) —
+            // the BOTH-AXIS world-fit of PLAN.md §5.3 as updated FIRST at 283af76
+            // (docs(plan):). The earlier single-axis shortEdge/boundsH letterboxed
+            // the world on portrait windows (measured on the S24 FE: content only
+            // in a band, the user's "first third of the screen down"). For the
+            // landscape windows both halves were verified on, the height term
+            // binds, so this reduces to the approved value and A-026's recorded
+            // proof numbers are unchanged BY CONSTRUCTION. The rest of the rule
+            // below stays byte-for-byte in behavior: ppuContain on the short
+            // edge, min of the two phases, clamp to [MIN_PPU, tierPPU], and
+            // orthoSize = windowHeightPx / ppu / 2 further down.
+            double ppuWorld;
+            if (boundsW > 0.0 && boundsH > 0.0)
+            {
+                double fitW = (double)windowW / boundsW;
+                double fitH = (double)windowH / boundsH;
+                ppuWorld = fitW < fitH ? fitW : fitH;
+            }
+            else
+            {
+                ppuWorld = (double)minPpu;
+            }
             double ppuContain = evWu > 0.0
                 ? (shortEdge * (double)containPct / 100.0) / (2.0 * evWu)
                 : ppuWorld;
@@ -500,14 +589,13 @@ namespace EH
             // (LevelLoader starts the hole at the centre of that rectangle).
             if (!starfieldPlaced)
             {
-                double boundsWu = (double)(long)s.boundsW / 4294967296.0;
-                if (boundsH > 0.0 && boundsWu > 0.0)
+                if (boundsH > 0.0 && boundsW > 0.0)
                 {
-                    tmpPos.x = (float)(boundsWu * 0.5);
+                    tmpPos.x = (float)(boundsW * 0.5);
                     tmpPos.y = (float)(boundsH * 0.5);
                     tmpPos.z = -2.0f; // farthest layer, inside the measured [-2,0] range
                     starfieldTransform.position = tmpPos;
-                    tmpScale.x = (float)boundsWu;
+                    tmpScale.x = (float)boundsW;
                     tmpScale.y = (float)boundsH;
                     tmpScale.z = 1.0f;
                     starfieldTransform.localScale = tmpScale;
@@ -717,7 +805,10 @@ namespace EH
         /// </summary>
         private static UnityEngine.Sprite makeGlowTexture(int size, double peakAlpha)
         {
-            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            // A-023 eleventh extension (defect A): alpha-carrying format +
+            // alpha=true — the soft gradients ARE the alpha; the two-argument
+            // default format ignored it and drew hard-edged squares.
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size, spriteTextureFormat, true);
             perfCountAlloc();
             UnityEngine.Color[] px = new UnityEngine.Color[size * size];
             perfCountAlloc();
@@ -755,7 +846,10 @@ namespace EH
         /// </summary>
         private static UnityEngine.Sprite makeAccretionTexture(int size)
         {
-            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            // A-023 eleventh extension (defect A): alpha-carrying format +
+            // alpha=true — the soft gradients ARE the alpha; the two-argument
+            // default format ignored it and drew hard-edged squares.
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size, spriteTextureFormat, true);
             perfCountAlloc();
             UnityEngine.Color[] px = new UnityEngine.Color[size * size];
             perfCountAlloc();
@@ -808,7 +902,10 @@ namespace EH
         /// </summary>
         private static UnityEngine.Sprite makeStarfieldTexture(int size, int points)
         {
-            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            // A-023 eleventh extension (defect A): alpha-carrying format +
+            // alpha=true — the soft gradients ARE the alpha; the two-argument
+            // default format ignored it and drew hard-edged squares.
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size, spriteTextureFormat, true);
             perfCountAlloc();
             UnityEngine.Color[] px = new UnityEngine.Color[size * size];
             perfCountAlloc();
