@@ -1,16 +1,22 @@
 ---
 status: draft
-next_artifact: none executable (A-023 Unity player package is done — merged via PR #38 into develop; the Unity toolchain gate and the Unity license gate were both closed 2026-10-10, the candidate build is real — Build/EventHorizon-Android.apk 12,431,883 bytes and Build/EventHorizon-iOS.app — and A-019 §12's ship-build exclusion steps STEP-11a..11e run green against it. A-025 stays gated on store consoles and on real device classes; contact verification needs a real inbox — event-horizon.game still does not resolve; the live SDL window still needs a human at a desktop. The run is at a gate.)
+next_artifact: A-004 docs/spec.md RE-BASELINE (2026-10-17: the design baseline v2 of §5.0 — the user's redefinition — re-opens the design artifacts in dependency order; see §2.1. The desktop-first platform line and the real-equations physics model are now the source of truth; the phone-build visual thread that was running is superseded by the baseline, its evidence stays recorded.)
 owner: coordinator
 project: Event Horizon
-platform: iOS, Android
+platform: Desktop (Steam: Linux, Windows) — FIRST; iOS; Android (re-baselined 2026-10-17 by the design baseline v2 of §5.0; the earlier line was iOS, Android)
 ---
 
 # Event Horizon Game Plan
 
 ## 0. Purpose
 
-This plan defines a mobile game where the player controls a growing black hole. The black hole starts small, moves across the screen, attracts bodies with its gravitational field, absorbs them, and grows in mass, event horizon, and gravitational pull.
+This plan defines a game — desktop-first (Steam, Linux, Windows), then iOS and Android, per
+the design baseline v2 of §5.0 — where the player commands a growing black hole (BN,
+*Buraco Negro*), presented like the black hole of the film *Interstellar* in a top-down
+view. The BN starts as a collapsing cloud of cosmic dust, moves, attracts nearby matter with
+its gravity well, ingests it through its accretion disc, and grows in mass and event
+horizon (HE, *Horizonte de Events*) according to real astrophysical equations, with the
+live readouts (solar masses, AU) at the top-left of the screen.
 
 The repository is intended to be coordinated by AI agents. Each artifact is developed in a specific order so agents do not duplicate work or make incompatible design decisions.
 
@@ -227,29 +233,63 @@ The sequence below is ordered so that AI agents can coordinate work safely.
 | A-001 | PLAN.md | coordinator | none | Master plan and coordination protocol | done | Contains game concept, artifact order, agent rules, git-flow requirement. |
 | A-002 | README.md | coordinator | A-001 | Repo overview | done | Explains repo and next steps. |
 | A-003 | AGENTS.md | coordinator | A-002 | Agent roles and workflow | done | Defines agent responsibilities and branch rules. |
-| A-004 | docs/spec.md | planner | A-001 | High-level game specification | done | Defines core loop, controls, goals, failure conditions. |
-| A-005 | docs/architecture.md | architect | A-004 | Technical architecture | done | Defines modules, simulation loop, data structures, platform plan. |
-| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | done | Defines visual language, feedback, accessibility. |
-| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | done | Defines mass growth, upgrade values, target masses. |
-| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | done | Lists objects, hazards, rewards, modifiers. |
-| A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | done | Defines worlds, objectives, difficulty curve. |
-| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | done | Defines UI layout and mobile scaling. |
-| A-011 | docs/input.md | designer | A-010 | Mobile controls | done | Defines drag, joystick, tilt, accessibility. |
-| A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | done | Defines contrast, reduced motion, larger controls. |
-| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | done | Defines simulation tests, balance tests, UI tests. |
-| A-014 | docs/qa.md | qa | A-013 | QA checklist | done | Defines manual QA and performance checklist. |
-| A-015 | docs/store.md | release | A-014 | Store submission plan | done | Defines listing, screenshots, trailer, compliance. |
-| A-016 | docs/monetization.md | release | A-015 | Monetization and economy | done | Defines ads, IAP, analytics, fairness. |
-| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | done | Defines data collected, contact info, store compliance. |
+| A-004 | docs/spec.md | planner | A-001 | High-level game specification | ready (re-baseline 2026-10-17 vs §5.0) | Defines core loop, controls, goals, failure conditions. |
+| A-005 | docs/architecture.md | architect | A-004 | Technical architecture | proposed (re-baseline, after A-004) | Defines modules, simulation loop, data structures, platform plan. |
+| A-006 | docs/design.md | designer | A-004 | Game feel, visuals, UI, camera | proposed (re-baseline, after A-004) | Defines visual language, feedback, accessibility. |
+| A-007 | docs/balance.md | balance | A-006 | Progression, economy, difficulty | proposed (re-baseline, after A-006) | Defines mass growth, upgrade values, target masses. |
+| A-008 | docs/content.md | level-designer | A-006, A-007 | Object types, hazards, upgrades | proposed (re-baseline, after A-006/A-007) | Lists objects, hazards, rewards, modifiers. |
+| A-009 | docs/levels.md | level-designer | A-008 | Level structure and campaign | proposed (re-baseline, after A-008) | Defines worlds, objectives, difficulty curve. |
+| A-010 | docs/ui.md | designer | A-006 | HUD, menus, settings | proposed (re-baseline, after A-006) | Defines UI layout and mobile scaling. |
+| A-011 | docs/input.md | designer | A-010 | Mobile controls | proposed (re-baseline, after A-010; desktop mouse path in scope) | Defines drag, joystick, tilt, accessibility. |
+| A-012 | docs/accessibility.md | designer | A-010 | Accessibility options | proposed (re-baseline, after A-010) | Defines contrast, reduced motion, larger controls. |
+| A-013 | docs/test-plan.md | qa | A-005 | Testing strategy | proposed (re-baseline, after A-005) | Defines simulation tests, balance tests, UI tests. |
+| A-014 | docs/qa.md | qa | A-013 | QA checklist | proposed (re-baseline, after A-013) | Defines manual QA and performance checklist. |
+| A-015 | docs/store.md | release | A-014 | Store submission plan | proposed (re-baseline, after A-014; Steam in scope) | Defines listing, screenshots, trailer, compliance. |
+| A-016 | docs/monetization.md | release | A-015 | Monetization and economy | proposed (re-baseline, after A-015) | Defines ads, IAP, analytics, fairness. |
+| A-017 | docs/privacy-policy.md | release | A-015 | Privacy policy | proposed (re-baseline, after A-015) | Defines data collected, contact info, store compliance. |
 | A-018 | docs/agent-rules.md | planner | A-003 | Expanded agent rules | done | Detailed rules for AI agents. |
-| A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | done | Defines first playable prototype modules. |
-| A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | done | Defines final release steps. |
+| A-019 | docs/prototype-scaffold.md | architect | A-005, A-013 | First code scaffold | proposed (re-baseline, after A-005/A-013) | Defines first playable prototype modules. |
+| A-020 | docs/ship.md | release | A-015, A-016, A-017 | Shipping checklist | proposed (re-baseline, after A-015/A-016/A-017) | Defines final release steps. |
 | A-021 | Assets/ + tools/harness/ (Phase 1 prototype code) | programmer | A-005, A-013, A-019 | Phase 1 prototype: one black hole, one level, move/attract/absorb/grow | done | Headless build compiles with dotnet; harness H-01 runs p1-level-01 to completion exercising move/attract/absorb/grow per A-007 formulas; H-02 golden replay byte-equal (determinism); module status table per A-019 §4; EHSNAP1/EIDIG1 formats per A-019 §7/§8; no-softening holds (no assists, stubs return identity). |
 | A-022 | Phase 2 frame driver and render state (code) | programmer | A-005, A-019, A-021 | Frame driver, render state, and the weak-device and quality-tier knobs that make H-06..H-09 real instead of exit-2 stubs. | done | Headless build compiles with 0 errors and 0 warnings; the frame driver reaches the exactly-one-loop of A-019 §11 and never re-implements stepping; H-06..H-09 exit 0 and assert SimState byte-identical across quality tiers for the same (seed, inputDigest) per A-019 §10; DT stays the constant 1/60 so a quality or fps setting cannot change the simulation; FIXED-FORK digest stays 0xb6b01e1cff3f7710UL unless a hashed Fixed/ or SimCore/ file changed, in which case forkExpected is re-blessed and both goldens re-verified. |
 | A-023 | Unity player package (ship build) | programmer | A-005, A-022 | The player-facing build for the device classes named in A-014: render layer, UI root, input adapter, platform bridge over the same SimCore. | done | Gate CLOSED 2026-10-10 by installing, not by claiming: `unityhub` 3.21.0-1 (AUR, ships the Hub app and `UnityLicensingClient_V1`, no editor), then `unityhub --headless install --version 6000.0.84f1` exit 0 "installed successfully", then `install-modules --version 6000.0.84f1 -m ios android --cm` exit 0 with iOSSupport, AndroidPlayer, OpenJDK, Android NDK, CMake and the Android SDK tool sets all "installed successfully". Verified on disk: `editors -i` reports the editor at `/home/dfcastro/Unity/Hub/Editor/6000.0.84f1/Editor/Unity`, the ELF binary prints `6000.0.84f1`, `Editor/Data/PlaybackEngines/iOSSupport` and `Editor/Data/PlaybackEngines/AndroidPlayer` exist, `modules.json` lists 26 installed module entries, 15 GB on disk. The earlier "no connection" probe used the wrong host: `dl.unity.com` has no DNS while `download.unity3d.com` and `public-cdn.cloud.unity3d.com` resolve. SECOND GATE FOUND BY PROBING 2026-10-10 (a license, not the toolchain): the editor opens a project directory (creates `Logs/`, `Temp/UnityLockfile`, `UserSettings/`) but exits 198, and the shipped `UnityLicensingClient_V1` (`Unity.Licensing.Client --showAllEntitlements`) prints "No licenses were found" — the Hub headless CLI has no login command, so the player build is blocked until the user signs in or supplies a license token; the build and the two ship-build exclusion steps against a built package are recorded NOT EXECUTABLE, never green. SECOND GATE CLOSED AND BUILT 2026-10-10: `unity auth login` (Unity CLI 1.0.0-beta.13) → `loggedIn: true`, then `license activate --personal --accept-eula` → `active: true` with Unity Personal and Asset Store; the recipe exits 0 with `editorErrors: []` and writes `Build/EventHorizon-Android.apk` (12,431,883 bytes) and `Build/EventHorizon-iOS.app`; STEP-11a..11e of A-019 §12 run GREEN against that package (zero harness/replay/`dev.*` hits in the APK listing), STEP-11d's device re-run stays NOT EXECUTABLE (hardware); P-01/P-02/P-04/P-05 stay hardware-gated and are never reported green. Builds for the device classes named in A-014; runs the same SimCore with DT = 1/60 unchanged; the two ship-build exclusion steps of A-019 §7 run green; the version string follows A-020 §2, so 1.0.0 is used only once A-014's release gate and A-015's SG gates are green. Extended 2026-10-11 on `feature/programmer-player-render` after the package was RUN on a real device: it rendered nothing, and the fix (a layer-owned camera, an orthographic depth range that straddles the draw plane, and `stripEngineCode: 0` per Unity's own advice) is recorded in §4 A-023. Extended 2026-10-11 on `feature/programmer-player-instrumentation`: the player gains the measurement surface A-014 §6's "needs, not design" item 3 asks for, so P-01 (frame time) and P-05 (per-frame allocations) become measurable on a real device; the decision and the API facts are recorded in §4 A-023. |
 | A-024 | docs/policy-hosting.md | release | A-017, A-020 | Publishes the policy page at the single POLICY_URL and records it (A-020 STEP-10, PR-2/PR-3). | done | Host gate closed 2026-10-09: the segment pre-named in A-020 §6 is squatted by an unrelated GitHub org (probed), so the canonical POLICY_URL is `https://danielfcastro.github.io/privacy-policy/`. Merged via PR #32 into develop at 866fa08. Evidence in docs/policy-hosting.md §5: GET 200 with zero redirects; served text equals the page source verbatim after documented host rendering (the default theme emits an h1 "privacy-policy" heading, recorded not removed); no placeholder tokens; live page carries policy text version 1.1 and the effective date. Records the host, the published POLICY_URL, and the policy text version of the page published; confirms one single URL reused in every listing field and the in-game privacy screen; the page body is the fenced block of A-017 §3 verbatim at that version. |
 | A-025 | docs/submission.md and docs/ship-notes/<version>.md | release | A-020, A-023, A-024 | Executes A-020 §4.1 submission mechanics against the real consoles and files the ship notes. | proposed | Environment gate: requires store consoles and the A-023 ship build, neither present in this environment. Records per-store submission date and public listing URLs, the version string matching A-020 §2, and one line of gate evidence per row of A-020 §4; never reports a gate green without evidence. |
 | A-026 | Non-Unity player package (SDL2 windowed client) | programmer | A-005, A-019, A-021, A-022 | A windowed, playable client that draws the black hole and the bodies it absorbs, so the repo produces something a human can see and steer without the Unity toolchain. | done | A window opens on the desktop and shows the hole and the bodies; keyboard thrust moves it through the same 16-way `InputDigest` angle table the replay channel uses; `holeMass` and `holeRadius` grow as bodies are absorbed; the run reaches the `p1-level-01` goal at the same step index as H-01 (2828). The renderer READS `SimState` and never writes to it, and the simulation is the existing `SimCore`/`FixedStepDriver` reached through `FrameDriver.frameLive`, not a reimplementation. A frame payload dumped from the client matches the harness snapshot at the same step index. The C renderer compiles with `gcc -lSDL2` and the C# side builds with 0 errors and 0 warnings; `DT` stays `71582788L`. Extended 2026-10-10 (PR #34, merged into develop at e77797f): the merged client drew the collision core, so the hole never visibly grew — found by looking at the frames. The extension puts `holeEventRadius` in the payload in both halves and draws the horizon at the §5.3 zoom; verified by running and by looking (`eventRadiusPx=167`, `ppuUsed` 5 -> 3 -> 2, embedded snapshot still byte-identical to the golden at step 1800, harness regression green). The residual — a constant-fraction horizon pins the on-screen hole at 334 px, so §5.3's "starts small" needs A-007/A-009 numbers — is recorded in §4 as an open question, not decided here. Extended a second time 2026-10-10 (PR #35, merged into develop at a67a76a): the §5.3 hybrid camera — `min(ppuWorld, ppuContain)` gives a fixed world-fitting view while the horizon fits (growth visible) and a smooth zoom-out once it would clip (contained); `boundsW`/`boundsH` joined the payload in both halves. Verified on the merged tree: the dump proof reports `phase=1 boundsWU=128x96 eventRadiusPx=157 ppuUsed=5` at step 1, `phase=1 eventRadiusPx=218` at 1200, `phase=2 eventRadiusPx=242 ppuUsed=4` at 1800, `phase=2 eventRadiusPx=242 ppuUsed=3` at 2827; harness regression green with the fork guard unchanged and the embedded snapshot at 1800 still byte-identical to the golden. A-007's and A-009's numbers and every golden replay are untouched by this decision. |
+
+### 2.1 Re-baseline 2026-10-17 (the design baseline v2 of §5.0)
+
+The user's redefinition (§5.0) conflicts with parts of every approved design document.
+The approved documents are NOT discarded — they stay the base — but each artifact whose
+content conflicts is RE-OPENED as an EXTENSION pass against §5.0, in the same dependency
+order. The Status column of §2 reflects this pass: `ready` = startable now; `proposed` =
+waiting for its upstream re-baseline; code artifacts (A-021, A-022, A-023, A-026) stay
+`done` as the existing base and receive extensions only after the design re-baseline is
+approved. The extension record of each artifact names exactly which requirements of §5.0
+it answers and what it supersedes.
+
+| Artifact | Re-baseline status | What it must answer from §5.0 |
+| --- | --- | --- |
+| A-004 spec | ready | the whole loop: desktop-first platforms, the BN/HE identity, the dust-cloud opening, the real-equations framing, the threshold dialog, the camera controls (requirements 1-10) |
+| A-005 architecture | proposed (after A-004) | the platform plan (Steam/Linux/Windows first), the real-equations physics modules, the accretion-disc ingestion model, the camera-control state (render-side, never sim-side) |
+| A-006 design | proposed (after A-004) | the top-down Interstellar BN as the default presentation, the cosmos-at-every-scale field, inclination/tilt as a visual option, the accretion disc as the ingestion point |
+| A-007 balance | proposed (after A-006) | the real growth equations in fixed-point (Roche radius linear in mass), solar-mass/AU unit anchors, the threshold schedule, the bonus values (+2% tiers), the light-speed spin cap, the electric-charge stat |
+| A-008 content | proposed (after A-006, A-007) | cosmic dust and the collapsing cloud, the proto-star/proto-planet, the bonus item catalog (rotation, electric charge), mass deposits readable in the vicinity |
+| A-009 levels | proposed (after A-008) | the opening sequence as a level structure, deposit placement, the desktop-first level set |
+| A-010 ui | proposed (after A-006) | the top-left live readout (solar masses, AU), the threshold dialog box with the 3-bonus choice, the camera-control affordances |
+| A-011 input | proposed (after A-010) | direction-first control on touch AND mouse (desktop), the camera controls (zoom/pan/inclination/rotation), the existing drag as one mapping |
+| A-012 accessibility | proposed (after A-010) | the readout and dialog carriers under the no-softening rule for the new surfaces |
+| A-013 test-plan | proposed (after A-005) | new test families: real-equation anchors, unit fidelity, the threshold dialog draw, camera controls never touching the sim |
+| A-014 qa | proposed (after A-013) | the desktop device classes (Linux/Windows) in the reference set, the re-blessed golden fixtures against the new model |
+| A-015 store | proposed (after A-014) | the Steam listing (desktop-first) alongside the mobile listings |
+| A-016 monetization | proposed (after A-015) | monetization on Steam vs mobile (the no-pay-to-win and tension rules survive unchanged) |
+| A-017 privacy-policy | proposed (after A-015) | the desktop/Steam data surface in the collection inventory |
+| A-019 scaffold | proposed (after A-005, A-013) | the desktop-first scaffold route (extend A-026's client before the Unity packages) |
+| A-020 ship | proposed (after A-015, A-016, A-017) | the Steam ship path (Steamworks, Linux/Windows builds) first |
+
+The goldens: A-014's rule already says a changed model re-blesses the fixtures; the
+physics change of requirement 4 makes the CURRENT goldens stale the moment A-005/A-007
+land, and the re-bless is part of those artifacts' acceptance, never a silent keep.
 
 ## 3. Dependency graph
 
@@ -1391,7 +1431,103 @@ above without touching A-007 or A-009:**
 
 ## 5. Core game design plan
 
+### 5.0 Design baseline v2 (2026-10-17, the user's redefinition — the current design authority)
+
+Definitions (the user's terms, used across the repo from this baseline on):
+
+- **BN** — *Buraco Negro* (Black Hole): the body the player commands, presented as the
+  black hole of the film *Interstellar*, in a top-down view.
+- **HE** — *Horizonte de Events* (Event Horizon): the visual gravitational boundary of the BN.
+
+The user's redefinition of 2026-10-17 is the current design authority. Where it conflicts
+with earlier text of this plan, **it wins**, and the earlier text is marked superseded at
+that section. The concrete numbers, formulas, layouts, and content remain owned by the role
+agents named below each requirement — this section states the requirements, not the values.
+
+Requirements, recorded as the user stated them:
+
+1. **Platforms: Android, iOS, and Desktop. Start with the DESKTOP version.** The game may
+   be sold on **Steam** and must run on **Linux and Windows**. This supersedes the
+   platform line `iOS, Android` (frontmatter and §0) and CLOSES the desktop/Steam open
+   question recorded in §5.3 and §4 A-026 ("desktop/Steam stays an open question for
+   A-023/A-025"). Desktop-first re-weights the build order: the non-Unity desktop
+   surface (A-026, the SDL2 windowed client, already merged and visible) is the first
+   playable target of this baseline; the Unity packages (A-023) follow for the other
+   platforms. A-005 (platform plan), A-015/A-020 (store), and A-025 (submission) own the
+   Steam-side detail.
+2. **The player commands a BN presented as Interstellar's black hole, top-down.** The
+   approved visual language (A-006 §3.2/§3.3: true-black sphere + accretion disc glow +
+   lensing halo) is the same film reference the user names; it survives this baseline
+   unchanged, and the top-down framing is its default presentation.
+3. **Top-left corner: real-time readouts** — the BN's mass in multiples of solar masses
+   (when the BN is at solar or planetary scale) and the HE's diameter in astronomical
+   units (AU) at the same scale framing. The data updates as mass is ingested. The unit
+   model and the scale anchors are A-007's (balance) and A-010's (UI); the readout must
+   equal the sim state (A-013's U-11 number fidelity survives as a requirement).
+4. **Mass ingestion is modeled FROM the accretion disc; the HE grows according to REAL
+   equations.** This SUPERSEDES §5.6's "Use arcade physics, not full real astrophysics"
+   and its `eventRadius = baseRadius + a * sqrt(mass)` growth law. The real anchors the
+   baseline names: the HE is the Roche/event-horizon boundary (linear in mass,
+   r = 2GM/c²), matter enters through the accretion disc, and the disc's spin has a
+   physical ceiling at the speed of light (requirement 7's cap). The concrete fixed-point
+   implementation, its determinism contract, and every number are A-005's (architecture)
+   and A-007's (balance); the golden fixtures are re-blessed against the new model, never
+   kept as a stale oracle.
+5. **The player commands the DIRECTION of the BN with touch or mouse (desktop).** The
+   direction-first framing extends §5.2 (the drag that translates the hole is one mapping
+   of a direction command; the mouse path is new). A-011 owns the input scheme.
+6. **The player has a view of the BN's vicinity** to identify where there is mass to head
+   toward; matter is also attracted by the BN's gravity well. This matches §5.1's
+   attraction model; the presented view must make mass deposits identifiable around the
+   BN (A-006/A-010 own the readability).
+7. **Mass-threshold dialog:** whenever the BN grows and crosses a mass threshold, a dialog
+   box appears saying, verbatim in the user's words: "Parabéns, seu BN agora tem uma
+   massa de X e HE de tamanho Y. You can choose one of the 3 bonuses of a random list" —
+   the player picks one of three bonuses drawn from a random list. The starting item list
+   (the user's own, stated as a starting point: more items and suggestions are accepted):
+
+   ```text
+   Aumentar 2% seu HE            (grow the HE by 2%)
+   Aumentar 2% sua massa         (grow the mass by 2%)
+   Adicionar rotação             (add rotation: the accretion spin)
+   Adicionar carga elétrica      (add electric charge)
+   Aumentar rotação em 2%        (limit: the HE spins at the speed of light)
+   Aumentar a carga elétrica em 2%
+   ```
+
+   This extends §5.9: the threshold schedule, the draw rules, the values, and the new
+   stats (Rotation = the accretion spin, Electric Charge) are A-007's (values) and
+   A-008's (the item catalog); the dialog itself is A-010's (UI). The light-speed spin
+   cap is a real-physics limit from requirement 4, not an arcade knob.
+8. **The screen background is appropriate to the size of the BN; its role is the cosmos.**
+   Extends §5.3: the auto-framing rule stays the baseline for the default view (the
+   camera adapts as the BN grows), and the field must read as space at every scale —
+   bare letterbox bands under the world-fit are superseded by this framing requirement.
+9. **Opening sequence:** the game begins with a cloud of cosmic dust that eventually
+   collapses into a core and a proto-star or proto-planet surge; it continues to ingest
+   matter and grow; the player can move the astro toward places where there is more
+   matter; the top-left data updates as mass is ingested. New content: A-008 (objects:
+   cosmic dust, the collapsing cloud, the proto-star/proto-planet) and A-009 (the opening
+   as a level structure) own it; §5.7's object catalog gains the dust-cloud opening.
+10. **Camera controls:** zoom in and out, pan, and changing inclination and rotation on
+    screen are possible; the DEFAULT view is the BN at the center of the screen. Extends
+    §5.3: the auto-framing rule is the default; player camera controls are an explicit
+    layer on top of it (A-010/A-011 own the control mapping; inclination means the
+    presentation may tilt off the pure top-down plane — A-006 owns that visual decision,
+    with the top-down BN view of requirement 2 as the default).
+
+What this baseline does NOT change: the hard rules of this plan (determinism, no-softening,
+the agent workflow, the tension rule), the Interstellar visual language (A-006 §3.2), the
+observability directives, or the git-flow. What it RE-OPENS: every approved design artifact
+whose content conflicts with the requirements above — see §2.1.
+
 ### 5.1 Concept
+
+**REFRAMED by §5.0 (2026-10-17):** the player commands a BN (Black Hole) presented like the
+film *Interstellar*, top-down; the game OPENS as a cloud of cosmic dust that collapses into
+a core and a proto-star/proto-planet surge, then keeps ingesting matter through the accretion
+disc and growing per real equations; matter in the BN's vicinity is attracted by its gravity
+well and the player steers the BN toward deposits. The loop below stays the same shape.
 
 The player controls a small black hole moving through space. The black hole attracts nearby bodies with a gravitational field. Absorbed bodies increase the black hole's mass, which increases its event horizon and gravitational pull.
 
@@ -1410,6 +1546,11 @@ small black hole
 
 ### 5.2 Controls
 
+**EXTENDED by §5.0 requirements 5-6 (2026-10-17):** the player commands the DIRECTION of
+the BN with touch OR mouse (desktop, in scope first). The drag below is one mapping of a
+direction command, not the whole scheme; the mouse path and the direction-first framing are
+A-011's re-baseline. The player must be able to read the BN's vicinity for mass deposits.
+
 Default mobile control:
 
 - Direct drag.
@@ -1426,6 +1567,15 @@ Alternative: device tilt
 ```
 
 ### 5.3 Camera
+
+**EXTENDED by §5.0 requirements 8-10 (2026-10-17):** the DEFAULT view is the BN at the
+center of the screen, and the auto-framing rule below stays the baseline for that default.
+On top of it the player may zoom in/out, pan, and change inclination and rotation on screen
+(A-010/A-011 own the control mapping; inclination is a visual decision owned by A-006, with
+the top-down BN view of requirement 2 as the default). The field must read as the cosmos at
+EVERY scale: bare letterbox bands under the world-fit term are superseded as a
+presentation concern by the framing requirement (the starfield covering the presented view,
+merged in the A-023 twelfth extension, is the implementation of exactly this).
 
 Camera follows the black hole.
 
@@ -1499,6 +1649,13 @@ expansion of the shipping platform list.
 
 ### 5.4 Black hole stats
 
+**EXTENDED by §5.0 requirements 3-7 (2026-10-17):** the live readout at the top-left
+presents Mass in multiples of solar masses and the HE diameter in AU at the same scale
+framing (solar or planetary scale); the values shown are the sim state, never an
+interpolation (U-11 stays a requirement). Two stats join the table: Rotation (the accretion
+disc spin, capped at the speed of light per §5.0 requirement 4) and Electric Charge (the
+bonus family of §5.0 requirement 7). The units and anchors are A-007's; the layout is A-010's.
+
 | Stat | Meaning |
 | --- | --- |
 | Mass | Main progression stat |
@@ -1509,6 +1666,8 @@ expansion of the shipping platform list.
 | Stability | Prevents runaway growth or overload |
 | Efficiency | How much absorbed mass becomes useful mass |
 | Combo | Streak bonus for chaining absorptions |
+| Rotation | Accretion-disc spin, presented like the film; capped at light speed |
+| Electric Charge | The charge family of the §5.0 bonus list |
 
 ### 5.5 Starting black hole types
 
@@ -1560,7 +1719,14 @@ Speed:       high
 
 ### 5.6 Physics model
 
-Use arcade physics, not full real astrophysics.
+**SUPERSEDED IN PART by §5.0 requirement 4 (2026-10-17):** "Use arcade physics, not full
+real astrophysics" and the `eventRadius = baseRadius + a * sqrt(mass)` growth law are
+replaced by the user's real-equations requirement: the HE is the Roche/event-horizon
+boundary (linear in mass, r = 2GM/c²), matter is ingested THROUGH the accretion disc, and
+the disc spin is capped at the speed of light. The concrete fixed-point model, its
+determinism contract, and every constant are A-005's and A-007's. The attraction and
+absorption shapes below stay as the model of player-visible behavior unless the real
+equations say otherwise.
 
 Mass growth:
 
@@ -1597,6 +1763,11 @@ if distance(body, blackHole) < absorptionRadius:
 ```
 
 ### 5.7 Object types
+
+**EXTENDED by §5.0 requirement 9 (2026-10-17):** the catalog gains the opening matter — a
+cloud of cosmic dust that collapses into a core and a proto-star or proto-planet surge
+(A-008 owns the item definitions, A-009 the sequence). Mass deposits must be identifiable
+in the BN's vicinity (§5.0 requirement 6).
 
 Small:
 
@@ -1641,6 +1812,13 @@ Use efficiency challenge.
 ```
 
 ### 5.9 Upgrade systems
+
+**EXTENDED by §5.0 requirement 7 (2026-10-17):** at mass thresholds the BN presents the
+dialog box ("Parabéns, seu BN agora tem uma massa de X e HE de tamanho Y…") offering one
+choice of three bonuses drawn from a random list; the starting item list and the new bonus
+families (HE %, mass %, Rotation with the light-speed cap, Electric Charge) are in §5.0.
+The threshold schedule and the values are A-007's; the item catalog is A-008's; the dialog
+is A-010's. The lists below stay as the existing base the extension builds on.
 
 Use two systems:
 
