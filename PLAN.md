@@ -1187,6 +1187,30 @@ a design decision updates `PLAN.md` first):**
   field layer is visual (A-006 §3.3's own words). Branch
   `feature/programmer-player-live-input` (registered in §1.3); brief
   docs/briefs/A-023-live-input.md.
+  OUTCOME 2026-10-17: programmer subagent returned the code (ee80921
+  code(player-package):); coordinator reviewed the diff against this record
+  before merging — ONLY GameLoop.cs and RenderLayer.cs move; the live path
+  no longer reads the code channel (resolveLiveIntent writes the ONE reused
+  liveIntent field quantized through the SAME InputDigest tables straight for
+  frameLive; InputAdapter.boot stays for the deterministic path), no try/catch
+  or softening anywhere, no float reaches SimCore; the starfield is centred on
+  the camera and scaled to (windowW/ppu, windowH/ppu) each draw (the exact
+  presented-view rectangle, screen-static, one draw call, weakest element
+  unchanged). PR NOT EXECUTABLE (gh 401, token expired); merged into develop
+  by the coordinator at ee80921 with the user-granted authority, branch
+  deleted. POST-MERGE VERIFICATION BY RUNNING on merged develop from a clean
+  obj: harness 0/0, FIXED-FORK guard silent, H-01 digest=6d25ff0add639448
+  steps=2828 droppedSteps=0 result=goal, fresh sim BYTE-IDENTICAL to the
+  golden (138,865 B), H-02 PASS snapshotsCompared=6, player build 0/0,
+  replay goalStep=2828 droppedSteps=0; Unity build green (build.sh exit 0),
+  APK 21,284,329 B sha256 7240678d… (deterministic — matches the subagent's
+  build), exclusions STEP-11a..11e PASS. The capture rows of the ELEVENTH
+  build (the evidence behind this record) are in docs/qa-results/2026-10-17-
+  p01-p05-modern-phone.md. AWAITING: the device capture of the TWELFTH build
+  (the user reconnects and plays, display ON) — it must show EH-DRAW frame
+  tracking EH-PERF frame past the first touch (defect D closed) and the
+  visual screencap of the approved look; the boot-warm touch read is an
+  attempt decided by that capture.
 
 **Status:**
 
