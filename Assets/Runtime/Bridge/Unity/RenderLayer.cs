@@ -54,6 +54,51 @@
 // Transforms replace every `new` and every per-frame GetComponent. The surface
 // is a QA instrument: it may log, it may not gate, and it changes nothing the
 // player can perceive except log lines.
+//
+// A-023 TENTH EXTENSION (2026-10-16, the approved Interstellar look — docs/design.md
+// §3.2/§3.3/§3.5/§3.6, the A-006 extension merged at f6892c8): the black hole is
+// presented as in the film (true-black sphere + accretion glow + bright rim ring),
+// the field carries a static starfield, and every body reads as a glowing star
+// (bright core + one soft halo behind it) instead of a flat disc. All of it is
+// layered soft-alpha sprites with boot-generated textures — no additive blending,
+// no custom shaders, no materials (none of those are proven on this package).
+// Decisions taken, recorded per the brief:
+//  - Ring layering: the MERGED two-disc layering is kept (rim disc behind +
+//    smaller black disc over, insetWu = 4.0 / ppu stays). It already produces
+//    the constant-width ring using only settled names; a generated ring texture
+//    in front was the alternative and was NOT chosen.
+//  - Starfield: ONE boot-generated background texture on ONE sprite scaled to
+//    the world bounds (the brief's preferred option: one draw call, static by
+//    construction — placed on the first draw because bounds are sim state, then
+//    never touched again; it never drifts).
+//  - z-order (camera at z = -10, larger z nearer, all inside the measured
+//    [-2, 0] presenting range): starfield -2, accretion glow -1.5, rim disc -1,
+//    true-black sphere -0.5, body glow -0.25, body core 0. The glow sits behind
+//    the rim disc so the ring — the only perfect circle and the brightest
+//    element (§3.1) — stays unbroken by decoration.
+//  - Body stars: two sprites per body (the §3.5 vocabulary verbatim: "a bright
+//    core sprite plus one larger, lower-alpha soft sprite behind it"). The core
+//    stays the solid disc at the exact sim radius (drawn size follows the sim
+//    radius, unchanged); the halo is a generated radial-gradient sprite scaled
+//    to 2.5x the core radius, capped at 1/8 of the horizon radius (§3.2 ratio)
+//    so glows never merge into a field that hides the ring. A single
+//    core+halo texture was rejected: when the cap binds it would shrink the
+//    core below the sim radius, breaking the drawn-size rule.
+//  - Accretion rotation: ONE render constant, accretionDegPerS, in one place;
+//    A-012's reduced-motion option flips it later — the option itself is NOT
+//    implemented here (§3.6: the constant is owned by A-023, not a sim
+//    quantity).
+//  - Math API drift (the compiler is the oracle on 6000.0.84f1; nothing passed
+//    quietly): `Math.*` rejected at 4 sites with CS0103 (no such identifier in
+//    this namespace context); `UnityEngine.MathF.*` rejected at the same 4 sites
+//    with CS0234 (no type `MathF` in namespace UnityEngine — the class is
+//    `Mathf`, capital F at the end, per the engine's own strings table);
+//    `UnityEngine.Mathf.sqrt/atan2/cos` rejected at the same 4 sites with CS0117
+//    (no lowercase members). Settled: `UnityEngine.Mathf.Sqrt/Atan2/Cos`
+//    (PascalCase, matching the DLL's `Atan2`/`Ceil`/`Floor` strings), with
+//    explicit (float) arguments and (double) results — C# will not implicitly
+//    narrow the doubles this layer already keeps. The module XML stubs contain
+//    no math names at all; only the compiler decides.
 
 namespace EH
 {
@@ -67,6 +112,27 @@ namespace EH
         private static UnityEngine.GameObject[] bodyObjects;
         private static UnityEngine.SpriteRenderer[] bodySprites;
         private static UnityEngine.Sprite defaultSprite;
+        // A-023 tenth extension: the generated soft-alpha bases (§3.5 glow rule —
+        // alpha lives in the texture, colour lives in SpriteRenderer.color).
+        private static UnityEngine.Sprite glowSprite;    // body halo: radial fade to transparent
+        private static UnityEngine.Sprite accretionSpriteTex; // rim-wrapped band + halo, with swirl
+        private static UnityEngine.Sprite starfieldSpriteTex; // static field points, weakest element
+        private static UnityEngine.GameObject starfieldObject;
+        private static UnityEngine.SpriteRenderer starfieldRenderer;
+        private static UnityEngine.Transform starfieldTransform;
+        private static bool starfieldPlaced; // world bounds are sim state: place once, first draw
+        private static UnityEngine.GameObject accretionObject;
+        private static UnityEngine.SpriteRenderer accretionRenderer;
+        private static UnityEngine.Transform accretionTransform;
+        private static UnityEngine.GameObject[] bodyGlowObjects;
+        private static UnityEngine.SpriteRenderer[] bodyGlowSprites;
+        private static UnityEngine.Transform[] bodyGlowTransform;
+        private static UnityEngine.Quaternion tmpQuat; // value type: no per-frame allocation
+        private static double accretionAngleDeg; // accumulated spin (wrapped to [0,360))
+        // §3.6: the accretion disc rotates slowly around the sphere; its speed is a
+        // render constant owned by A-023, kept in ONE place so A-012's reduced-motion
+        // option can flip it later (the option itself is NOT implemented here).
+        public static double accretionDegPerS = 12.0; // deg/s: one turn per 30 s — slow, calm
         private static UnityEngine.GameObject horizonObject;
         private static UnityEngine.SpriteRenderer horizonSprite;
         private static UnityEngine.GameObject horizonRimObject;
@@ -159,6 +225,24 @@ namespace EH
                 bodySprites[body] = bodyObjects[body].AddComponent<UnityEngine.SpriteRenderer>();
                 bodyTransform[body] = bodyObjects[body].GetComponent<UnityEngine.Transform>();
             }
+            // A-023 tenth extension: the body-glow pool (§3.5 bodies-as-stars: one
+            // larger, lower-alpha soft sprite BEHIND each core). Same capacity,
+            // allocated at boot only; steady-state frames still allocate zero.
+            perfCountAlloc();
+            bodyGlowObjects = new UnityEngine.GameObject[SimState.BODY_CAPACITY];
+            perfCountAlloc();
+            bodyGlowSprites = new UnityEngine.SpriteRenderer[SimState.BODY_CAPACITY];
+            perfCountAlloc();
+            bodyGlowTransform = new UnityEngine.Transform[SimState.BODY_CAPACITY];
+            for (int glow = 0; glow < SimState.BODY_CAPACITY; glow++)
+            {
+                perfCountAlloc(); // the name string
+                bodyGlowObjects[glow] = new UnityEngine.GameObject("eh-glow-" + glow);
+                perfCountAlloc(); // the GameObject
+                perfCountAlloc(); // the SpriteRenderer component
+                bodyGlowSprites[glow] = bodyGlowObjects[glow].AddComponent<UnityEngine.SpriteRenderer>();
+                bodyGlowTransform[glow] = bodyGlowObjects[glow].GetComponent<UnityEngine.Transform>();
+            }
             perfCountAlloc();
             horizonObject = new UnityEngine.GameObject("eh-horizon");
             perfCountAlloc();
@@ -221,6 +305,53 @@ namespace EH
             // Observability: the sprite source is now a printed fact, not a
             // guess — the frame's content depends on it.
             UnityEngine.Debug.Log("EH-SPRITE source=" + (spriteFromBuiltin ? "builtin" : "generated"));
+            // A-023 tenth extension: the three soft-alpha bases, all boot-generated
+            // (the package ships no asset files; the built-in lookup is null here).
+            // Recipes, recorded:
+            //  - glowSprite: 32x32 radial gradient, alpha 0.5 at centre fading
+            //    quadratically to 0 at the edge — the body halo behind a core.
+            //  - accretionSpriteTex: 64x64; alpha rises to a peak at r=0.62 (the
+            //    sphere's own edge once scaled to 1.6x the horizon radius) and
+            //    fades to 0 at r=1.0; a cos(3*theta + 6r) swirl modulates the
+            //    band so the slow rotation reads as gas, as in the film.
+            //  - starfieldSpriteTex: 256x256, ~110 one-pixel points from a
+            //    deterministic xorshift (boot-only; the same seed every run, so
+            //    the field is stable across builds), alpha 0.16..0.30. At the
+            //    placeholder 128x96 WU bounds one texel is 0.5 WU — a point is
+            //    a quarter of the smallest body core's diameter (ObjectTable
+            //    dust radius 1 WU), and the colour below is dimmer than every
+            //    palette colour, so the starfield stays the weakest element of
+            //    the §3.1 hierarchy by construction.
+            glowSprite = makeGlowTexture(32, 0.5);
+            accretionSpriteTex = makeAccretionTexture(64);
+            starfieldSpriteTex = makeStarfieldTexture(256, 110);
+            // The starfield: ONE sprite, farthest z, static by construction (placed
+            // once on the first draw from the level's bounds, never touched again —
+            // it never drifts and never carries readability, §3.3/§3.6).
+            perfCountAlloc();
+            starfieldObject = new UnityEngine.GameObject("eh-starfield");
+            perfCountAlloc();
+            starfieldRenderer = starfieldObject.AddComponent<UnityEngine.SpriteRenderer>();
+            starfieldTransform = starfieldObject.GetComponent<UnityEngine.Transform>();
+            starfieldRenderer.sprite = starfieldSpriteTex;
+            // Dimmer than every palette colour (smallest body core is 84,200,255):
+            // the texture alpha (<=0.30) multiplies on top, so this is doubly weak.
+            perfCountAlloc();
+            starfieldRenderer.color = new UnityEngine.Color(71.0f / 255.0f, 84.0f / 255.0f, 107.0f / 255.0f, 1.0f);
+            starfieldObject.SetActive(true);
+            // The accretion glow: behind the rim disc and the true-black sphere, so
+            // only a rim-wrapped band and an outer halo show (§3.5). Colour is the
+            // accretion rim palette already owned here (pack_px(140,236,255)) — one
+            // palette, never a second invention; alpha lives in the texture.
+            perfCountAlloc();
+            accretionObject = new UnityEngine.GameObject("eh-accretion");
+            perfCountAlloc();
+            accretionRenderer = accretionObject.AddComponent<UnityEngine.SpriteRenderer>();
+            accretionTransform = accretionObject.GetComponent<UnityEngine.Transform>();
+            accretionRenderer.sprite = accretionSpriteTex;
+            perfCountAlloc();
+            accretionRenderer.color = new UnityEngine.Color(140.0f / 255.0f, 236.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+            accretionObject.SetActive(true);
             // The camera the §5.3 rule drives. Created here, once, so the class is
             // present in the build and the framing has an owner.
             perfCountAlloc();
@@ -361,6 +492,60 @@ namespace EH
             tmpPos.z = -10.0f;
             cameraTransform.position = tmpPos;
 
+            // ---- starfield: one sprite, farthest z, static by construction ------
+            // Placed on the FIRST draw only (world bounds are sim state, read
+            // read-only here), then never touched again: it never drifts (§3.6)
+            // and never carries readability (§3.3). Scaled to the world bounds,
+            // centred at (boundsW/2, boundsH/2) — the level's bounds convention
+            // (LevelLoader starts the hole at the centre of that rectangle).
+            if (!starfieldPlaced)
+            {
+                double boundsWu = (double)(long)s.boundsW / 4294967296.0;
+                if (boundsH > 0.0 && boundsWu > 0.0)
+                {
+                    tmpPos.x = (float)(boundsWu * 0.5);
+                    tmpPos.y = (float)(boundsH * 0.5);
+                    tmpPos.z = -2.0f; // farthest layer, inside the measured [-2,0] range
+                    starfieldTransform.position = tmpPos;
+                    tmpScale.x = (float)boundsWu;
+                    tmpScale.y = (float)boundsH;
+                    tmpScale.z = 1.0f;
+                    starfieldTransform.localScale = tmpScale;
+                    starfieldPlaced = true;
+                }
+            }
+
+            // ---- accretion glow: behind the rim disc and the black sphere -------
+            // §3.5: the glow reads as gas around the void; the sphere and the rim
+            // disc (z -1 and -0.5) cover its inner band, so only a rim-wrapped
+            // band and an outer halo show. §3.6: it rotates slowly — decoration
+            // only, driven by the ONE constant accretionDegPerS above; the
+            // reduced-motion option is A-012's, not implemented here.
+            accretionRenderer.sprite = accretionSpriteTex;
+            tmpPos.x = (float)holeXWu;
+            tmpPos.y = (float)holeYWu;
+            tmpPos.z = -1.5f; // behind the rim disc (-1) and the sphere (-0.5)
+            accretionTransform.position = tmpPos;
+            // 1.6x the horizon radius: the texture's band peaks at r=0.62 of the
+            // sprite, i.e. right at the sphere's own edge, and fades to nothing at
+            // 1.6x — a rim-wrapped band plus a soft outer halo, never a hard disc.
+            double accWu = 3.2 * evWu; // sprite diameter in WU
+            tmpScale.x = (float)accWu;
+            tmpScale.y = (float)accWu;
+            tmpScale.z = 1.0f;
+            accretionTransform.localScale = tmpScale;
+            // The spin: accumulate degrees from the frame clock (deltaTime is the
+            // engine's per-frame seconds; a render-side double, never sim state),
+            // wrap, then set the rotation through a reused Quaternion — a value
+            // type, so this allocates nothing per frame.
+            accretionAngleDeg = accretionAngleDeg + accretionDegPerS * (double)UnityEngine.Time.deltaTime;
+            if (accretionAngleDeg >= 360.0)
+            {
+                accretionAngleDeg = accretionAngleDeg - 360.0;
+            }
+            tmpQuat = UnityEngine.Quaternion.Euler(0.0f, 0.0f, (float)accretionAngleDeg);
+            accretionTransform.rotation = tmpQuat;
+
             // ---- horizon ring: the VISIBLE hole is the event horizon (A-026's
             // render fix established this: drawing holeRadius, the constant
             // collision core, made the hole look frozen) --------------------------
@@ -400,6 +585,7 @@ namespace EH
                 if ((s.bodyFlags[body] & 0x01) == 0)
                 {
                     bodyObjects[body].SetActive(false); // inactive records are never drawn as ghosts
+                    bodyGlowObjects[body].SetActive(false);
                     continue;
                 }
                 double dxWu = ((double)s.bodyX[body] / 4294967296.0) - holeXWu;
@@ -409,6 +595,7 @@ namespace EH
                     dyWu > halfHWu + rWu || dyWu < -(halfHWu + rWu))
                 {
                     bodyObjects[body].SetActive(false);
+                    bodyGlowObjects[body].SetActive(false); // the glow is culled with its core
                     // near-edge but culled: the visibilityLayer hook (a hook, not
                     // a sim write — the UI layer reads it, the sim never does).
                     if (dxWu <= halfWWu * 2.0 + rWu && dxWu >= -(halfWWu * 2.0 + rWu) &&
@@ -436,6 +623,38 @@ namespace EH
                 // Written into the reused Color; the setter copies at assignment.
                 bodyColorInto(s.bodyFlags[body]);
                 bodySprites[body].color = tmpColor;
+                // A-023 tenth extension: the star's halo — one larger, lower-alpha
+                // soft sprite BEHIND the core (§3.5 vocabulary; the core keeps the
+                // exact sim radius, so the silhouette and the identity channels of
+                // §3.2 stay intact; hazards would use the same palette family and
+                // the glow sits behind the core, per the design's hazard row).
+                // §3.2 ratios: halo 2.5x the core radius, capped at 1/8 of the
+                // horizon radius so glows never merge into a field that hides the
+                // ring; if the cap falls below the core the glow hides behind it.
+                bodyGlowObjects[body].SetActive(true);
+                bodyGlowSprites[body].sprite = glowSprite;
+                double haloR = 2.5 * rWu;
+                double haloCapWu = evWu * 0.125;
+                if (haloR > haloCapWu)
+                {
+                    haloR = haloCapWu;
+                }
+                if (haloR < rWu)
+                {
+                    haloR = rWu;
+                }
+                UnityEngine.Transform gt = bodyGlowTransform[body]; // cached at boot
+                tmpPos.x = (float)(holeXWu + dxWu);
+                tmpPos.y = (float)(holeYWu + dyWu);
+                tmpPos.z = -0.25f; // behind the core (0), in front of the sphere (-0.5)
+                gt.position = tmpPos;
+                tmpScale.x = (float)(2.0 * haloR);
+                tmpScale.y = (float)(2.0 * haloR);
+                tmpScale.z = 1.0f;
+                gt.localScale = tmpScale;
+                // Same palette as the core (bodyColorInto already wrote tmpColor);
+                // the softness is the texture's alpha, never a second colour.
+                bodyGlowSprites[body].color = tmpColor;
             }
 
             // hazard pool: empty on p1-level-01 (A-009); the slot is documented,
@@ -482,6 +701,135 @@ namespace EH
             tmpColor.g = g / 255.0f;
             tmpColor.b = b / 255.0f;
             tmpColor.a = 1.0f;
+        }
+
+        // ---- A-023 tenth extension: the boot-generated soft-alpha bases ---------
+        // All three run once at boot (the package ships no asset files; the built-in
+        // lookup is null on it). Alpha lives in the texture; colour lives in
+        // SpriteRenderer.color — the §3.5 glow rule, no shaders, no materials, no
+        // additive blending. SetPixels(Color[]) and Sprite.Create(Texture2D, Rect,
+        // Vector2) are the settled names the ninth extension compiled.
+
+        /// <summary>
+        /// Body halo: a radial gradient from peakAlpha at the centre to fully
+        /// transparent at the edge. Drawn behind a core sprite, it reads as the
+        /// soft halo of a glowing star (§3.2 bodies-as-stars).
+        /// </summary>
+        private static UnityEngine.Sprite makeGlowTexture(int size, double peakAlpha)
+        {
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            perfCountAlloc();
+            UnityEngine.Color[] px = new UnityEngine.Color[size * size];
+            perfCountAlloc();
+            UnityEngine.Color clear = new UnityEngine.Color(0.0f, 0.0f, 0.0f, 0.0f);
+            double half = (double)size * 0.5;
+            for (int y = 0; y < size; y = y + 1)
+            {
+                for (int x = 0; x < size; x = x + 1)
+                {
+                    double dx = (x + 0.5 - half) / half;
+                    double dy = (y + 0.5 - half) / half;
+                    double r2 = dx * dx + dy * dy;
+                    if (r2 >= 1.0)
+                    {
+                        px[y * size + x] = clear;
+                    }
+                    else
+                    {
+                        double falloff = 1.0 - (double)UnityEngine.Mathf.Sqrt((float)r2);
+                        double a = peakAlpha * falloff * falloff;
+                        px[y * size + x] = new UnityEngine.Color(1.0f, 1.0f, 1.0f, (float)a);
+                    }
+                }
+            }
+            tex.SetPixels(px);
+            return UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(0, 0, size, size), new UnityEngine.Vector2((float)half, (float)half));
+        }
+
+        /// <summary>
+        /// Accretion disc: a soft band that rises to its peak at r=0.62 (the
+        /// sphere's own edge once the sprite is scaled to 1.6x the horizon radius)
+        /// and fades to nothing at r=1.0, modulated around the angle by a slow
+        /// cos(3*theta + 6r) swirl so the rotation reads as glowing gas, as in
+        /// the film (§3.2/§3.3 channel 4 — decoration only, never readability).
+        /// </summary>
+        private static UnityEngine.Sprite makeAccretionTexture(int size)
+        {
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            perfCountAlloc();
+            UnityEngine.Color[] px = new UnityEngine.Color[size * size];
+            perfCountAlloc();
+            UnityEngine.Color clear = new UnityEngine.Color(0.0f, 0.0f, 0.0f, 0.0f);
+            double half = (double)size * 0.5;
+            for (int y = 0; y < size; y = y + 1)
+            {
+                for (int x = 0; x < size; x = x + 1)
+                {
+                    double dx = (x + 0.5 - half) / half;
+                    double dy = (y + 0.5 - half) / half;
+                    double r2 = dx * dx + dy * dy;
+                    if (r2 >= 1.0)
+                    {
+                        px[y * size + x] = clear;
+                    }
+                    else
+                    {
+                        double r = (double)UnityEngine.Mathf.Sqrt((float)r2);
+                        double theta = (double)UnityEngine.Mathf.Atan2((float)dy, (float)dx);
+                        double band;
+                        if (r < 0.62)
+                        {
+                            double t = r / 0.62;
+                            band = t * t; // rises toward the rim; the sphere covers it
+                        }
+                        else
+                        {
+                            double t = (r - 0.62) / 0.38;
+                            band = 1.0 - t; // the visible outer halo, fading to nothing
+                        }
+                        double swirl = 0.72 + 0.28 * (double)UnityEngine.Mathf.Cos((float)(3.0 * theta + 6.0 * r));
+                        double a = 0.55 * band * swirl;
+                        px[y * size + x] = new UnityEngine.Color(1.0f, 1.0f, 1.0f, (float)a);
+                    }
+                }
+            }
+            tex.SetPixels(px);
+            return UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(0, 0, size, size), new UnityEngine.Vector2((float)half, (float)half));
+        }
+
+        /// <summary>
+        /// Starfield: sparse one-pixel points from a deterministic xorshift (the
+        /// same field every run — it is decoration, not a per-run random), alpha
+        /// 0.16..0.30. One texture, one draw call, static by construction (§3.3/
+        /// §3.6): it never drifts and stays the weakest element of the §3.1
+        /// hierarchy (points are a quarter of the smallest body core's diameter at
+        /// the placeholder bounds, and the colour multiplier is below every
+        /// palette colour).
+        /// </summary>
+        private static UnityEngine.Sprite makeStarfieldTexture(int size, int points)
+        {
+            UnityEngine.Texture2D tex = new UnityEngine.Texture2D(size, size);
+            perfCountAlloc();
+            UnityEngine.Color[] px = new UnityEngine.Color[size * size];
+            perfCountAlloc();
+            UnityEngine.Color clear = new UnityEngine.Color(0.0f, 0.0f, 0.0f, 0.0f);
+            for (int i = 0; i < size * size; i = i + 1)
+            {
+                px[i] = clear;
+            }
+            ulong st = 0x9E3779B97F4A7C15UL;
+            for (int p = 0; p < points; p = p + 1)
+            {
+                st = st ^ (st << 13); st = st ^ (st >> 7); st = st ^ (st << 17);
+                int x = (int)(st % (ulong)size);
+                st = st ^ (st << 13); st = st ^ (st >> 7); st = st ^ (st << 17);
+                int y = (int)(st % (ulong)size);
+                st = st ^ (st << 13); st = st ^ (st >> 7); st = st ^ (st << 17);
+                double a = 0.16 + 0.14 * (double)(int)(st & 0xFFUL) / 255.0;
+                px[y * size + x] = new UnityEngine.Color(1.0f, 1.0f, 1.0f, (float)a);
+            }
+            tex.SetPixels(px);
+            return UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(0, 0, size, size), new UnityEngine.Vector2((float)((double)size * 0.5), (float)((double)size * 0.5)));
         }
 
         // ---- the measurement surface (A-023 extension: P-01 / P-05) --------------
@@ -648,9 +996,12 @@ namespace EH
 
         /// <summary>
         /// Named absences so later artifacts find the slot instead of inventing a
-        /// parallel one: particles, the horizon-ring art, and the edge-indicator
-        /// drawing are A-006/A-010 owned (brief §9 scope boundaries); this layer
-        /// exposes the hook and the camera, not the art.
+        /// parallel one: particles and the edge-indicator DRAWING are A-010 owned
+        /// (brief §9 scope boundaries). The A-023 tenth extension has now filled
+        /// the horizon-ring art slot (the Interstellar presentation of A-006 is
+        /// implemented above); what remains absent here is particles, the edge
+        /// indicators, and A-012's reduced-motion option (which flips the ONE
+        /// constant accretionDegPerS, not code here).
         /// </summary>
         public static void drawEffectsAbsent(SimState s)
         {
