@@ -98,6 +98,7 @@ feature/programmer-player-sprite-fallback
 feature/designer-visual-language
 feature/programmer-player-visual-presentation
 feature/programmer-player-visual-input
+feature/programmer-player-live-input
 feature/qa-capture-tool
 feature/programmer-player-splash
 feature/release-policy-hosting
@@ -1154,6 +1155,38 @@ a design decision updates `PLAN.md` first):**
   are the first draw() call and the recorded GameActivity pause pattern.
   Branch `feature/programmer-player-visual-input` (registered in §1.3); brief
   docs/briefs/A-023-visual-input.md.
+- **Twelfth extension: defect D ROOT-CAUSED and FIXED, 2026-10-17 (the
+  capture of the eleventh build).** The capture log settles it: EH-PERF runs
+  (3,902 frames, p50=16.625 ms = 60 FPS, P-05 allocs=0) while EH-DRAW froze
+  at frame=536 (t≈9 s) — the first touch, whose first GetTouch frame is also
+  the run's worst_hitch=29.28 ms. A 29.3 ms frame with accumulator debt is a
+  TWO-STEP catch-up frame: `frameLive` advances sim.stepIndex by 2, and the
+  very next frame's `InputAdapter.sampleIntent` hard-rejects
+  "step must advance exactly one per sample" — the frame aborts BEFORE
+  frameLive, stepIndex never advances again, and the rejection repeats every
+  frame FOREVER: the live path permanently breaks its own one-sample-per-step
+  invariant on ANY multi-step frame. The same latent break already happened in
+  the 2026-10-16 capture at the 57.8 s DOZE suspend (its EH-DRAW stayed at
+  frame=2495 while EH-PERF continued — unnoticed then, same signature). The
+  fix honours A-022's boundary VERBATIM ("frameLive is the LIVE path: the
+  platform layer hands over one already-resolved intent for the frame; at 30
+  fps a frame delivers two steps and both share it"): the per-step CODE
+  CHANNEL belongs to the deterministic replay path (H-02), not to the live
+  path — GameLoop resolves the drag each frame into ONE reused Intent
+  instance (a field allocated at Start, never `new` per frame: P-05 stays 0)
+  quantized through the SAME InputDigest tables (16-way angle + 21-step rate
+  — the identical identity channels, no second invention) and passes it
+  straight to frameLive; InputAdapter keeps boot + the deterministic
+  transport untouched, and no hard rule is softened anywhere. The first-touch
+  29 ms hitch stays as a one-time cost (recorded, not softened).
+  Also from the same capture: the starfield must cover the PRESENTED VIEW
+  rectangle (recomputed with the camera each frame, screen-static), not just
+  the world bounds — a landscape world on a portrait window leaves the
+  §5.3-fit bands, and bare bands read as "content from the first third down"
+  (the user's second report); the world bounds stay the play area, the
+  field layer is visual (A-006 §3.3's own words). Branch
+  `feature/programmer-player-live-input` (registered in §1.3); brief
+  docs/briefs/A-023-live-input.md.
 
 **Status:**
 
