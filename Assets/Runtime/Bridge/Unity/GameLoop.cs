@@ -63,8 +63,35 @@
 // int read; the count read is touchCount). The Input System package is NOT
 // installed and was not reached for.
 //
-// D. THE FREEZE — INVESTIGATED, NOT PAPERED OVER (see the Update comment):
-// no try/catch, no softening anywhere for it.
+// A-023 TWELFTH EXTENSION (2026-10-17, defect D of the four the user SAW —
+// brief docs/briefs/A-023-live-input.md; PLAN.md updated FIRST at 6b336d7
+// docs(plan):). Decisions taken, recorded per the brief:
+//  - THE FREEZE FIX lives HERE ONLY (A-022's boundary names this file as the
+//    live path's owner; InputAdapter, FrameDriver, and SimCore stay untouched).
+//    The live path no longer samples the per-step code channel: GameLoop
+//    resolves the drag each frame into ONE Intent INSTANCE held in an instance
+//    field (allocated once at Start — never `new` per frame; P-05 stays 0) and
+//    passes it straight to FrameDriver.frameLive. The reuse site is the field;
+//    FixedStepDriver.step's "state.intent must equal the sampled intent"
+//    assert holds by identity on the live path (SimStep.run assigns s.intent
+//    to the SAME instance every step), and the multi-step catch-up frame that
+//    broke the sample/step cursor forever never sees a cursor at all.
+//  - Quantization path: the SAME InputDigest tables, no second invention —
+//    angle = quantizeAngle(thrustX, thrustY); ANGLE_COAST -> zero thrust,
+//    else thrust = ANGLE_X/ANGLE_Y[angle]; rate = rateFromCode(quantizeRate
+//    (rateRaw)). No-contact frames carry the SAME neutral intent A-011's coast
+//    rule produced through the old round-trip (zero thrust, RATE_NEUTRAL).
+//  - InputAdapter.boot stays at Start: the transport slot stays documented for
+//    the deterministic path (H-02 replay); the live path simply stops reading
+//    it. The comment says WHY: the one-sample-per-step invariant cannot hold
+//    when one frame covers many steps.
+//  - Boot warm of the touch subsystem: one discarded UnityEngine.Input.
+//    touchCount read at Start moves the first-touch 29 ms lazy-init hitch to boot
+//    cost (counted in the warm-up max, never in a steady frame). This is an
+//    ATTEMPT, not a claim — the next capture decides whether worst_hitch drops
+//    below the first-touch value.
+// The full freeze record (capture evidence, root cause, resolution) lives
+// above Update() — see "D. THE FREEZE — RESOLVED IN TWO STEPS".
 
 namespace EH
 {
@@ -95,6 +122,16 @@ namespace EH
         // PLACEHOLDER for A-011's tuning — not a re-decided scheme; the
         // transport contract and the sim are untouched.
         private static readonly long dragFullPx = 120L;
+
+        // A-023 twelfth extension (defect D fix): the ONE live-path intent.
+        // Allocated once at Start, resolved in place every frame — never `new`
+        // per frame (P-05 stays 0). Reuse site: this instance field, passed
+        // straight to FrameDriver.frameLive. Identity makes the sim-side
+        // "state.intent must equal the sampled intent" assert hold by
+        // construction on the live path (SimStep.run assigns s.intent to this
+        // SAME object every step), and the per-step sample cursor that broke
+        // forever on the first multi-step catch-up frame is not read at all.
+        private Intent liveIntent;
 
         /// <summary>
         /// Unity entry (A-019 §11). Builds the SAME SimState the harness builds
@@ -152,7 +189,29 @@ namespace EH
             {
                 FrameDriver.setTier(clock, tier); // render state only (A-019 §10 item 2)
             }
+            // A-023 twelfth extension: the transport slot stays booted and
+            // documented for the DETERMINISTIC path (the per-step code channel
+            // belongs to replay, H-02). The LIVE path no longer samples it:
+            // InputAdapter.sampleIntent's "step must advance exactly one per
+            // sample" invariant cannot hold when one frame covers many steps
+            // (A-022's boundary — frameLive takes ONE already-resolved intent
+            // for the frame), and the eleventh build's capture proved the
+            // rejection repeats every frame forever from the first touch on.
             InputAdapter.boot(64);
+            // The ONE live-path intent, allocated once here (never per frame).
+            liveIntent = new Intent();
+            // Boot warm of the touch subsystem (an ATTEMPT, not a claim): the
+            // eleventh capture's worst_hitch=29.28 ms was exactly the first
+            // GetTouch frame — Unity's touch subsystem initializes lazily. One
+            // discarded touchCount read at Start moves that lazy-init cost to
+            // boot (boot is before the measured window; the warm-up max never
+            // lands in a steady frame). The next capture decides: if worst_hitch
+            // still reads ~29 ms at a first touch, this attempt failed.
+            int touchWarm = UnityEngine.Input.touchCount; // result discarded: boot warm only
+            if (touchWarm < 0)
+            {
+                dragAnchorX = 0.0f; // unreachable (touchCount is never negative); keeps the read honest without an unused local
+            }
             RenderLayer.boot();
             UIRoot.register();
             started = true;
@@ -177,28 +236,40 @@ namespace EH
             return 0; // unknown: no scriptable RAM signal on this engine version
         }
 
-        // A-023 eleventh extension — D. THE FREEZE: OPEN INVESTIGATION, NOT
-        // PAPERED OVER. Measured on the S24 FE: the log shows EH-BOOT/EH-PACE/
-        // EH-SPRITE/EH-CAMERA/EH-FRAME and then ZERO EH-PERF lines — Update
-        // ran once and stopped; an earlier run left an il2cpp dropbox report
-        // (native crash) while the user's process was alive but suspended.
-        // The cause is NOT proven (the DOZE display-surface stop remains a
-        // competing environment explanation; PROGRESS.md records both). NO
-        // try/catch, no softening, no guess: the A/B/C fixes touch exactly the
-        // code that runs in the FIRST draw() (the generated-texture formats,
-        // the both-axis fit, the first starfield placement) and C adds the
-        // first finger read in pushLiveIntent. The NEXT device capture decides:
-        // EH-PERF lines appearing means the freeze was in the code being fixed;
-        // if the code still faults, Unity's own log will name the fault.
+        // D. THE FREEZE — RESOLVED IN TWO STEPS, RECORDED NOT PAPERED OVER.
+        // The eleventh extension's investigation (the first-draw freeze: zero
+        // EH-PERF lines) was DECIDED by the 2026-10-17 capture of the eleventh
+        // build: EH-PERF is present (3,902 frames, p50=16.625 ms = 60 FPS,
+        // P-05 allocs=0) — the A/B/C fixes removed that freeze. The capture
+        // then found the SECOND freeze, root-caused from the code, not guessed:
+        // EH-DRAW froze at frame=536 (t~9 s — the first touch; the run's
+        // worst_hitch=29.28 ms is that same frame) while EH-PERF kept counting
+        // to 4,499. The live path's InputAdapter.sampleIntent hard-rejects
+        // "step must advance exactly one per sample"; that invariant cannot
+        // hold when one frame covers many steps (A-022's boundary: frameLive is
+        // the LIVE path, ONE already-resolved intent for the frame; the per-
+        // step CODE CHANNEL belongs to the deterministic replay path, H-02).
+        // The same latent break happened unnoticed at the 2026-10-16 DOZE
+        // suspend (EH-DRAW stayed at frame=2495). The user's "same problems" =
+        // the game freezes on the first touch. The twelfth extension's fix
+        // (this file only) removes the sampleIntent round-trip from the live
+        // path: resolveLiveIntent writes the ONE reused liveIntent instance,
+        // quantized through the SAME InputDigest tables, straight for frameLive.
+        // No try/catch, no softening anywhere.
         /// <summary>
-        /// One Unity frame. The intent is sampled ONCE per step boundary through
-        /// InputAdapter (transport only — it holds no input scheme of its own,
-        /// A-019 §4), then the whole frame budget goes to the ONE driver via
-        /// FrameDriver.frameLive, which is the same frame body the harness runs
-        /// (target-fps wall budget, hitch debt, then FixedStepDriver.advance).
-        /// advance() runs at most MAX_CATCHUP steps and drops further debt into
-        /// s.droppedSteps; GameLoop never interpolates, cushions, or softens, and
-        /// owns no accumulator of its own.
+        /// One Unity frame. The platform resolves the drag into ONE already-
+        /// resolved intent for the frame (A-023 twelfth extension: the live
+        /// path no longer round-trips through InputAdapter.sampleIntent — the
+        /// per-step CODE CHANNEL belongs to the deterministic replay path, H-02,
+        /// and its one-sample-per-step invariant cannot hold when one frame
+        /// covers many steps; the eleventh build's capture proved that rejection
+        /// repeats every frame forever from the first touch on). The whole
+        /// frame budget still goes to the ONE driver via FrameDriver.frameLive,
+        /// the same frame body the harness runs (target-fps wall budget, hitch
+        /// debt, then FixedStepDriver.advance). advance() runs at most MAX_
+        /// CATCHUP steps and drops further debt into s.droppedSteps; GameLoop
+        /// never interpolates, cushions, or softens, and owns no accumulator
+        /// of its own.
         ///
         /// A-022 boundary: frameLive is the LIVE path, so one already-resolved
         /// intent covers the whole frame. At 30 fps a frame delivers two steps
@@ -214,12 +285,10 @@ namespace EH
                 return;
             }
 
-            // A-011 owns the pointer/touch/tilt mapping; this file forwards the
-            // platform telemetry layer's already-resolved values into the
-            // transport (first-contact-wins and pause-cancels-intent live in
-            // InputAdapter, not here). The candidate build now wires the
-            // built-in mobile touch drag (A-023 eleventh extension, defect C);
-            // the scheme itself is not re-decided.
+            // A-011 owns the pointer/touch/tilt mapping; this file resolves the
+            // platform telemetry layer's values into the frame's intent (the
+            // minimal drag wiring of the eleventh extension stays here — the
+            // scheme itself is not re-decided).
             // A-023 extension: the measurement surface opens the frame (P-01/P-05
             // QA instrument — samples the real-time clock at the frame boundary,
             // feeds the previous frame's delta into the fixed histogram, snapshots
@@ -227,11 +296,13 @@ namespace EH
             // nothing the player can perceive except log lines).
             RenderLayer.perfBeginFrame();
 
-            pushLiveIntent();
-            Intent i = InputAdapter.sampleIntent(sim.stepIndex);
-            InputAdapter.endStep(); // opens the next step's first-contact window
+            // A-023 twelfth extension: resolve the drag into the ONE reused
+            // liveIntent instance (quantized through the SAME InputDigest
+            // tables), then hand it straight to the live path. No sampleIntent,
+            // no endStep: the code channel is not read on the live path.
+            resolveLiveIntent();
 
-            FrameDriver.frameLive(clock, sim, i);
+            FrameDriver.frameLive(clock, sim, liveIntent);
 
             // render-only interpolation between the last two fixed steps; never
             // fed back into the sim (A-019 §4 RenderLayer row: alpha is render
@@ -243,24 +314,31 @@ namespace EH
         }
 
         /// <summary>
-        /// A-023 eleventh extension: the MINIMAL drag wiring (defect C — the
-        /// user touched the screen and nothing moved because this slot was a
-        /// pause() stub that NEVER read a finger). A-011's approved default
-        /// scheme (docs/input.md §2): touch + drag TRANSLATES the hole; the
-        /// intent channel is direction + rate. This is the MINIMAL honest
-        /// wiring, not the full scheme: first contact anchors at the finger
-        /// position (screen px); while a contact is held the drag vector =
-        /// current − anchor; no contact clears the anchor and calls
-        /// InputAdapter.pause() (the existing coast/neutral rule). A-011's
-        /// full scheme (offset-preserving pickup, dead zone, edge band,
-        /// re-anchor) is a LATER refinement; first-contact-wins and pause-
-        /// cancels stay in InputAdapter (untouched); one pushIntent per frame
-        /// is fine — the adapter locks the first per step and discards the
-        /// rest. The transport contract and the sim are untouched; floats
-        /// appear ONLY on this platform side and are converted to Q32.32
-        /// int64 before the transport call.
+        /// A-023 twelfth extension (defect D fix): resolve the drag into the
+        /// ONE reused liveIntent instance, in place, every frame — never `new`
+        /// per frame (P-05 stays 0). The MINIMAL drag wiring of the eleventh
+        /// extension stays exactly here (defect C — the user touched the screen
+        /// and nothing moved because the slot never read a finger): A-011's
+        /// approved default scheme (docs/input.md §2) says touch + drag
+        /// TRANSLATES the hole; the intent channel is direction + rate; first
+        /// contact anchors at the finger position (screen px); while a contact
+        /// is held the drag vector = current − anchor; no contact clears the
+        /// anchor and carries the coast/neutral intent (A-011's coast — the
+        /// same values the old pause() round-trip produced through the code
+        /// channel). A-011's full scheme (offset-preserving pickup, dead zone,
+        /// edge band, re-anchor) is a LATER refinement. The transport contract
+        /// and the sim are untouched; floats appear ONLY on this platform side
+        /// and are converted to Q32.32 before the tables.
+        ///
+        /// Quantization path (no second invention): the SAME InputDigest tables
+        /// the transport and replay use — angle = quantizeAngle(thrustX,
+        /// thrustY); ANGLE_COAST -> zero thrust, else thrust = ANGLE_X/ANGLE_Y
+        /// [angle]; rate = rateFromCode(quantizeRate(rateRaw)). The live path
+        /// and the deterministic path agree on the identity of an intent by
+        /// reading the same tables; the per-step CODE CHANNEL itself stays with
+        /// the deterministic replay path (H-02), per A-022's boundary.
         /// </summary>
-        private void pushLiveIntent()
+        private void resolveLiveIntent()
         {
             // Settled by the compiler on 6000.0.84f1 (the ApiProbe pattern:
             // temporary probe built, read, deleted; the validation line
@@ -278,51 +356,79 @@ namespace EH
                 UnityEngine.Touch touch = UnityEngine.Input.GetTouch(0); // the minimal wiring reads one finger; multi-touch is A-011's later
                 float x = touch.position.x;
                 float y = touch.position.y;
+                long thrustX;
+                long thrustY;
+                long rateRaw;
                 if (!dragContact)
                 {
                     // first contact: anchor = current finger position; no drag
-                    // vector exists yet, so the intent is a zero (the adapter
-                    // records coast/zero-rate for a zero vector). A contact
-                    // frame must NOT fall through to pause().
+                    // vector exists yet, so the intent is a zero (the same
+                    // values the old pushIntent(0,0,0) round-trip produced). A
+                    // contact frame must NOT fall through to the coast branch.
                     dragContact = true;
                     dragAnchorX = x;
                     dragAnchorY = y;
-                    InputAdapter.pushIntent(0L, 0L, 0L);
-                    return;
-                }
-                float dx = x - dragAnchorX;
-                float dy = y - dragAnchorY;
-                // floats are allowed HERE — platform side only, never into
-                // SimCore. Normalize the drag, scale the rate in px, then
-                // convert to Q32.32 int64 before the transport call.
-                double len2 = (double)dx * (double)dx + (double)dy * (double)dy;
-                double len = (double)UnityEngine.Mathf.Sqrt((float)len2); // Mathf.Sqrt: the PascalCase member settled by the tenth extension
-                if (len <= 0.0)
-                {
-                    InputAdapter.pushIntent(0L, 0L, 0L); // held but no movement yet: neutral
-                    return;
-                }
-                double nx = (double)dx / len;
-                double ny = (double)dy / len;
-                long thrustX = (long)(nx * 4294967296.0); // Q32.32 of the unit direction
-                long thrustY = (long)(ny * 4294967296.0);
-                long rate;
-                if (len >= (double)dragFullPx)
-                {
-                    rate = FixedQ.ONE; // 1.0 Q32.32
+                    thrustX = 0L;
+                    thrustY = 0L;
+                    rateRaw = 0L;
                 }
                 else
                 {
-                    rate = (long)(len / (double)dragFullPx * 4294967296.0); // min(len / DRAG_FULL_PX, 1)
+                    float dx = x - dragAnchorX;
+                    float dy = y - dragAnchorY;
+                    // floats are allowed HERE — platform side only, never into
+                    // SimCore. Normalize the drag, scale the rate in px, then
+                    // convert to Q32.32 int64 before the tables.
+                    double len2 = (double)dx * (double)dx + (double)dy * (double)dy;
+                    double len = (double)UnityEngine.Mathf.Sqrt((float)len2); // Mathf.Sqrt: the PascalCase member settled by the tenth extension
+                    if (len <= 0.0)
+                    {
+                        thrustX = 0L;
+                        thrustY = 0L;
+                        rateRaw = 0L; // held but no movement yet: neutral zero
+                    }
+                    else
+                    {
+                        double nx = (double)dx / len;
+                        double ny = (double)dy / len;
+                        thrustX = (long)(nx * 4294967296.0); // Q32.32 of the unit direction
+                        thrustY = (long)(ny * 4294967296.0);
+                        if (len >= (double)dragFullPx)
+                        {
+                            rateRaw = FixedQ.ONE; // min(len / DRAG_FULL_PX, 1)
+                        }
+                        else
+                        {
+                            rateRaw = (long)(len / (double)dragFullPx * 4294967296.0);
+                        }
+                    }
                 }
-                InputAdapter.pushIntent(thrustX, thrustY, rate);
+                // Quantize through the SAME InputDigest tables (identity
+                // channels identical, no second invention).
+                int angle = InputDigest.quantizeAngle(thrustX, thrustY);
+                if (angle == InputDigest.ANGLE_COAST)
+                {
+                    liveIntent.thrustX = 0L;
+                    liveIntent.thrustY = 0L;
+                }
+                else
+                {
+                    liveIntent.thrustX = InputDigest.ANGLE_X[angle];
+                    liveIntent.thrustY = InputDigest.ANGLE_Y[angle];
+                }
+                liveIntent.rate = InputDigest.rateFromCode(InputDigest.quantizeRate(rateRaw));
             }
             else
             {
-                // no contact: clear the anchor and coast/neutral — the existing
-                // rule (InputAdapter.pause with the A-011 ordering).
+                // no contact: clear the anchor and coast/zero — the same
+                // neutral intent A-011's coast rule produced through the old
+                // round-trip (pause -> codes 16/10 -> zero thrust, RATE_
+                // NEUTRAL). The live path writes it directly; the code channel
+                // is not touched (it belongs to the deterministic path, H-02).
                 dragContact = false;
-                InputAdapter.pause();
+                liveIntent.thrustX = 0L;
+                liveIntent.thrustY = 0L;
+                liveIntent.rate = InputDigest.rateFromCode(InputDigest.RATE_NEUTRAL);
             }
         }
 

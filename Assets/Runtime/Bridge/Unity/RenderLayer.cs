@@ -134,6 +134,9 @@
 //    so this reduces to the approved shortEdge/boundsH value and A-026's
 //    recorded proof numbers (ppuUsed 5 → 3 → 2, eventRadiusPx values) are
 //    unchanged BY CONSTRUCTION — no re-derivation here.
+//  - D. THE FREEZE — INVESTIGATED, NOT PAPERED OVER (see the Update comment):
+//    no try/catch, no softening anywhere for it.
+//
 //  - D. THE FREEZE — INVESTIGATED, NOT PAPERED OVER (see the GameLoop
 //    comment): the log showed EH-BOOT/EH-PACE/EH-SPRITE/EH-CAMERA/EH-FRAME
 //    then ZERO EH-PERF lines; an earlier run left an il2cpp dropbox report
@@ -142,6 +145,29 @@
 //    code that runs in the FIRST draw(); the next device capture decides:
 //    EH-PERF lines appearing means the freeze was in the code being fixed,
 //    and if the code still faults, Unity's log will name the fault.
+//
+// A-023 TWELFTH EXTENSION (2026-10-17, the 2026-10-17 capture of the ELEVENTH
+// build — brief docs/briefs/A-023-live-input.md; PLAN.md updated FIRST at 6b336d7
+// docs(plan):). Two fixes; only this file and GameLoop.cs move. Decisions taken,
+// recorded per the brief:
+//  - THE STARFIELD COVERS THE PRESENTED VIEW (defect B follow-up, measured: the
+//    user read "content from the first third down" — the §5.3 both-axis fit
+//    leaves bare bands on a portrait window, a landscape world in a tall screen).
+//    The field layer is visual (A-006 §3.3): the starfield now covers the
+//    PRESENTED VIEW rectangle, not the world bounds — each frame, scale =
+//    (windowW/ppu, windowH/ppu) centred on the camera position (the hole), far-
+//    est z as now. It stays screen-static (it moves exactly with the camera,
+//    never on its own — §3.6's "never drifts"), still the weakest element
+//    (same texture, same alpha rule), one draw call. The one-time world-bounds
+//    placement is removed; the world bounds stay the play area and the culling
+//    rule is unchanged. The bands are INHERENT to a landscape world on a
+//    portrait window under the approved fit; the field layer now reads as space
+//    everywhere.
+//  - EH-* observability stays as-is (EH-SPRITE/EH-PACE/EH-CAMERA/EH-DRAW
+//    unchanged); EH-DRAW now also proves the GameLoop fix: lastDrawFrame tracks
+//    frameCount again because frameLive no longer aborts before draw().
+// The freeze record (defect D, root-caused and fixed in GameLoop.cs) lives in
+// that file; nothing here re-decides it.
 
 namespace EH
 {
@@ -174,7 +200,10 @@ namespace EH
         private static UnityEngine.GameObject starfieldObject;
         private static UnityEngine.SpriteRenderer starfieldRenderer;
         private static UnityEngine.Transform starfieldTransform;
-        private static bool starfieldPlaced; // world bounds are sim state: place once, first draw
+        // A-023 twelfth extension: the one-time world-bounds placement flag is
+        // REMOVED — the starfield now covers the PRESENTED VIEW rectangle,
+        // recomputed with the camera every draw (screen-static: it moves exactly
+        // with the camera, never on its own).
         private static UnityEngine.GameObject accretionObject;
         private static UnityEngine.SpriteRenderer accretionRenderer;
         private static UnityEngine.Transform accretionTransform;
@@ -389,9 +418,10 @@ namespace EH
             glowSprite = makeGlowTexture(32, 0.5);
             accretionSpriteTex = makeAccretionTexture(64);
             starfieldSpriteTex = makeStarfieldTexture(256, 110);
-            // The starfield: ONE sprite, farthest z, static by construction (placed
-            // once on the first draw from the level's bounds, never touched again —
-            // it never drifts and never carries readability, §3.3/§3.6).
+            // The starfield: ONE sprite, farthest z, screen-static (A-023 twelfth
+            // extension: sized and centred with the camera every draw to cover the
+            // PRESENTED VIEW rectangle — it moves exactly with the camera, never
+            // on its own, §3.6's "never drifts"; never carries readability, §3.3).
             perfCountAlloc();
             starfieldObject = new UnityEngine.GameObject("eh-starfield");
             perfCountAlloc();
@@ -493,9 +523,11 @@ namespace EH
             // read A-026's view.c makes (`(double)p->holeEventRadius / 4294967296.0`);
             // truncating with >> 32 would let the two implementations of the §5.3
             // rule drift by up to one world unit (a few pixels) on the same state.
-            // A-023 eleventh extension: boundsW is read here too (it was already
-            // read below for the starfield placement) because the §5.3 world-fit
-            // term now uses BOTH window axes against BOTH world axes.
+            // A-023 eleventh extension: boundsW is read here too because the §5.3
+            // world-fit term now uses BOTH window axes against BOTH world axes
+            // (it had also been read below for the tenth extension's one-time
+            // starfield placement, which the twelfth extension replaced with a
+            // presented-view covering — the bounds reads stay for this rule only).
             double boundsW = (double)(long)s.boundsW / 4294967296.0;
             double boundsH = (double)(long)s.boundsH / 4294967296.0;
             double evWu = (double)(long)s.holeEventRadius / 4294967296.0;
@@ -581,27 +613,29 @@ namespace EH
             tmpPos.z = -10.0f;
             cameraTransform.position = tmpPos;
 
-            // ---- starfield: one sprite, farthest z, static by construction ------
-            // Placed on the FIRST draw only (world bounds are sim state, read
-            // read-only here), then never touched again: it never drifts (§3.6)
-            // and never carries readability (§3.3). Scaled to the world bounds,
-            // centred at (boundsW/2, boundsH/2) — the level's bounds convention
-            // (LevelLoader starts the hole at the centre of that rectangle).
-            if (!starfieldPlaced)
-            {
-                if (boundsH > 0.0 && boundsW > 0.0)
-                {
-                    tmpPos.x = (float)(boundsW * 0.5);
-                    tmpPos.y = (float)(boundsH * 0.5);
-                    tmpPos.z = -2.0f; // farthest layer, inside the measured [-2,0] range
-                    starfieldTransform.position = tmpPos;
-                    tmpScale.x = (float)boundsW;
-                    tmpScale.y = (float)boundsH;
-                    tmpScale.z = 1.0f;
-                    starfieldTransform.localScale = tmpScale;
-                    starfieldPlaced = true;
-                }
-            }
+            // ---- starfield: one sprite, farthest z, covers the PRESENTED VIEW ---
+            // A-023 twelfth extension (the 2026-10-17 capture, the user's "content
+            // from the first third down"): the field layer is visual (A-006 §3.3)
+            // — the starfield now covers the PRESENTED VIEW rectangle, not the
+            // world bounds. The bands are INHERENT to a landscape world on a
+            // portrait window under the approved §5.3 both-axis fit; the field
+            // layer now reads as space everywhere. Screen-static stays: each
+            // frame the field is centred on the camera position (the hole) and
+            // scaled to (windowW/ppu, windowH/ppu) — the exact presented-view
+            // rectangle in WU — so it moves exactly with the camera, never on
+            // its own (§3.6's "never drifts"). Same texture, same alpha rule,
+            // same farthest z, one draw call, still the weakest element. The
+            // one-time world-bounds placement is removed; the world bounds stay
+            // the play area and the culling rule below is unchanged. Reused
+            // temporaries only — no per-frame allocation.
+            tmpPos.x = (float)holeXWu; // the camera position (the hole) — moves exactly with it
+            tmpPos.y = (float)holeYWu;
+            tmpPos.z = -2.0f; // farthest layer, inside the measured [-2,0] range
+            starfieldTransform.position = tmpPos;
+            tmpScale.x = (float)((double)windowW / ppu); // the PRESENTED VIEW rectangle in WU
+            tmpScale.y = (float)((double)windowH / ppu);
+            tmpScale.z = 1.0f;
+            starfieldTransform.localScale = tmpScale;
 
             // ---- accretion glow: behind the rim disc and the black sphere -------
             // §3.5: the glow reads as gas around the void; the sphere and the rim
@@ -895,10 +929,16 @@ namespace EH
         /// Starfield: sparse one-pixel points from a deterministic xorshift (the
         /// same field every run — it is decoration, not a per-run random), alpha
         /// 0.16..0.30. One texture, one draw call, static by construction (§3.3/
-        /// §3.6): it never drifts and stays the weakest element of the §3.1
-        /// hierarchy (points are a quarter of the smallest body core's diameter at
-        /// the placeholder bounds, and the colour multiplier is below every
-        /// palette colour).
+        /// §3.6): it never drifts (draw() centres and scales it to the camera's
+        /// PRESENTED VIEW every frame — it moves exactly with the camera, never
+        /// on its own) and stays the weakest element of the §3.1 hierarchy: the
+        /// colour multiplier is below every palette colour and the texture alpha
+        /// is <= 0.30 on top of it. A-023 twelfth extension sizing note: the
+        /// texture spans the presented view, so a point is ~1/256 of the screen
+        /// on either axis at ANY zoom — never larger than a body core on screen,
+        /// so the weakest-element rule holds by construction at every framing
+        /// (the tenth extension's world-bounds sizing made the same claim at the
+        /// placeholder bounds only).
         /// </summary>
         private static UnityEngine.Sprite makeStarfieldTexture(int size, int points)
         {
