@@ -53,6 +53,28 @@ Row format per A-014 §5: `device-class, os-build, test-ID, metric, measured, bo
    actively during the window keeps it ON; the next capture needs that plus the
    twelfth-extension build (7240678d… 21,284,329 B).
 
+## Second capture this day: the TWELFTH build (defect D CLOSED) — 2026-10-17T13:33:42Z
+
+- build-hash: sha256 7240678d80509ab345656d924bcc0289b42014acec3c985d46fc08aeaf128e95, 21,284,329 B (the A-023 TWELFTH-extension package, merged at ee80921)
+- capture tool: tools/player-package/capture.sh (WAIT=120, the user played; the display entered DOZE during the window — the user stopped touching)
+
+### Measured rows
+
+- EH-BOOT / EH-PACE target=60 / EH-SPRITE source=generated format=4 / EH-CAMERA clearFlags=2 / EH-FRAME present.
+- EH-DRAW tracks EH-PERF EVERY summary row: frame=902/903, 1203/1204, 1503/1504, 1803/1804, 2103/2104, 2403/2404, 2703/2704, 3003/3004 — draw() completes every frame, past the first touch. DEFECT D CLOSED.
+- The camera MOVED with the user's drag: cam=85.07,72.35 -> 127.02,60.47 -> 126.01,70.27 (the hole translates; the user's report "moving when I touch/slide works" matches the log).
+- visible=2 -> 10 -> 13 -> 16 -> 17 -> 18 -> 21 -> 23 bodies presented; horizonPx grows 307 -> 344 -> 392; ppu=8.4375 (the both-axis fit), orthoSize=138.67.
+- P-01, metric=p50_ms, measured=16.625, bound=(informational), —, 2026-10-17, 7240678d…
+- P-01, metric=p95_ms, measured=17.625, bound=16.6, FAIL, 2026-10-17, 7240678d… (the bound-vs-vsync finding stands; A-014/A-007 to re-derive, never softened)
+- P-01, metric=worst_hitch_ms, measured=29.530 at t~40 s (frame ~2404) — NOT at the first touch: the boot-warm attempt's first-touch cost is gone from the contact frame; a different one-time 29.5 ms hitch appears mid-run (recorded, not softened; the attempt is partially decided: the first-touch hitch moved, a new mid-run hitch appeared).
+- P-05, metric=allocs_per_frame_max, measured=0, bound=0, PASS, 2026-10-17, 7240678d… (steady across 2,402+ measured frames; allocs_warmup_max=1834 is boot cost, outside steady frames by construction)
+- visual: display-state DOZE (dimmed ~5%); screencap 1080x2340 full-frame analysis: nonblack_px=5,699 (0.2255%), ALL grayscale, confined to rows y=1715..1810 — that is the system UI band (doze overlay), NOT the game; zero colored pixels anywhere. Under 5% dimming the navy field (8,10,18) rounds to (0,0,0), so the game frame is indistinguishable from black at this dimming: INCONCLUSIVE for the game's own colors. A bright accretion glow WOULD survive dimming (orange ~ (12,8,3) minimum) and none is present at the sampled points — but the sampled points may miss the glow; the full-frame scan found no warm-colored pixel at all, which is evidence the glow is NOT presenting at full brightness — pending a display-ON capture.
+
+### What this capture decides and what stays open
+
+DECIDED: defect D (the freeze) is CLOSED — the live-path fix works; the user's touch/slide translates the hole (their report matches). P-05 stays PASS.
+STILL OPEN: the visual proof of the Interstellar look. The user's direct report says the visual issues persist (no hole, squares, band). The DOZE screencap cannot decide colors. NEXT: one capture with the display ON the whole window (the user keeps dragging continuously), then a full-frame grid analysis of the true colors.
+
 ## What the NEXT capture (twelfth build) must show
 
 - EH-DRAW `frame=` must TRACK EH-PERF `frame=` across the whole window, including past
